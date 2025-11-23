@@ -35,32 +35,57 @@ gdbus call --session --dest org.gnome.Shell.Extensions \
 
 ## Typical Development Cycle
 
+### Method A: Manual Build (Simple)
+
 ```bash
-# 1. Edit your code
-vim extension.js
+# 1. Edit your TypeScript code
+vim src/extension.ts
 
-# 2. Copy to extension directory (if not using symlink)
-cp extension.js ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io/
+# 2. Build and reload in one command
+npm run build && npm run reload
+```
 
-# 3. Reload the extension
-gnome-extensions disable snappa@x7c1.github.io && gnome-extensions enable snappa@x7c1.github.io
+The `reload` command automatically:
+- Copies files from `dist/` to the extension directory
+- Disables and re-enables the extension
 
-# 4. Test the changes
+### Method B: Watch Mode (Recommended)
+
+For faster development, use watch mode to automatically recompile on file changes:
+
+```bash
+# Terminal 1: Start watch mode
+npm run watch
+
+# Terminal 2: Edit code, then reload
+vim src/extension.ts
+# Save the file (watch mode auto-compiles)
+npm run reload
 ```
 
 ## Using Symlinks for Faster Development
 
-Instead of copying files every time, create a symlink:
+Instead of copying files every time, create a symlink to the `dist/` directory:
 
 ```bash
 # Remove the directory if it exists
 rm -rf ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io
 
-# Create a symlink to your development directory
-ln -s /path/to/your/dev/directory ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io
+# Create a symlink to your dist/ directory (build output)
+ln -s /path/to/your/dev/directory/dist ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io
 ```
 
-Now you only need to reload the extension after editing files.
+**Important:** The symlink points to `dist/`, not the project root, because that's where the compiled JavaScript lives.
+
+With this setup:
+1. Edit `src/extension.ts`
+2. Files are auto-compiled (if using `npm run watch`)
+3. Reload the extension manually:
+   ```bash
+   gnome-extensions disable snappa@x7c1.github.io && gnome-extensions enable snappa@x7c1.github.io
+   ```
+
+**Note:** When using symlinks, you don't need `npm run reload` (which copies files). Just disable/enable the extension directly.
 
 ## Viewing Extension Logs
 

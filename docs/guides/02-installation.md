@@ -9,7 +9,17 @@ GNOME Shell extensions are installed in:
 
 ## Installation Steps
 
-### 1. Create Extension Directory
+### 1. Build the Extension
+
+First, compile TypeScript to JavaScript:
+
+```bash
+npm run build
+```
+
+This creates the compiled files in the `dist/` directory.
+
+### 2. Create Extension Directory
 
 ```bash
 mkdir -p ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io
@@ -17,14 +27,16 @@ mkdir -p ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io
 
 The directory name **must match** the UUID in `metadata.json`.
 
-### 2. Copy Extension Files
+### 3. Copy Extension Files
 
 ```bash
-# Copy from your development directory
-cp metadata.json extension.js ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io/
+# Copy all files from the dist/ directory (build output)
+cp dist/* ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io/
 ```
 
-### 3. Restart GNOME Shell (First Time Only)
+**Note:** Copy files from `dist/`, not from the project root. The `dist/` directory contains the compiled JavaScript and metadata.
+
+### 4. Restart GNOME Shell (First Time Only)
 
 #### For X11 Session:
 ```bash
@@ -35,13 +47,13 @@ killall -3 gnome-shell
 - Logout and login again
 - Or reboot
 
-### 4. Enable the Extension
+### 5. Enable the Extension
 
 ```bash
 gnome-extensions enable snappa@x7c1.github.io
 ```
 
-### 5. Verify Installation
+### 6. Verify Installation
 
 ```bash
 gnome-extensions list
