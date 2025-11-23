@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    // Target ES2020 for SpiderMonkey 91 (GNOME Shell 42)
+    "target": "ES2020",
+    "lib": ["ES2020"],
+
+    // Module system - CommonJS for GNOME Shell 42
+    "module": "commonjs",
+
+    // Output configuration
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+
+    // Type checking
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+
+    // Module resolution
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    // Additional checks
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Performance
+    "skipLibCheck": true,
+
+    // Compatibility
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
