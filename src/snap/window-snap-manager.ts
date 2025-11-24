@@ -263,7 +263,9 @@ export class WindowSnapManager {
         const width = Math.floor(workArea.width * preset.width);
         const height = Math.floor(workArea.height * preset.height);
 
-        log(`[WindowSnapManager] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`);
+        log(
+            `[WindowSnapManager] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`
+        );
 
         // Unmaximize window if maximized
         if (targetWindow.get_maximized()) {

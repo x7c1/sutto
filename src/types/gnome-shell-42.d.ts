@@ -115,6 +115,8 @@ declare namespace Shell {
         display: Meta.Display;
         get_current_time(): number;
         stage: Clutter.Actor;
+        screen_width: number;
+        screen_height: number;
     }
 }
 
@@ -206,6 +208,8 @@ declare namespace St {
         y_align?: Clutter.ActorAlign;
         x_expand?: boolean;
         y_expand?: boolean;
+        x?: number;
+        y?: number;
         width?: number;
         height?: number;
         visible?: boolean;
