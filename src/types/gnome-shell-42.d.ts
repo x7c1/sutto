@@ -68,14 +68,23 @@ declare namespace Meta {
 
     interface Window {
         get_frame_rect(): Rectangle;
-        move_resize_frame(user_op: boolean, x: number, y: number, width: number, height: number): void;
+        move_resize_frame(
+            user_op: boolean,
+            x: number,
+            y: number,
+            width: number,
+            height: number
+        ): void;
         unmaximize(directions: number): void;
         is_fullscreen(): boolean;
         get_maximized(): number;
     }
 
     interface Display {
-        connect(signal: string, callback: (display: Display, window: Window, op: GrabOp) => void): number;
+        connect(
+            signal: string,
+            callback: (display: Display, window: Window, op: GrabOp) => void
+        ): number;
         disconnect(id: number): void;
         get_monitor_geometry(monitor: number): Rectangle;
         get_n_monitors(): number;

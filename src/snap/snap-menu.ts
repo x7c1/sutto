@@ -145,12 +145,7 @@ export class SnapMenu {
             const [actorX, actorY] = button.get_transformed_position();
             const [width, height] = button.get_transformed_size();
 
-            if (
-                x >= actorX &&
-                x <= actorX + width &&
-                y >= actorY &&
-                y <= actorY + height
-            ) {
+            if (x >= actorX && x <= actorX + width && y >= actorY && y <= actorY + height) {
                 log(`[SnapMenu] Position (${x}, ${y}) is over preset: ${preset.label}`);
                 return preset;
             }

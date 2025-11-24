@@ -10,7 +10,7 @@
 const Meta = imports.gi.Meta;
 const GLib = imports.gi.GLib;
 
-import { SnapMenu, SnapPreset } from './snap-menu';
+import { SnapMenu, type SnapPreset } from './snap-menu';
 
 declare function log(message: string): void;
 
