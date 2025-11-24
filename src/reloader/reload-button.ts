@@ -26,12 +26,12 @@
 
 // Import required modules
 const St = imports.gi.St;
-const Main = imports.ui.main;
+const Main = imports.ui.main as any as Main;
 
 import { Reloader } from './reloader';
 
 export class ReloadButton {
-    private _button: any; // St.Button
+    private _button: St.Button | null;
     private _reloader: Reloader;
 
     /**
@@ -53,7 +53,7 @@ export class ReloadButton {
      */
     enable(): void {
         // Create button
-        this._button = new (St as any).Button({
+        const button = new St.Button({
             style_class: 'panel-button',
             reactive: true,
             can_focus: true,
@@ -65,16 +65,17 @@ export class ReloadButton {
             text: this._label,
             y_align: 2, // CENTER
         });
-        this._button.set_child(label);
+        button.set_child(label);
 
         // Connect click event to reload function
-        this._button.connect('button-press-event', () => {
+        button.connect('button-press-event', () => {
             this._reloader.reload();
             return true; // Clutter.EVENT_STOP
         });
 
         // Add button to the panel (top bar)
-        (Main as any).panel._rightBox.insert_child_at_index(this._button, 0);
+        Main.panel._rightBox.insert_child_at_index(button, 0);
+        this._button = button;
     }
 
     /**
@@ -82,7 +83,7 @@ export class ReloadButton {
      */
     disable(): void {
         if (this._button) {
-            (Main as any).panel._rightBox.remove_child(this._button);
+            Main.panel._rightBox.remove_child(this._button);
             this._button.destroy();
             this._button = null;
         }
