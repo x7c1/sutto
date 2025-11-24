@@ -1,16 +1,8 @@
 # Snappa - GNOME Shell Extension
 
-A simple GNOME Shell extension that displays "Hello World" in the top panel.
+> **⚠️ UNDER DEVELOPMENT** - This extension is currently in active development and not yet stable.
 
-## Overview
-
-Snappa is a minimal GNOME Shell extension written in TypeScript, demonstrating the basics of GNOME Shell extension development with modern tooling.
-
-## Features
-
-- Displays a "Hello World" label in the GNOME Shell top panel
-- Written in TypeScript for type safety and better development experience
-- Supports GNOME Shell 42
+A GNOME Shell extension for window snapping.
 
 ## Quick Start
 
@@ -33,35 +25,9 @@ Snappa is a minimal GNOME Shell extension written in TypeScript, demonstrating t
 
 3. The compiled extension is in the `dist/` directory
 
-### Development
-
-For active development with automatic recompilation:
-
-```bash
-npm run watch
-```
-
-See [TypeScript Build Guide](./docs/guides/05-typescript-build.md) for detailed build instructions.
-
-## Project Structure
-
-```
-.
-├── src/                    # TypeScript source code
-│   ├── extension.ts        # Main extension implementation
-│   └── types/              # Custom type definitions for GNOME Shell 42
-├── dist/                   # Build output (distribution ready)
-│   ├── extension.js        # Compiled JavaScript
-│   └── metadata.json       # Extension metadata
-├── docs/                   # Documentation
-│   ├── guides/             # Development guides
-│   └── learning/           # Learning resources
-├── package.json            # npm configuration
-└── tsconfig.json           # TypeScript configuration
-```
-
 ## Documentation
 
+- [Debugging and Logging](./docs/guides/06-debugging-and-logging.md) - Debugging techniques and logging
 - [TypeScript Build Guide](./docs/guides/05-typescript-build.md) - How to build the extension
 - [Development Workflow](./docs/guides/03-development-workflow.md) - Development best practices
 
