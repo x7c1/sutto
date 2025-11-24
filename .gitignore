@@ -9,8 +9,11 @@ lerna-debug.log*
 
 # node.js directories
 node_modules
-dist
 dist-ssr
+
+# TypeScript compiled files in dist/ (but keep metadata.json)
+dist/*.js
+dist/*.js.map
 
 # TypeScript build info
 *.tsbuildinfo
@@ -21,6 +24,7 @@ target
 # Local files
 *.local
 .envrc
+.claude
 
 # Editor directories and files
 .vscode/*

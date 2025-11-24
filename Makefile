@@ -21,7 +21,3 @@ claude-run: claude-setup setup-role ## Run Claude Code in Docker container
 	docker compose run --rm claude-code
 
 workspace: claude-run ## Alias for claude-run
-
-pr: ## Create pull request automatically
-	./vendor/strata/skills/create-pr/create-pr-auto.sh
-

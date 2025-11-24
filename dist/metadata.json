@@ -1,0 +1,10 @@
+{
+  "uuid": "snappa@x7c1.github.io",
+  "name": "Snappa",
+  "description": "A simple Hello World GNOME Shell extension",
+  "shell-version": [
+    "42"
+  ],
+  "url": "https://github.com/x7c1/snappa",
+  "version": 1
+}
