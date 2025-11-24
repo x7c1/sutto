@@ -88,6 +88,24 @@ declare namespace Gio {
          * Gets the file name
          */
         get_name(): string;
+
+        /**
+         * Gets the file type
+         */
+        get_file_type(): FileType;
+    }
+
+    /**
+     * File type enumeration
+     */
+    enum FileType {
+        UNKNOWN = 0,
+        REGULAR = 1,
+        DIRECTORY = 2,
+        SYMBOLIC_LINK = 3,
+        SPECIAL = 4,
+        SHORTCUT = 5,
+        MOUNTABLE = 6,
     }
 
     /**

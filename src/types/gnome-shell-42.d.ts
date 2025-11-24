@@ -38,12 +38,91 @@
  */
 
 // ============================================================================
+// Meta Types (from @girs/meta)
+// ============================================================================
+
+declare namespace Meta {
+    enum GrabOp {
+        NONE = 0,
+        MOVING = 1,
+        RESIZING_NW = 36865,
+        RESIZING_N = 32769,
+        RESIZING_NE = 40961,
+        RESIZING_E = 8193,
+        RESIZING_SE = 40961,
+        RESIZING_S = 16385,
+        RESIZING_SW = 20481,
+        RESIZING_W = 4097,
+    }
+
+    interface Rectangle {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }
+
+    interface RectangleConstructor {
+        new (props: { x: number; y: number; width: number; height: number }): Rectangle;
+    }
+
+    interface Window {
+        get_frame_rect(): Rectangle;
+        move_resize_frame(user_op: boolean, x: number, y: number, width: number, height: number): void;
+        unmaximize(directions: number): void;
+        is_fullscreen(): boolean;
+        get_maximized(): number;
+    }
+
+    interface Display {
+        connect(signal: string, callback: (display: Display, window: Window, op: GrabOp) => void): number;
+        disconnect(id: number): void;
+        get_monitor_geometry(monitor: number): Rectangle;
+        get_n_monitors(): number;
+        get_current_monitor(): number;
+        get_monitor_index_for_rect(rect: Rectangle): number;
+    }
+}
+
+// ============================================================================
+// GLib Types
+// ============================================================================
+
+declare const GLib: {
+    PRIORITY_DEFAULT: number;
+    timeout_add(priority: number, interval: number, callback: () => boolean): number;
+    Source: {
+        remove(id: number): boolean;
+    };
+};
+
+// ============================================================================
+// Shell Types
+// ============================================================================
+
+declare namespace Shell {
+    interface Global {
+        get_pointer(): [number, number, number];
+        display: Meta.Display;
+        get_current_time(): number;
+        stage: Clutter.Actor;
+    }
+}
+
+// ============================================================================
 // Clutter Types (from @girs/clutter-10)
 // ============================================================================
 
 declare namespace Clutter {
     interface Actor {
         destroy(): void;
+        connect(signal: string, callback: (...args: any[]) => boolean): number;
+        disconnect(id: number): void;
+        get_parent(): Clutter.Actor | null;
+        add_child(child: Clutter.Actor): void;
+        remove_child(child: Clutter.Actor): void;
+        get_transformed_position(): [number, number];
+        get_transformed_size(): [number, number];
     }
 
     enum ActorAlign {
@@ -86,6 +165,54 @@ declare namespace St {
     interface LabelConstructor {
         new (props?: LabelConstructorProperties): Label;
     }
+
+    interface ButtonConstructorProperties {
+        style_class?: string;
+        style?: string;
+        reactive?: boolean;
+        can_focus?: boolean;
+        track_hover?: boolean;
+        x_align?: Clutter.ActorAlign;
+        y_align?: Clutter.ActorAlign;
+        x_expand?: boolean;
+        y_expand?: boolean;
+        visible?: boolean;
+    }
+
+    interface Button extends Clutter.Actor {
+        set_child(child: Clutter.Actor): void;
+        connect(signal: string, callback: () => boolean): number;
+        destroy(): void;
+    }
+
+    interface ButtonConstructor {
+        new (props?: ButtonConstructorProperties): Button;
+    }
+
+    interface BoxLayoutConstructorProperties {
+        style_class?: string;
+        style?: string;
+        vertical?: boolean;
+        x_align?: Clutter.ActorAlign;
+        y_align?: Clutter.ActorAlign;
+        x_expand?: boolean;
+        y_expand?: boolean;
+        width?: number;
+        height?: number;
+        visible?: boolean;
+    }
+
+    interface BoxLayout extends Clutter.Actor {
+        add_child(child: Clutter.Actor): void;
+        remove_child(child: Clutter.Actor): void;
+        remove_all_children(): void;
+        set_position(x: number, y: number): void;
+        destroy(): void;
+    }
+
+    interface BoxLayoutConstructor {
+        new (props?: BoxLayoutConstructorProperties): BoxLayout;
+    }
 }
 
 // ============================================================================
@@ -115,10 +242,17 @@ declare const imports: {
     gi: {
         St: {
             Label: St.LabelConstructor;
+            Button: St.ButtonConstructor;
+            BoxLayout: St.BoxLayoutConstructor;
             [key: string]: any;
         };
         Clutter: {
             ActorAlign: typeof Clutter.ActorAlign;
+            [key: string]: any;
+        };
+        Meta: {
+            GrabOp: typeof Meta.GrabOp;
+            Rectangle: Meta.RectangleConstructor;
             [key: string]: any;
         };
         [key: string]: any;
@@ -129,3 +263,5 @@ declare const imports: {
     };
     [key: string]: any;
 };
+
+declare const global: Shell.Global;

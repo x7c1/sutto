@@ -139,9 +139,14 @@ export class Reloader {
                 break;
             }
             const name = fileInfo.get_name();
-            const sourceFile = sourceDir.get_child(name);
-            const destFile = tmpDirFile.get_child(name);
-            sourceFile.copy(destFile, Gio.FileCopyFlags.OVERWRITE, null, null);
+            const fileType = fileInfo.get_file_type();
+
+            // Only copy regular files, skip directories
+            if (fileType === Gio.FileType.REGULAR) {
+                const sourceFile = sourceDir.get_child(name);
+                const destFile = tmpDirFile.get_child(name);
+                sourceFile.copy(destFile, Gio.FileCopyFlags.OVERWRITE, null, null);
+            }
         }
 
         return tmpDirFile;
