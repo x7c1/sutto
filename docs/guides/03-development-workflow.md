@@ -1,91 +1,81 @@
 # Development Workflow
 
-## Reloading Extensions During Development
+## Self-Reload Feature (Recommended)
 
-**Important:** You do NOT need to logout/login every time you make changes!
+Snappa includes a **built-in self-reload feature** that eliminates the need to restart GNOME Shell during development.
 
-### Method 1: Disable and Enable (Recommended)
+### How It Works
 
-This is the simplest way to reload your extension after making code changes:
+The extension displays a "Reload" button in the GNOME Shell top panel. When clicked, it:
+1. Copies the current extension to `/tmp` with a new UUID
+2. Loads the new code (bypassing GJS importer cache)
+3. Unloads the old instance
+4. Cleans up temporary files
+
+This approach is inspired by [ExtensionReloader](https://codeberg.org/som/ExtensionReloader) and works without DBus Eval permissions.
+
+### Development Cycle (Recommended)
+
+```bash
+# 1. Edit your TypeScript code
+vim src/extension.ts
+
+# 2. Build and copy files
+npm run build && npm run copy-files
+
+# 3. Click the "Reload" button in the panel
+# → Extension reloads instantly (< 1 second)!
+```
+
+**Key Benefits:**
+- No GNOME Shell restart required (saves several seconds)
+- Works on both X11 and Wayland
+- No need for xdotool or other external tools
+- Code changes are reflected immediately
+
+### Alternative: Watch Mode
+
+For even faster iteration:
+
+```bash
+# Terminal 1: Start watch mode
+npm run watch
+
+# Terminal 2: After editing and saving
+npm run copy-files
+# Then click the "Reload" button
+```
+
+## Legacy Methods (Not Recommended)
+
+### Method 1: Disable and Enable
+
+**Note:** This method may not work reliably due to GJS importer caching.
 
 ```bash
 gnome-extensions disable snappa@x7c1.github.io
 gnome-extensions enable snappa@x7c1.github.io
 ```
 
-Or in one line:
+### Method 2: GNOME Shell Restart
+
+**Note:** This is slow and unnecessary with the self-reload feature.
+
+For X11:
 ```bash
-gnome-extensions disable snappa@x7c1.github.io && gnome-extensions enable snappa@x7c1.github.io
+# Alt+F2 → type 'r' → Enter
+# Or use xdotool:
+./scripts/reload-extension-x11.sh
 ```
 
-### Method 2: Using D-Bus
-
-```bash
-gdbus call --session --dest org.gnome.Shell.Extensions \
-  --object-path /org/gnome/Shell/Extensions \
-  --method org.gnome.Shell.Extensions.ReloadExtension \
-  "snappa@x7c1.github.io"
-```
+For Wayland:
+- Must logout/login (not recommended during development)
 
 ### Method 3: Looking Glass (Interactive Debugging)
 
 1. Press `Alt + F2`
 2. Type `lg` and press Enter
 3. Use the Looking Glass interface for debugging
-
-## Typical Development Cycle
-
-### Method A: Manual Build (Simple)
-
-```bash
-# 1. Edit your TypeScript code
-vim src/extension.ts
-
-# 2. Build and reload in one command
-npm run build && npm run reload
-```
-
-The `reload` command automatically:
-- Copies files from `dist/` to the extension directory
-- Disables and re-enables the extension
-
-### Method B: Watch Mode (Recommended)
-
-For faster development, use watch mode to automatically recompile on file changes:
-
-```bash
-# Terminal 1: Start watch mode
-npm run watch
-
-# Terminal 2: Edit code, then reload
-vim src/extension.ts
-# Save the file (watch mode auto-compiles)
-npm run reload
-```
-
-## Using Symlinks for Faster Development
-
-Instead of copying files every time, create a symlink to the `dist/` directory:
-
-```bash
-# Remove the directory if it exists
-rm -rf ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io
-
-# Create a symlink to your dist/ directory (build output)
-ln -s /path/to/your/dev/directory/dist ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io
-```
-
-**Important:** The symlink points to `dist/`, not the project root, because that's where the compiled JavaScript lives.
-
-With this setup:
-1. Edit `src/extension.ts`
-2. Files are auto-compiled (if using `npm run watch`)
-3. Reload the extension manually:
-   ```bash
-   gnome-extensions disable snappa@x7c1.github.io && gnome-extensions enable snappa@x7c1.github.io
-   ```
-
-**Note:** When using symlinks, you don't need `npm run reload` (which copies files). Just disable/enable the extension directly.
 
 ## Viewing Extension Logs
 

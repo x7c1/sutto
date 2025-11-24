@@ -2,9 +2,17 @@
 
 ## When Do You Need to Restart?
 
-- **First time installing** an extension: Yes
-- **Updating existing extension**: No (just disable/enable)
+With snappa's **self-reload feature**, you rarely need to restart GNOME Shell:
+
+- **First time installing** an extension: Yes (one-time only)
+- **Updating existing extension during development**: No (use the "Reload" button)
 - **Installing GNOME Shell updates**: Yes
+
+## Self-Reload Feature (Recommended)
+
+**For extension development, use the built-in "Reload" button instead of restarting GNOME Shell.**
+
+See `03-development-workflow.md` for details.
 
 ## Check Your Session Type First
 
@@ -48,6 +56,11 @@ You must:
 
 ## For Extension Development
 
-**Good news:** After the initial installation, you can reload extensions without restarting GNOME Shell!
+**Good news:** After the initial installation, snappa's built-in "Reload" button allows you to reload the extension instantly without restarting GNOME Shell!
 
-See `03-development-workflow.md` for details.
+The methods described above are only needed for:
+- Initial installation
+- System updates
+- Troubleshooting severe errors
+
+For normal development, see `03-development-workflow.md` for the recommended self-reload workflow.
