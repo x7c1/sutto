@@ -33,7 +33,7 @@ class Extension {
  * Initialize the extension
  * This function is called when the extension is loaded by GNOME Shell
  */
-// @ts-ignore - Called by GNOME Shell runtime
+// @ts-expect-error - Called by GNOME Shell runtime
 function init(metadata: ExtensionMetadata): Extension {
     return new Extension(metadata);
 }

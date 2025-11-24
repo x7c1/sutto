@@ -13,7 +13,7 @@
     "copy-files": "./scripts/copy-files.sh",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "check": "biome check .",
+    "check": "biome check --write .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

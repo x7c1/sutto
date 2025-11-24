@@ -198,4 +198,3 @@ export class Reloader {
         GLib.spawn_command_line_async(cleanupCommand);
     }
 }
-
