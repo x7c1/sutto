@@ -123,8 +123,11 @@ export class Reloader {
             null
         );
 
-        let fileInfo;
-        while ((fileInfo = enumerator.next_file(null)) !== null) {
+        while (true) {
+            const fileInfo = enumerator.next_file(null);
+            if (fileInfo === null) {
+                break;
+            }
             const name = fileInfo.get_name();
             const sourceFile = sourceDir.get_child(name);
             const destFile = tmpDirFile.get_child(name);
