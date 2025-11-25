@@ -8,6 +8,21 @@ The extension is written in TypeScript and compiled to JavaScript. The TypeScrip
 - Better IDE support with autocomplete
 - Compile-time error detection
 
+## Build Modes
+
+The extension supports two build modes:
+
+### Development Build (`npm run build`)
+- Includes D-Bus hot-reload functionality
+- Use during active development
+- Enables `npm run dev` for fast iteration
+
+### Release Build (`npm run build:release`)
+- Production-ready build
+- Excludes development-only features
+- Smaller runtime footprint
+- Use for distribution
+
 ## Project Structure
 
 ```
@@ -38,8 +53,9 @@ project-root/
 npm install
 ```
 
-### Build Command
+### Build Commands
 
+#### Development Build
 ```bash
 npm run build
 ```
@@ -48,6 +64,17 @@ This command:
 1. Runs the TypeScript compiler with type checking
 2. Compiles `src/extension.ts` to `dist/extension.js`
 3. Bundles all modules with esbuild
+4. Sets `__DEV__ = true` for development features
+
+#### Release Build
+```bash
+npm run build:release
+```
+
+This command:
+1. Same as development build
+2. Sets `__DEV__ = false` to disable development features
+3. Produces a production-ready build
 
 ## Type Definitions
 
