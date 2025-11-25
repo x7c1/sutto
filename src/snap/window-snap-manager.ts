@@ -11,7 +11,7 @@ const Meta = imports.gi.Meta;
 const GLib = imports.gi.GLib;
 const Main = imports.ui.main;
 
-import { SnapMenu, type SnapPreset } from './snap-menu';
+import { type SnapLayout, SnapMenu } from './snap-menu';
 
 declare function log(message: string): void;
 
@@ -33,8 +33,8 @@ export class WindowSnapManager {
     constructor() {
         // Initialize snap menu
         this._snapMenu = new SnapMenu();
-        this._snapMenu.setOnPresetSelected((preset) => {
-            this._applyPresetToCurrentWindow(preset);
+        this._snapMenu.setOnLayoutSelected((layout) => {
+            this._applyLayoutToCurrentWindow(layout);
         });
     }
 
@@ -118,7 +118,7 @@ export class WindowSnapManager {
             this._clearEdgeTimer();
 
             // Keep menu visible until a button is clicked
-            // (menu will be hidden when preset is applied)
+            // (menu will be hidden when layout is applied)
         }
     }
 
@@ -240,16 +240,16 @@ export class WindowSnapManager {
     }
 
     /**
-     * Apply preset to currently dragged window (called when menu button is clicked)
+     * Apply layout to currently dragged window (called when menu button is clicked)
      */
-    private _applyPresetToCurrentWindow(preset: SnapPreset): void {
-        log(`[WindowSnapManager] Apply preset: ${preset.label}`);
+    private _applyLayoutToCurrentWindow(layout: SnapLayout): void {
+        log(`[WindowSnapManager] Apply layout: ${layout.label}`);
 
         // Use lastDraggedWindow since currentWindow might be null if drag just ended
         const targetWindow = this._currentWindow || this._lastDraggedWindow;
 
         if (!targetWindow) {
-            log('[WindowSnapManager] No window to apply preset to');
+            log('[WindowSnapManager] No window to apply layout to');
             return;
         }
 
@@ -257,11 +257,11 @@ export class WindowSnapManager {
         const monitor = global.display.get_current_monitor();
         const workArea = Main.layoutManager.getWorkAreaForMonitor(monitor);
 
-        // Calculate window position and size based on preset
-        const x = workArea.x + Math.floor(workArea.width * preset.x);
-        const y = workArea.y + Math.floor(workArea.height * preset.y);
-        const width = Math.floor(workArea.width * preset.width);
-        const height = Math.floor(workArea.height * preset.height);
+        // Calculate window position and size based on layout
+        const x = workArea.x + Math.floor(workArea.width * layout.x);
+        const y = workArea.y + Math.floor(workArea.height * layout.y);
+        const width = Math.floor(workArea.width * layout.width);
+        const height = Math.floor(workArea.height * layout.height);
 
         log(
             `[WindowSnapManager] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`
@@ -277,7 +277,7 @@ export class WindowSnapManager {
         targetWindow.move_resize_frame(false, x, y, width, height);
         log('[WindowSnapManager] Window moved');
 
-        // Hide menu and clear state after applying preset
+        // Hide menu and clear state after applying layout
         this._snapMenu.hide();
         this._lastDraggedWindow = null;
     }

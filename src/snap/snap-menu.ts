@@ -3,7 +3,7 @@
 /**
  * Snap Menu
  *
- * Displays a menu with preset buttons for snapping windows to different positions.
+ * Displays a menu with layout buttons for snapping windows to different positions.
  * The menu appears at the cursor position when the user drags a window to a screen edge.
  */
 
@@ -16,7 +16,7 @@ const MENU_WIDTH = 300;
 const MENU_HEIGHT = 300;
 const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding menu when cursor leaves
 
-export interface SnapPreset {
+export interface SnapLayout {
     label: string;
     x: number; // percentage of screen width (0-1)
     y: number; // percentage of screen height (0-1)
@@ -26,17 +26,17 @@ export interface SnapPreset {
 
 export class SnapMenu {
     private _container: St.BoxLayout | null = null;
-    private _presets: SnapPreset[] = [];
-    private _onPresetSelected: ((preset: SnapPreset) => void) | null = null;
-    private _presetButtons: Map<St.Button, SnapPreset> = new Map();
+    private _layouts: SnapLayout[] = [];
+    private _onLayoutSelected: ((layout: SnapLayout) => void) | null = null;
+    private _layoutButtons: Map<St.Button, SnapLayout> = new Map();
     private _clickOutsideId: number | null = null;
     private _autoHideTimeoutId: number | null = null;
     private _leaveEventId: number | null = null;
     private _enterEventId: number | null = null;
 
     constructor() {
-        // Initialize with default presets
-        this._presets = [
+        // Initialize with default layouts
+        this._layouts = [
             {
                 label: 'Left Half',
                 x: 0,
@@ -55,10 +55,10 @@ export class SnapMenu {
     }
 
     /**
-     * Set callback for when a preset is selected
+     * Set callback for when a layout is selected
      */
-    setOnPresetSelected(callback: (preset: SnapPreset) => void): void {
-        this._onPresetSelected = callback;
+    setOnLayoutSelected(callback: (layout: SnapLayout) => void): void {
+        this._onLayoutSelected = callback;
     }
 
     /**
@@ -68,8 +68,8 @@ export class SnapMenu {
         // Hide existing menu if any
         this.hide();
 
-        // Clear preset buttons map
-        this._presetButtons.clear();
+        // Clear layout buttons map
+        this._layoutButtons.clear();
 
         // Create container
         this._container = new St.BoxLayout({
@@ -102,10 +102,10 @@ export class SnapMenu {
         });
         this._container.add_child(title);
 
-        // Add preset buttons
-        for (const preset of this._presets) {
-            const button = this._createPresetButton(preset);
-            this._presetButtons.set(button, preset);
+        // Add layout buttons
+        for (const layout of this._layouts) {
+            const button = this._createLayoutButton(layout);
+            this._layoutButtons.set(button, layout);
             this._container.add_child(button);
         }
 
@@ -207,32 +207,32 @@ export class SnapMenu {
     }
 
     /**
-     * Get preset at the given position, or null if position is not over a preset button
+     * Get layout at the given position, or null if position is not over a layout button
      */
-    getPresetAtPosition(x: number, y: number): SnapPreset | null {
+    getLayoutAtPosition(x: number, y: number): SnapLayout | null {
         if (!this._container) {
             return null;
         }
 
-        // Check each preset button to see if position is within its bounds
-        for (const [button, preset] of this._presetButtons.entries()) {
+        // Check each layout button to see if position is within its bounds
+        for (const [button, layout] of this._layoutButtons.entries()) {
             const [actorX, actorY] = button.get_transformed_position();
             const [width, height] = button.get_transformed_size();
 
             if (x >= actorX && x <= actorX + width && y >= actorY && y <= actorY + height) {
-                log(`[SnapMenu] Position (${x}, ${y}) is over preset: ${preset.label}`);
-                return preset;
+                log(`[SnapMenu] Position (${x}, ${y}) is over layout: ${layout.label}`);
+                return layout;
             }
         }
 
-        log(`[SnapMenu] Position (${x}, ${y}) is not over any preset`);
+        log(`[SnapMenu] Position (${x}, ${y}) is not over any layout`);
         return null;
     }
 
     /**
-     * Create a preset button
+     * Create a layout button
      */
-    private _createPresetButton(preset: SnapPreset): St.Button {
+    private _createLayoutButton(layout: SnapLayout): St.Button {
         const button = new St.Button({
             style_class: 'snap-menu-button',
             style: `
@@ -248,7 +248,7 @@ export class SnapMenu {
         });
 
         const label = new St.Label({
-            text: preset.label,
+            text: layout.label,
             style: `
                 color: white;
                 font-size: 14px;
@@ -259,9 +259,9 @@ export class SnapMenu {
 
         // Connect click event
         button.connect('button-press-event', () => {
-            log(`[SnapMenu] Button clicked: ${preset.label}`);
-            if (this._onPresetSelected) {
-                this._onPresetSelected(preset);
+            log(`[SnapMenu] Button clicked: ${layout.label}`);
+            if (this._onLayoutSelected) {
+                this._onLayoutSelected(layout);
             }
             this.hide();
             return true; // Clutter.EVENT_STOP
@@ -357,4 +357,3 @@ export class SnapMenu {
         return button;
     }
 }
-
