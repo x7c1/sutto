@@ -13,7 +13,6 @@ const Main = imports.ui.main;
 declare function log(message: string): void;
 
 const MENU_WIDTH = 300;
-const MENU_HEIGHT = 300;
 const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding menu when cursor leaves
 
 export interface SnapLayout {
@@ -22,11 +21,17 @@ export interface SnapLayout {
     y: number; // percentage of screen height (0-1)
     width: number; // percentage of screen width (0-1)
     height: number; // percentage of screen height (0-1)
+    zIndex: number; // stacking order for overlapping layouts
+}
+
+export interface SnapLayoutGroup {
+    name: string;
+    layouts: SnapLayout[];
 }
 
 export class SnapMenu {
     private _container: St.BoxLayout | null = null;
-    private _layouts: SnapLayout[] = [];
+    private _layoutGroups: SnapLayoutGroup[] = [];
     private _onLayoutSelected: ((layout: SnapLayout) => void) | null = null;
     private _layoutButtons: Map<St.Button, SnapLayout> = new Map();
     private _clickOutsideId: number | null = null;
@@ -35,21 +40,57 @@ export class SnapMenu {
     private _enterEventId: number | null = null;
 
     constructor() {
-        // Initialize with default layouts
-        this._layouts = [
+        // Initialize with default layout groups
+        this._layoutGroups = [
             {
-                label: 'Left Half',
-                x: 0,
-                y: 0,
-                width: 0.5,
-                height: 1,
+                name: 'Two-Way Split',
+                layouts: [
+                    {
+                        label: 'Left Half',
+                        x: 0,
+                        y: 0,
+                        width: 0.5,
+                        height: 1,
+                        zIndex: 0,
+                    },
+                    {
+                        label: 'Right Half',
+                        x: 0.5,
+                        y: 0,
+                        width: 0.5,
+                        height: 1,
+                        zIndex: 0,
+                    },
+                ],
             },
             {
-                label: 'Right Half',
-                x: 0.5,
-                y: 0,
-                width: 0.5,
-                height: 1,
+                name: 'Three-Way Split',
+                layouts: [
+                    {
+                        label: 'Left Third',
+                        x: 0,
+                        y: 0,
+                        width: 0.333,
+                        height: 1,
+                        zIndex: 0,
+                    },
+                    {
+                        label: 'Center Third',
+                        x: 0.333,
+                        y: 0,
+                        width: 0.334,
+                        height: 1,
+                        zIndex: 0,
+                    },
+                    {
+                        label: 'Right Third',
+                        x: 0.667,
+                        y: 0,
+                        width: 0.333,
+                        height: 1,
+                        zIndex: 0,
+                    },
+                ],
             },
         ];
     }
@@ -71,6 +112,23 @@ export class SnapMenu {
         // Clear layout buttons map
         this._layoutButtons.clear();
 
+        // Get screen dimensions and calculate aspect ratio
+        const screenWidth = global.screen_width;
+        const screenHeight = global.screen_height;
+        const aspectRatio = screenHeight / screenWidth;
+
+        // Calculate group dimensions (fit within menu width minus padding)
+        const groupWidth = MENU_WIDTH - 24; // 12px padding on each side
+        const groupHeight = groupWidth * aspectRatio;
+        const groupSpacing = 10;
+
+        // Calculate total menu height
+        const titleHeight = 40; // Approximate title height
+        const cancelButtonHeight = 40; // Approximate cancel button height
+        const totalGroupsHeight = this._layoutGroups.length * groupHeight;
+        const totalSpacing = (this._layoutGroups.length - 1) * groupSpacing;
+        const menuHeight = titleHeight + totalGroupsHeight + totalSpacing + cancelButtonHeight + 24; // 24 for padding
+
         // Create container
         this._container = new St.BoxLayout({
             style_class: 'snap-menu',
@@ -82,7 +140,7 @@ export class SnapMenu {
             `,
             vertical: true,
             width: MENU_WIDTH,
-            height: MENU_HEIGHT,
+            height: menuHeight,
             visible: true,
             reactive: true,
             can_focus: true,
@@ -102,11 +160,19 @@ export class SnapMenu {
         });
         this._container.add_child(title);
 
-        // Add layout buttons
-        for (const layout of this._layouts) {
-            const button = this._createLayoutButton(layout);
-            this._layoutButtons.set(button, layout);
-            this._container.add_child(button);
+        // Add layout groups
+        for (let i = 0; i < this._layoutGroups.length; i++) {
+            const group = this._layoutGroups[i];
+            const groupContainer = this._createGroupContainer(group, groupWidth, groupHeight);
+            this._container.add_child(groupContainer as any);
+
+            // Add spacing between groups (except after last group)
+            if (i < this._layoutGroups.length - 1) {
+                const spacer = new St.Widget({
+                    height: groupSpacing,
+                });
+                this._container.add_child(spacer);
+            }
         }
 
         // Add cancel button
@@ -208,11 +274,15 @@ export class SnapMenu {
 
     /**
      * Get layout at the given position, or null if position is not over a layout button
+     * If multiple layouts overlap at this position, returns the one with highest zIndex
      */
     getLayoutAtPosition(x: number, y: number): SnapLayout | null {
         if (!this._container) {
             return null;
         }
+
+        let topLayout: SnapLayout | null = null;
+        let topZIndex = -Infinity;
 
         // Check each layout button to see if position is within its bounds
         for (const [button, layout] of this._layoutButtons.entries()) {
@@ -220,46 +290,96 @@ export class SnapMenu {
             const [width, height] = button.get_transformed_size();
 
             if (x >= actorX && x <= actorX + width && y >= actorY && y <= actorY + height) {
-                log(`[SnapMenu] Position (${x}, ${y}) is over layout: ${layout.label}`);
-                return layout;
+                // If this layout has a higher zIndex than current top, use it
+                if (layout.zIndex > topZIndex) {
+                    topLayout = layout;
+                    topZIndex = layout.zIndex;
+                }
             }
         }
 
-        log(`[SnapMenu] Position (${x}, ${y}) is not over any layout`);
-        return null;
+        if (topLayout) {
+            log(
+                `[SnapMenu] Position (${x}, ${y}) is over layout: ${topLayout.label} (zIndex: ${topZIndex})`
+            );
+        } else {
+            log(`[SnapMenu] Position (${x}, ${y}) is not over any layout`);
+        }
+
+        return topLayout;
     }
 
     /**
-     * Create a layout button
+     * Create a group container with layout buttons positioned inside
      */
-    private _createLayoutButton(layout: SnapLayout): St.Button {
-        const button = new St.Button({
-            style_class: 'snap-menu-button',
+    private _createGroupContainer(
+        group: SnapLayoutGroup,
+        groupWidth: number,
+        groupHeight: number
+    ): St.Widget {
+        // Create group container with fixed positioning
+        const groupContainer = new St.Widget({
             style: `
-                background-color: rgba(60, 60, 60, 0.8);
+                background-color: rgba(60, 60, 60, 0.5);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 4px;
-                padding: 12px 20px;
-                margin: 4px 0;
+                width: ${groupWidth}px;
+                height: ${groupHeight}px;
+            `,
+            layout_manager: new imports.gi.Clutter.FixedLayout(),
+            reactive: true,
+        });
+
+        // Sort layouts by zIndex to ensure proper rendering order
+        const sortedLayouts = [...group.layouts].sort((a, b) => a.zIndex - b.zIndex);
+
+        // Create layout buttons and position them
+        for (const layout of sortedLayouts) {
+            const button = this._createLayoutButtonForGroup(layout, groupWidth, groupHeight);
+            this._layoutButtons.set(button, layout);
+            groupContainer.add_child(button);
+        }
+
+        return groupContainer;
+    }
+
+    /**
+     * Create a layout button for a group
+     */
+    private _createLayoutButtonForGroup(
+        layout: SnapLayout,
+        groupWidth: number,
+        groupHeight: number
+    ): St.Button {
+        const margin = 3;
+
+        // Calculate button position and size based on layout percentages
+        const buttonX = layout.x * groupWidth + margin;
+        const buttonY = layout.y * groupHeight + margin;
+        const buttonWidth = layout.width * groupWidth - margin * 2;
+        const buttonHeight = layout.height * groupHeight - margin * 2;
+
+        const button = new St.Button({
+            style_class: 'snap-layout-button',
+            style: `
+                background-color: rgba(80, 80, 80, 0.6);
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-radius: 2px;
+                width: ${buttonWidth}px;
+                height: ${buttonHeight}px;
+                z-index: ${layout.zIndex};
             `,
             reactive: true,
             can_focus: true,
             track_hover: true,
         });
 
-        const label = new St.Label({
-            text: layout.label,
-            style: `
-                color: white;
-                font-size: 14px;
-            `,
-            x_align: 2, // CENTER
-        });
-        button.set_child(label);
+        // Set position using set_position method (cast to any due to type definition limitations)
+        (button as any).set_position(buttonX, buttonY);
 
         // Connect click event
         button.connect('button-press-event', () => {
-            log(`[SnapMenu] Button clicked: ${layout.label}`);
+            log(`[SnapMenu] Layout selected: ${layout.label}`);
             if (this._onLayoutSelected) {
                 this._onLayoutSelected(layout);
             }

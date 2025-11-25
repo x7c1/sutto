@@ -14,7 +14,7 @@ Never duplicate content across files.
 After making code changes, always run:
 
 ```bash
-npm run check
+npm run build && npm run check
 ```
 
 Fix any issues before considering the task complete.
