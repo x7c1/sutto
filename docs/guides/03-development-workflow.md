@@ -46,37 +46,6 @@ npm run copy-files
 # Then click the "Reload" button
 ```
 
-## Legacy Methods (Not Recommended)
-
-### Method 1: Disable and Enable
-
-**Note:** This method may not work reliably due to GJS importer caching.
-
-```bash
-gnome-extensions disable snappa@x7c1.github.io
-gnome-extensions enable snappa@x7c1.github.io
-```
-
-### Method 2: GNOME Shell Restart
-
-**Note:** This is slow and unnecessary with the self-reload feature.
-
-For X11:
-```bash
-# Alt+F2 → type 'r' → Enter
-# Or use xdotool:
-./scripts/reload-extension-x11.sh
-```
-
-For Wayland:
-- Must logout/login (not recommended during development)
-
-### Method 3: Looking Glass (Interactive Debugging)
-
-1. Press `Alt + F2`
-2. Type `lg` and press Enter
-3. Use the Looking Glass interface for debugging
-
 ## Viewing Extension Logs
 
 ```bash

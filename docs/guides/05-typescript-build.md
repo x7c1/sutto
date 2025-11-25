@@ -85,30 +85,6 @@ npm run clean
 
 This removes `dist/*.js` and `dist/*.js.map` files, but keeps `dist/metadata.json`.
 
-## Testing Changes
-
-After building, you need to reload the extension to see changes:
-
-### Method 1: Using GNOME Extensions Tool (Recommended)
-
-```bash
-# Disable the extension
-gnome-extensions disable snappa@x7c1.github.io
-
-# Enable the extension
-gnome-extensions enable snappa@x7c1.github.io
-```
-
-### Method 2: Restart GNOME Shell (X11 only)
-
-Press `Alt + F2`, type `r`, and press Enter.
-
-**Note**: This method only works on X11, not Wayland.
-
-### Method 3: Logout and Login
-
-Log out and log back in to fully restart GNOME Shell.
-
 ## Creating Distribution Packages
 
 The `dist/` directory contains everything needed for distribution.
