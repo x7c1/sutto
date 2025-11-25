@@ -1,25 +1,29 @@
 /// <reference path="./types/gnome-shell-42.d.ts" />
+/// <reference path="./types/build-mode.d.ts" />
 
 import { DBusReloader } from './reloader/dbus-reloader';
 import { WindowSnapManager } from './snap/window-snap-manager';
 
 // Extension class
 class Extension {
-    private _dbusReloader: DBusReloader;
+    private _dbusReloader: DBusReloader | null;
     private _windowSnapManager: WindowSnapManager;
 
     constructor(metadata: ExtensionMetadata) {
-        this._dbusReloader = new DBusReloader('snappa@x7c1.github.io', metadata.uuid);
+        // Initialize DBusReloader only in development mode
+        this._dbusReloader = __DEV__
+            ? new DBusReloader('snappa@x7c1.github.io', metadata.uuid)
+            : null;
         this._windowSnapManager = new WindowSnapManager();
     }
 
     enable(): void {
-        this._dbusReloader.enable();
+        this._dbusReloader?.enable();
         this._windowSnapManager.enable();
     }
 
     disable(): void {
-        this._dbusReloader.disable();
+        this._dbusReloader?.disable();
         this._windowSnapManager.disable();
     }
 }

@@ -1,6 +1,12 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 
+// Determine build mode from environment variable
+const isDev = process.env.BUILD_MODE !== 'release';
+const buildMode = isDev ? 'development' : 'release';
+
+console.log(`Building in ${buildMode} mode...`);
+
 // Build configuration
 const buildConfig = {
     entryPoints: ['src/extension.ts'],
@@ -14,6 +20,10 @@ const buildConfig = {
         js: '// GNOME Shell Extension - Bundled with esbuild',
     },
     logLevel: 'info',
+    // Replace __DEV__ constant at build time
+    define: {
+        '__DEV__': JSON.stringify(isDev),
+    },
 };
 
 async function build() {

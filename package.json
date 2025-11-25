@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc --noEmit && node esbuild.config.js",
+    "build:release": "BUILD_MODE=release tsc --noEmit && BUILD_MODE=release node esbuild.config.js",
     "watch": "tsc --watch --noEmit",
     "clean": "rm -f dist/*.js dist/*.js.map",
     "copy-files": "./scripts/copy-files.sh",
