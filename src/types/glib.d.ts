@@ -7,12 +7,14 @@ declare namespace GLib {
     /**
      * Variant type - GLib's generic value container
      */
+    // biome-ignore lint/complexity/noStaticOnlyClass: GLib.Variant is the actual GJS API
     class Variant {
         /**
          * Creates a new Variant
          * @param format_string Format string (e.g., '(b)' for tuple with boolean)
          * @param value Value to wrap
          */
+        // biome-ignore lint/suspicious/noMisleadingInstantiator: This matches GLib's actual API
         static new(format_string: string, value: any): Variant;
     }
 

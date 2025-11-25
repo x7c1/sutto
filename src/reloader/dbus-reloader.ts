@@ -81,11 +81,13 @@ export class DBusReloader {
                         this._handleReload(invocation);
                     }
                 },
-                null,  // get_property
-                null   // set_property
+                null, // get_property
+                null // set_property
             );
 
-            log(`[DBusReloader] D-Bus interface registered at /io/github/x7c1/Snappa with ID: ${this._dbusId}`);
+            log(
+                `[DBusReloader] D-Bus interface registered at /io/github/x7c1/Snappa with ID: ${this._dbusId}`
+            );
         } catch (e: unknown) {
             log(`[DBusReloader] Failed to register D-Bus interface: ${this._getErrorMessage(e)}`);
         }
