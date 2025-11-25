@@ -6,8 +6,8 @@ A reusable hot-reload utility for GNOME Shell extension development.
 
 This package provides two components for hot-reloading GNOME Shell extensions:
 
-1. **`ReloadButton`** - A ready-to-use panel button (recommended for most users)
-2. **`Reloader`** - The core reload logic (for custom implementations)
+1. **`DBusReloader`** - D-Bus interface for command-line reload (recommended)
+2. **`Reloader`** - The core reload logic (used internally by DBusReloader)
 
 Both work by bypassing GJS importer caching through temporary UUID swapping.
 
@@ -16,6 +16,7 @@ Both work by bypassing GJS importer caching through temporary UUID swapping.
 ## Features
 
 - ⚡ **Instant reload** - No GNOME Shell restart required (< 1 second)
+- 🖥️ **Command-line driven** - Reload from terminal without touching the mouse
 - 🔄 **Cache bypass** - Works around GJS importer limitations
 - 🧹 **Auto cleanup** - Removes old temporary instances and files
 - 🌐 **Universal** - Works on both X11 and Wayland
@@ -24,56 +25,79 @@ Both work by bypassing GJS importer caching through temporary UUID swapping.
 
 ## How It Works
 
+### Reload Mechanism
+
 1. Creates a temporary copy of the extension in `/tmp`
 2. Modifies the UUID to include a timestamp (e.g., `my-ext@example.com-reload-1234567890`)
 3. Loads the new copy (bypassing GJS cache)
 4. Unloads the old instance
 5. Cleans up old temporary files
 
+### D-Bus Interface
+
+The extension registers a D-Bus object at `/io/github/x7c1/Snappa` with a `Reload` method, allowing external processes to trigger reloads via the session bus.
+
 ## Usage
 
-### Quick Start: Using ReloadButton (Recommended)
+### Quick Start: Using DBusReloader (Recommended)
 
-The simplest way to add reload functionality:
+Add D-Bus reload functionality to your extension:
 
 ```typescript
-import { ReloadButton } from './reloader/reload-button';
+import { DBusReloader } from './reloader/dbus-reloader';
 
 class Extension {
-    private _reloadButton: ReloadButton;
+    private _dbusReloader: DBusReloader;
 
     constructor(metadata: ExtensionMetadata) {
-        this._reloadButton = new ReloadButton('my-extension@example.com', metadata.uuid);
+        this._dbusReloader = new DBusReloader('my-extension@example.com', metadata.uuid);
     }
 
     enable() {
-        this._reloadButton.enable();
+        this._dbusReloader.enable();
     }
 
     disable() {
-        this._reloadButton.disable();
+        this._dbusReloader.disable();
     }
 }
 ```
 
-That's it! A reload button will appear in your panel.
+### Reload from Command Line
 
-### Custom Button Label
+Once the extension is enabled, reload it with:
 
-```typescript
-constructor(metadata: ExtensionMetadata) {
-    // Third parameter is the button label
-    this._reloadButton = new ReloadButton(
-        'my-extension@example.com',
-        metadata.uuid,
-        '🔄' // Custom label
-    );
+```bash
+gdbus call --session \
+  --dest org.gnome.Shell \
+  --object-path /io/github/x7c1/Snappa \
+  --method io.github.x7c1.Snappa.Reload
+```
+
+### Integration with Build Scripts
+
+Add npm scripts to `package.json`:
+
+```json
+{
+  "scripts": {
+    "reload": "gdbus call --session --dest org.gnome.Shell --object-path /io/github/x7c1/Snappa --method io.github.x7c1.Snappa.Reload",
+    "dev": "npm run build && npm run copy-files && npm run reload"
+  }
 }
 ```
 
+Then simply run:
+
+```bash
+npm run dev
+```
+
+This will build, copy files, and reload the extension in one command!
+
 ### Advanced: Using Reloader Directly
 
-For custom implementations (e.g., keyboard shortcuts):
+For custom implementations (e.g., keyboard shortcuts or GUI buttons):
 
 ```typescript
 import { Reloader } from './reloader/reloader';
@@ -168,20 +192,19 @@ esbuild.build({
 }
 ```
 
-That's it! esbuild will automatically bundle `reloader.ts` and `reload-button.ts` into your extension.
+That's it! esbuild will automatically bundle `dbus-reloader.ts` and `reloader.ts` into your extension.
 
 ## Development Workflow
 
-With the Reloader, your development workflow becomes:
+With the DBusReloader, your development workflow becomes:
 
 ```bash
 # 1. Edit your code
 vim src/extension.ts
 
-# 2. Build and copy files
-npm run build && npm run copy-files
+# 2. Build, copy, and reload
+npm run dev
 
-# 3. Click the Reload button (or press your keyboard shortcut)
 # → Extension reloads instantly!
 ```
 
@@ -189,6 +212,49 @@ npm run build && npm run copy-files
 - ❌ Restarting GNOME Shell (Alt+F2 → r)
 - ❌ Logging out and back in
 - ❌ Waiting several seconds for changes to apply
+- ❌ Clicking reload buttons with your mouse
+
+## Customization
+
+### Changing the D-Bus Object Path
+
+If you're copying this to your own extension, update the object path and interface name in `dbus-reloader.ts`:
+
+```typescript
+// Change this:
+const DBUS_INTERFACE_XML = `
+<node>
+  <interface name="io.github.x7c1.Snappa">
+    <method name="Reload">
+      <arg type="b" direction="out" name="success"/>
+    </method>
+  </interface>
+</node>
+`;
+
+// To your extension's namespace:
+const DBUS_INTERFACE_XML = `
+<node>
+  <interface name="com.example.MyExtension">
+    <method name="Reload">
+      <arg type="b" direction="out" name="success"/>
+    </method>
+  </interface>
+</node>
+`;
+```
+
+And update the registration path:
+
+```typescript
+this._dbusId = connection.register_object(
+    '/com/example/MyExtension',  // Change this
+    interfaceInfo,
+    // ...
+);
+```
+
+Then update your `gdbus` command accordingly.
 
 ## Requirements
 
@@ -209,7 +275,33 @@ npm run build && npm run copy-files
 
 Check the logs:
 ```bash
-journalctl -f -o cat /usr/bin/gnome-shell | grep Reloader
+journalctl -f -o cat /usr/bin/gnome-shell | grep -E "DBusReloader|Reloader"
+```
+
+### D-Bus object not found
+
+Ensure the extension is enabled:
+```bash
+gnome-extensions info your-extension@example.com
+```
+
+Enable it if needed:
+```bash
+gnome-extensions enable your-extension@example.com
+```
+
+Check that D-Bus registration succeeded:
+```bash
+journalctl -n 50 /usr/bin/gnome-shell | grep DBusReloader
+```
+
+You should see:
+```
+[DBusReloader] Starting D-Bus registration...
+[DBusReloader] Got session bus connection
+[DBusReloader] Parsed XML interface definition
+[DBusReloader] Looked up interface info
+[DBusReloader] D-Bus interface registered at /io/github/x7c1/Snappa with ID: 123
 ```
 
 ### Extension not found
@@ -239,6 +331,15 @@ Old reload instances are automatically cleaned up:
 - After successfully loading the new instance
 - Temporary directories older than the current one are removed
 
+### D-Bus API
+
+The D-Bus interface uses:
+- **Bus**: Session bus (`Gio.BusType.SESSION`)
+- **Destination**: `org.gnome.Shell` (GNOME Shell's D-Bus name)
+- **Object Path**: `/io/github/x7c1/Snappa` (customizable)
+- **Interface**: `io.github.x7c1.Snappa` (customizable)
+- **Method**: `Reload() -> (boolean success)`
+
 ### Extension Manager API
 
 The Reloader uses these internal GNOME Shell APIs:
@@ -258,4 +359,3 @@ You're free to copy and use it in your own GPL-compatible projects.
 
 - Inspired by [ExtensionReloader](https://codeberg.org/som/ExtensionReloader) by som
 - Developed as part of the [Snappa](https://github.com/x7c1/snappa) project
-

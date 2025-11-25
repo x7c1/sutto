@@ -1,3 +1,6 @@
+/// <reference path="./glib.d.ts" />
+/// <reference path="./gio.d.ts" />
+
 /**
  * Type definitions for GNOME Shell 42 (GJS imports API)
  *

@@ -1,25 +1,25 @@
 /// <reference path="./types/gnome-shell-42.d.ts" />
 
-import { ReloadButton } from './reloader/reload-button';
+import { DBusReloader } from './reloader/dbus-reloader';
 import { WindowSnapManager } from './snap/window-snap-manager';
 
 // Extension class
 class Extension {
-    private _reloadButton: ReloadButton;
+    private _dbusReloader: DBusReloader;
     private _windowSnapManager: WindowSnapManager;
 
     constructor(metadata: ExtensionMetadata) {
-        this._reloadButton = new ReloadButton('snappa@x7c1.github.io', metadata.uuid);
+        this._dbusReloader = new DBusReloader('snappa@x7c1.github.io', metadata.uuid);
         this._windowSnapManager = new WindowSnapManager();
     }
 
     enable(): void {
-        this._reloadButton.enable();
+        this._dbusReloader.enable();
         this._windowSnapManager.enable();
     }
 
     disable(): void {
-        this._reloadButton.disable();
+        this._dbusReloader.disable();
         this._windowSnapManager.disable();
     }
 }

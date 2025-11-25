@@ -133,6 +133,134 @@ declare namespace Gio {
      * Creates a File object for the given path
      */
     function new_for_path(path: string): File;
+
+    /**
+     * D-Bus connection interface
+     */
+    interface DBusConnection {
+        register_object(
+            object_path: string,
+            interface_info: DBusInterfaceInfo,
+            vtable: DBusInterfaceVTable
+        ): number;
+
+        unregister_object(registration_id: number): void;
+    }
+
+    /**
+     * D-Bus interface info
+     */
+    interface DBusInterfaceInfo {
+        name: string;
+        methods: DBusMethodInfo[];
+        signals: DBusSignalInfo[];
+        properties: DBusPropertyInfo[];
+    }
+
+    /**
+     * D-Bus method info
+     */
+    interface DBusMethodInfo {
+        name: string;
+        in_args: DBusArgInfo[];
+        out_args: DBusArgInfo[];
+    }
+
+    /**
+     * D-Bus signal info
+     */
+    interface DBusSignalInfo {
+        name: string;
+        args: DBusArgInfo[];
+    }
+
+    /**
+     * D-Bus property info
+     */
+    interface DBusPropertyInfo {
+        name: string;
+        signature: string;
+        flags: number;
+    }
+
+    /**
+     * D-Bus argument info
+     */
+    interface DBusArgInfo {
+        name: string;
+        signature: string;
+    }
+
+    /**
+     * D-Bus interface virtual table
+     */
+    interface DBusInterfaceVTable {
+        method_call?: (
+            connection: DBusConnection,
+            sender: string,
+            object_path: string,
+            interface_name: string,
+            method_name: string,
+            parameters: any,
+            invocation: DBusMethodInvocation
+        ) => void;
+        get_property?: (
+            connection: DBusConnection,
+            sender: string,
+            object_path: string,
+            interface_name: string,
+            property_name: string
+        ) => any;
+        set_property?: (
+            connection: DBusConnection,
+            sender: string,
+            object_path: string,
+            interface_name: string,
+            property_name: string,
+            value: any
+        ) => boolean;
+    }
+
+    /**
+     * D-Bus method invocation
+     */
+    interface DBusMethodInvocation {
+        return_value(parameters: any | null): void;
+        return_error_literal(domain: number, code: number, message: string): void;
+    }
+
+    /**
+     * D-Bus bus types
+     */
+    enum BusType {
+        SESSION = 1,
+        SYSTEM = 2,
+    }
+
+    /**
+     * Gets the session bus connection
+     */
+    const DBus: {
+        session: DBusConnection;
+        system: DBusConnection;
+    };
+
+    /**
+     * Node info for D-Bus introspection XML
+     */
+    interface DBusNodeInfo {
+        lookup_interface(name: string): DBusInterfaceInfo;
+    }
+
+    /**
+     * Creates a DBusNodeInfo from XML
+     */
+    function DBusNodeInfo_new_for_xml(xml_data: string): DBusNodeInfo;
+
+    /**
+     * Gets a D-Bus connection synchronously
+     */
+    function bus_get_sync(bus_type: BusType, cancellable: Cancellable | null): DBusConnection;
 }
 
 declare const Gio: typeof Gio;
