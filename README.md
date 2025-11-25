@@ -13,27 +13,12 @@ A GNOME Shell extension for window snapping.
 
 ### Building from Source
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Build the extension:
-   ```bash
-   npm run build
-   ```
-
-3. The compiled extension is in the `dist/` directory
-
-### Development
-
-For fast iteration during development:
-
 ```bash
+npm install
 npm run dev
 ```
 
-This builds, copies files, and reloads the extension via D-Bus.
+Then restart GNOME Shell (first time only) and enable the extension.
 
 ## Documentation
 
