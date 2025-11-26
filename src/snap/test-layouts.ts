@@ -1,4 +1,4 @@
-import type { SnapLayoutGroup } from './snap-menu';
+import type { SnapLayoutGroup } from './snap-menu-types';
 
 /**
  * Test layout groups for debugging purposes
