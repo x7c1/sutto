@@ -12,7 +12,23 @@ const Main = imports.ui.main;
 
 declare function log(message: string): void;
 
+// Constants
 const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding menu when cursor leaves
+const MINIATURE_DISPLAY_WIDTH = 300; // Fixed width for miniature displays
+const MENU_PADDING = 12; // Padding around menu content
+const DISPLAY_SPACING = 12; // Spacing between miniature displays
+const BUTTON_BORDER_WIDTH = 1; // Border width for layout buttons
+const FOOTER_MARGIN_TOP = 12; // Margin above footer
+
+// Colors
+const MENU_BG_COLOR = 'rgba(40, 40, 40, 0.95)';
+const MENU_BORDER_COLOR = 'rgba(255, 255, 255, 0.2)';
+const DISPLAY_BG_COLOR = 'rgba(20, 20, 20, 0.9)';
+const BUTTON_BG_COLOR = 'rgba(80, 80, 80, 0.6)';
+const BUTTON_BG_COLOR_HOVER = 'rgba(120, 120, 120, 0.8)';
+const BUTTON_BORDER_COLOR = 'rgba(255, 255, 255, 0.3)';
+const BUTTON_BORDER_COLOR_HOVER = 'rgba(255, 255, 255, 0.6)';
+const FOOTER_TEXT_COLOR = 'rgba(255, 255, 255, 0.5)';
 
 export interface SnapLayout {
     label: string;
@@ -130,20 +146,16 @@ export class SnapMenu {
         const aspectRatio = screenHeight / screenWidth;
 
         // Miniature display dimensions
-        const miniatureDisplayWidth = 300; // Fixed width
-        const miniatureDisplayHeight = miniatureDisplayWidth * aspectRatio;
-
-        // Menu padding
-        const menuPadding = 12;
+        const miniatureDisplayHeight = MINIATURE_DISPLAY_WIDTH * aspectRatio;
 
         // Create main container with vertical BoxLayout
         const container = new St.BoxLayout({
             style_class: 'snap-menu',
             style: `
-                background-color: rgba(40, 40, 40, 0.95);
-                border: 2px solid rgba(255, 255, 255, 0.2);
+                background-color: ${MENU_BG_COLOR};
+                border: 2px solid ${MENU_BORDER_COLOR};
                 border-radius: 8px;
-                padding: ${menuPadding}px;
+                padding: ${MENU_PADDING}px;
             `,
             vertical: true, // Vertical layout: displays on top, footer on bottom
             visible: true,
@@ -155,46 +167,17 @@ export class SnapMenu {
 
         // Create and add displays container
         const displaysContainer = this._createDisplaysContainer(
-            miniatureDisplayWidth,
+            MINIATURE_DISPLAY_WIDTH,
             miniatureDisplayHeight
         );
         container.add_child(displaysContainer);
 
-        // Add footer with app name
-        const footer = new St.Label({
-            text: 'Powered by Snappa',
-            style: `
-                font-size: 12px;
-                color: rgba(255, 255, 255, 0.5);
-                text-align: center;
-                margin-top: 12px;
-            `,
-            x_align: 2, // CENTER
-        });
+        // Add footer
+        const footer = this._createFooter();
         container.add_child(footer);
 
-        // Add invisible background to capture clicks outside menu
-        const background = new St.BoxLayout({
-            style: 'background-color: rgba(0, 0, 0, 0);',
-            reactive: true,
-            x: 0,
-            y: 0,
-            width: global.screen_width,
-            height: global.screen_height,
-        });
-
-        // Add background first (behind menu)
-        Main.layoutManager.addChrome(background, {
-            affectsInputRegion: true,
-            trackFullscreen: false,
-        });
-
-        // Connect click on background to close menu
-        this._clickOutsideId = background.connect('button-press-event', () => {
-            log('[SnapMenu] Click on background, hiding menu');
-            this.hide();
-            return true; // Stop event propagation
-        });
+        // Create and setup background
+        const background = this._createBackground();
 
         // Position menu at cursor
         container.set_position(x, y);
@@ -304,6 +287,51 @@ export class SnapMenu {
     }
 
     /**
+     * Create footer with app name
+     */
+    private _createFooter(): St.Label {
+        return new St.Label({
+            text: 'Powered by Snappa',
+            style: `
+                font-size: 12px;
+                color: ${FOOTER_TEXT_COLOR};
+                text-align: center;
+                margin-top: ${FOOTER_MARGIN_TOP}px;
+            `,
+            x_align: 2, // CENTER
+        });
+    }
+
+    /**
+     * Create background overlay to capture clicks outside menu
+     */
+    private _createBackground(): St.BoxLayout {
+        const background = new St.BoxLayout({
+            style: 'background-color: rgba(0, 0, 0, 0);',
+            reactive: true,
+            x: 0,
+            y: 0,
+            width: global.screen_width,
+            height: global.screen_height,
+        });
+
+        // Add background first (behind menu)
+        Main.layoutManager.addChrome(background, {
+            affectsInputRegion: true,
+            trackFullscreen: false,
+        });
+
+        // Connect click on background to close menu
+        this._clickOutsideId = background.connect('button-press-event', () => {
+            log('[SnapMenu] Click on background, hiding menu');
+            this.hide();
+            return true; // Stop event propagation
+        });
+
+        return background;
+    }
+
+    /**
      * Create displays container with miniature displays
      */
     private _createDisplaysContainer(displayWidth: number, displayHeight: number): St.BoxLayout {
@@ -338,11 +366,11 @@ export class SnapMenu {
         const miniatureDisplay = new St.Widget({
             style_class: 'snap-miniature-display',
             style: `
-                background-color: rgba(20, 20, 20, 0.9);
+                background-color: ${DISPLAY_BG_COLOR};
                 width: ${displayWidth}px;
                 height: ${displayHeight}px;
                 border-radius: 4px;
-                margin-bottom: 12px;
+                margin-bottom: ${DISPLAY_SPACING}px;
             `,
             layout_manager: new imports.gi.Clutter.FixedLayout(),
             reactive: true,
@@ -351,11 +379,12 @@ export class SnapMenu {
         // Sort layouts by x position for proper width calculation
         const sortedByX = [...group.layouts].sort((a, b) => a.x - b.x);
 
+        // Build a map of next layouts for efficient lookup
+        const nextLayoutMap = this._buildNextLayoutMap(sortedByX);
+
         // Add layout buttons from this group to the miniature display
-        for (let i = 0; i < sortedByX.length; i++) {
-            const layout = sortedByX[i];
-            // Find the next layout to the right (if any)
-            const nextLayout = sortedByX.find((l) => l.x > layout.x && l.y === layout.y);
+        for (const layout of sortedByX) {
+            const nextLayout = nextLayoutMap.get(layout);
             const button = this._createLayoutButton(
                 layout,
                 displayWidth,
@@ -370,6 +399,26 @@ export class SnapMenu {
     }
 
     /**
+     * Build a map of each layout to its next layout on the same row
+     */
+    private _buildNextLayoutMap(
+        sortedLayouts: SnapLayout[]
+    ): Map<SnapLayout, SnapLayout | undefined> {
+        const nextLayoutMap = new Map<SnapLayout, SnapLayout | undefined>();
+
+        for (let i = 0; i < sortedLayouts.length; i++) {
+            const layout = sortedLayouts[i];
+            // Find the next layout to the right on the same row (same y coordinate)
+            const nextLayout = sortedLayouts
+                .slice(i + 1)
+                .find((l) => l.y === layout.y && l.x > layout.x);
+            nextLayoutMap.set(layout, nextLayout);
+        }
+
+        return nextLayoutMap;
+    }
+
+    /**
      * Create a layout button
      */
     private _createLayoutButton(
@@ -381,40 +430,15 @@ export class SnapMenu {
         // Calculate button position relative to miniature display
         const buttonX = Math.floor(layout.x * displayWidth);
         const buttonY = Math.floor(layout.y * displayHeight);
-        const borderWidth = 1;
 
-        // Calculate width: stretch to next layout, or use layout's own width
-        let buttonWidth: number;
-        if (nextLayout) {
-            // Stretch to the start of next layout
-            const nextX = Math.floor(nextLayout.x * displayWidth);
-            buttonWidth = nextX - buttonX - borderWidth * 2;
-        } else {
-            // No next layout: check if this layout extends to edge
-            const layoutEndX = Math.floor((layout.x + layout.width) * displayWidth);
-            if (layoutEndX === displayWidth) {
-                // Layout extends to edge, stretch to edge
-                buttonWidth = displayWidth - buttonX - borderWidth * 2;
-            } else {
-                // Layout doesn't extend to edge, use its own width
-                buttonWidth = Math.floor(layout.width * displayWidth) - borderWidth * 2;
-            }
-        }
+        // Calculate button dimensions
+        const buttonWidth = this._calculateButtonWidth(layout, displayWidth, nextLayout, buttonX);
+        const buttonHeight = Math.floor(layout.height * displayHeight) - BUTTON_BORDER_WIDTH * 2;
 
-        const buttonHeight = Math.floor(layout.height * displayHeight) - borderWidth * 2;
-
+        // Create button with initial style
         const button = new St.Button({
             style_class: 'snap-layout-button',
-            style: `
-                background-color: rgba(80, 80, 80, 0.6);
-                border: ${borderWidth}px solid rgba(255, 255, 255, 0.3);
-                border-radius: 2px;
-                width: ${buttonWidth}px;
-                height: ${buttonHeight}px;
-                margin: 0;
-                padding: 0;
-                z-index: ${layout.zIndex};
-            `,
+            style: this._getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex),
             reactive: true,
             can_focus: true,
             track_hover: true,
@@ -425,30 +449,16 @@ export class SnapMenu {
 
         // Add hover effect
         button.connect('enter-event', () => {
-            (button as any).set_style(`
-                background-color: rgba(120, 120, 120, 0.8);
-                border: ${borderWidth}px solid rgba(255, 255, 255, 0.6);
-                border-radius: 2px;
-                width: ${buttonWidth}px;
-                height: ${buttonHeight}px;
-                margin: 0;
-                padding: 0;
-                z-index: ${layout.zIndex};
-            `);
+            (button as any).set_style(
+                this._getButtonStyle(true, buttonWidth, buttonHeight, layout.zIndex)
+            );
             return false; // Clutter.EVENT_PROPAGATE
         });
 
         button.connect('leave-event', () => {
-            (button as any).set_style(`
-                background-color: rgba(80, 80, 80, 0.6);
-                border: ${borderWidth}px solid rgba(255, 255, 255, 0.3);
-                border-radius: 2px;
-                width: ${buttonWidth}px;
-                height: ${buttonHeight}px;
-                margin: 0;
-                padding: 0;
-                z-index: ${layout.zIndex};
-            `);
+            (button as any).set_style(
+                this._getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex)
+            );
             return false; // Clutter.EVENT_PROPAGATE
         });
 
@@ -463,6 +473,56 @@ export class SnapMenu {
         });
 
         return button;
+    }
+
+    /**
+     * Calculate button width based on layout and next layout
+     */
+    private _calculateButtonWidth(
+        layout: SnapLayout,
+        displayWidth: number,
+        nextLayout: SnapLayout | undefined,
+        buttonX: number
+    ): number {
+        if (nextLayout) {
+            // Stretch to the start of next layout
+            const nextX = Math.floor(nextLayout.x * displayWidth);
+            return nextX - buttonX - BUTTON_BORDER_WIDTH * 2;
+        }
+
+        // No next layout: check if this layout extends to edge
+        const layoutEndX = Math.floor((layout.x + layout.width) * displayWidth);
+        if (layoutEndX === displayWidth) {
+            // Layout extends to edge, stretch to edge
+            return displayWidth - buttonX - BUTTON_BORDER_WIDTH * 2;
+        }
+
+        // Layout doesn't extend to edge, use its own width
+        return Math.floor(layout.width * displayWidth) - BUTTON_BORDER_WIDTH * 2;
+    }
+
+    /**
+     * Get button style based on hover state
+     */
+    private _getButtonStyle(
+        isHovered: boolean,
+        buttonWidth: number,
+        buttonHeight: number,
+        zIndex: number
+    ): string {
+        const bgColor = isHovered ? BUTTON_BG_COLOR_HOVER : BUTTON_BG_COLOR;
+        const borderColor = isHovered ? BUTTON_BORDER_COLOR_HOVER : BUTTON_BORDER_COLOR;
+
+        return `
+            background-color: ${bgColor};
+            border: ${BUTTON_BORDER_WIDTH}px solid ${borderColor};
+            border-radius: 2px;
+            width: ${buttonWidth}px;
+            height: ${buttonHeight}px;
+            margin: 0;
+            padding: 0;
+            z-index: ${zIndex};
+        `;
     }
 
     /**
