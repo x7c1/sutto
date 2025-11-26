@@ -10,6 +10,10 @@
 const St = imports.gi.St;
 const Main = imports.ui.main;
 
+import { getDebugConfig, isDebugMode, loadDebugConfig } from './debug-config';
+import { DebugPanel } from './debug-panel';
+import { getTestLayoutGroups } from './test-layouts';
+
 declare function log(message: string): void;
 
 // Constants
@@ -54,8 +58,35 @@ export class SnapMenu {
     private _autoHideTimeoutId: number | null = null;
     private _leaveEventId: number | null = null;
     private _enterEventId: number | null = null;
+    private _debugPanel: DebugPanel | null = null;
+    private _menuX: number = 0;
+    private _menuY: number = 0;
+    private _isMenuHovered: boolean = false;
+    private _isDebugPanelHovered: boolean = false;
 
     constructor() {
+        // Initialize debug mode if BUILD_MODE=debug
+        if (isDebugMode()) {
+            loadDebugConfig();
+            this._debugPanel = new DebugPanel();
+            this._debugPanel.setOnConfigChanged(() => {
+                // Refresh menu when debug config changes
+                if (this._container) {
+                    this.show(this._menuX, this._menuY);
+                }
+            });
+            this._debugPanel.setOnEnter(() => {
+                // Mark debug panel as hovered and always cancel timer
+                this._isDebugPanelHovered = true;
+                this._clearAutoHideTimeout();
+            });
+            this._debugPanel.setOnLeave(() => {
+                // Mark debug panel as not hovered
+                this._isDebugPanelHovered = false;
+                this._checkAndStartAutoHide();
+            });
+        }
+
         // Initialize with default layout groups
         this._layoutGroups = [
             {
@@ -141,6 +172,13 @@ export class SnapMenu {
         // Clear layout buttons map
         this._layoutButtons.clear();
 
+        // Reset hover states
+        this._isMenuHovered = false;
+        this._isDebugPanelHovered = false;
+
+        // Get debug configuration
+        const debugConfig = this._debugPanel ? getDebugConfig() : null;
+
         // Get screen dimensions and calculate aspect ratio
         const screenWidth = global.screen_width;
         const screenHeight = global.screen_height;
@@ -166,16 +204,35 @@ export class SnapMenu {
         });
         this._container = container;
 
+        // Store menu position
+        this._menuX = x;
+        this._menuY = y;
+
+        // Determine which layout groups to render
+        let layoutGroups = this._layoutGroups;
+        if (this._debugPanel && debugConfig) {
+            // Add enabled test groups
+            const testGroups = getTestLayoutGroups();
+            const enabledTestGroups = testGroups.filter((g) =>
+                debugConfig.enabledTestGroups.has(g.name)
+            );
+            layoutGroups = [...layoutGroups, ...enabledTestGroups];
+        }
+
         // Create and add displays container
         const displaysContainer = this._createDisplaysContainer(
             MINIATURE_DISPLAY_WIDTH,
-            miniatureDisplayHeight
+            miniatureDisplayHeight,
+            layoutGroups,
+            debugConfig
         );
         container.add_child(displaysContainer);
 
-        // Add footer
-        const footer = this._createFooter();
-        container.add_child(footer);
+        // Add footer if enabled in debug config
+        if (!debugConfig || debugConfig.showFooter) {
+            const footer = this._createFooter();
+            container.add_child(footer);
+        }
 
         // Create and setup background
         this._background = this._createBackground();
@@ -191,6 +248,16 @@ export class SnapMenu {
 
         // Setup auto-hide on mouse leave
         this._setupAutoHide();
+
+        // Show debug panel if in debug mode
+        if (this._debugPanel) {
+            // Calculate approximate menu dimensions
+            // Each display is MINIATURE_DISPLAY_WIDTH wide, plus padding
+            const menuWidth = MINIATURE_DISPLAY_WIDTH + MENU_PADDING * 2;
+            // Use a default height for now (will be adjusted by panel)
+            const menuHeight = 500;
+            this._debugPanel.show(x + menuWidth + 20, y, menuHeight);
+        }
     }
 
     /**
@@ -223,6 +290,11 @@ export class SnapMenu {
             if (this._background) {
                 Main.layoutManager.removeChrome(this._background);
                 this._background.destroy();
+            }
+
+            // Hide debug panel
+            if (this._debugPanel) {
+                this._debugPanel.hide();
             }
 
             this._container = null;
@@ -331,7 +403,12 @@ export class SnapMenu {
     /**
      * Create displays container with miniature displays
      */
-    private _createDisplaysContainer(displayWidth: number, displayHeight: number): St.BoxLayout {
+    private _createDisplaysContainer(
+        displayWidth: number,
+        displayHeight: number,
+        layoutGroups: SnapLayoutGroup[],
+        debugConfig: ReturnType<typeof getDebugConfig> | null
+    ): St.BoxLayout {
         const displaysContainer = new St.BoxLayout({
             style_class: 'snap-displays-container',
             vertical: true, // Vertical layout: stack miniature displays
@@ -340,11 +417,12 @@ export class SnapMenu {
         });
 
         // Create one miniature display for each layout group
-        for (const group of this._layoutGroups) {
+        for (const group of layoutGroups) {
             const miniatureDisplay = this._createMiniatureDisplay(
                 group,
                 displayWidth,
-                displayHeight
+                displayHeight,
+                debugConfig
             );
             displaysContainer.add_child(miniatureDisplay);
         }
@@ -358,17 +436,31 @@ export class SnapMenu {
     private _createMiniatureDisplay(
         group: SnapLayoutGroup,
         displayWidth: number,
-        displayHeight: number
+        displayHeight: number,
+        debugConfig: ReturnType<typeof getDebugConfig> | null
     ): St.Widget {
+        // Apply debug configuration
+        const showBackground = !debugConfig || debugConfig.showMiniatureDisplayBackground;
+        const showBorder = debugConfig && debugConfig.showMiniatureDisplayBorder;
+
+        let style = `
+            width: ${displayWidth}px;
+            height: ${displayHeight}px;
+            border-radius: 4px;
+            margin-bottom: ${DISPLAY_SPACING}px;
+        `;
+
+        if (showBackground) {
+            style += `background-color: ${DISPLAY_BG_COLOR};`;
+        }
+
+        if (showBorder) {
+            style += `border: 2px solid rgba(255, 0, 0, 0.5);`; // Red border for debugging
+        }
+
         const miniatureDisplay = new St.Widget({
             style_class: 'snap-miniature-display',
-            style: `
-                background-color: ${DISPLAY_BG_COLOR};
-                width: ${displayWidth}px;
-                height: ${displayHeight}px;
-                border-radius: 4px;
-                margin-bottom: ${DISPLAY_SPACING}px;
-            `,
+            style: style,
             layout_manager: new imports.gi.Clutter.FixedLayout(),
             reactive: true,
         });
@@ -386,7 +478,8 @@ export class SnapMenu {
                 layout,
                 displayWidth,
                 displayHeight,
-                nextLayout
+                nextLayout,
+                debugConfig
             );
             this._layoutButtons.set(button, layout);
             miniatureDisplay.add_child(button);
@@ -422,7 +515,8 @@ export class SnapMenu {
         layout: SnapLayout,
         displayWidth: number,
         displayHeight: number,
-        nextLayout: SnapLayout | undefined
+        nextLayout: SnapLayout | undefined,
+        debugConfig: ReturnType<typeof getDebugConfig> | null
     ): St.Button {
         // Calculate button position relative to miniature display
         const buttonX = Math.floor(layout.x * displayWidth);
@@ -435,7 +529,13 @@ export class SnapMenu {
         // Create button with initial style
         const button = new St.Button({
             style_class: 'snap-layout-button',
-            style: this._getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex),
+            style: this._getButtonStyle(
+                false,
+                buttonWidth,
+                buttonHeight,
+                layout.zIndex,
+                debugConfig
+            ),
             reactive: true,
             can_focus: true,
             track_hover: true,
@@ -446,12 +546,16 @@ export class SnapMenu {
 
         // Add hover effect
         button.connect('enter-event', () => {
-            button.set_style(this._getButtonStyle(true, buttonWidth, buttonHeight, layout.zIndex));
+            button.set_style(
+                this._getButtonStyle(true, buttonWidth, buttonHeight, layout.zIndex, debugConfig)
+            );
             return false; // Clutter.EVENT_PROPAGATE
         });
 
         button.connect('leave-event', () => {
-            button.set_style(this._getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex));
+            button.set_style(
+                this._getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex, debugConfig)
+            );
             return false; // Clutter.EVENT_PROPAGATE
         });
 
@@ -501,14 +605,21 @@ export class SnapMenu {
         isHovered: boolean,
         buttonWidth: number,
         buttonHeight: number,
-        zIndex: number
+        zIndex: number,
+        debugConfig: ReturnType<typeof getDebugConfig> | null
     ): string {
         const bgColor = isHovered ? BUTTON_BG_COLOR_HOVER : BUTTON_BG_COLOR;
         const borderColor = isHovered ? BUTTON_BORDER_COLOR_HOVER : BUTTON_BORDER_COLOR;
 
+        // Apply debug configuration for button borders
+        const showBorders = !debugConfig || debugConfig.showButtonBorders;
+        const borderStyle = showBorders
+            ? `border: ${BUTTON_BORDER_WIDTH}px solid ${borderColor};`
+            : 'border: none;';
+
         return `
             background-color: ${bgColor};
-            border: ${BUTTON_BORDER_WIDTH}px solid ${borderColor};
+            ${borderStyle}
             border-radius: 2px;
             width: ${buttonWidth}px;
             height: ${buttonHeight}px;
@@ -526,19 +637,29 @@ export class SnapMenu {
             return;
         }
 
-        // Connect leave-event to start auto-hide timer
+        // Connect leave-event to check and start auto-hide timer
         this._leaveEventId = this._container.connect('leave-event', () => {
-            log('[SnapMenu] Cursor left menu, starting auto-hide timer');
-            this._startAutoHideTimeout();
+            this._isMenuHovered = false;
+            this._checkAndStartAutoHide();
             return false; // Clutter.EVENT_PROPAGATE
         });
 
         // Connect enter-event to cancel auto-hide timer
         this._enterEventId = this._container.connect('enter-event', () => {
-            log('[SnapMenu] Cursor entered menu, canceling auto-hide timer');
+            this._isMenuHovered = true;
             this._clearAutoHideTimeout();
             return false; // Clutter.EVENT_PROPAGATE
         });
+    }
+
+    /**
+     * Check if both menu and debug panel are not hovered, then start auto-hide
+     */
+    private _checkAndStartAutoHide(): void {
+        // Only start auto-hide if both menu and debug panel are not hovered
+        if (!this._isMenuHovered && !this._isDebugPanelHovered) {
+            this._startAutoHideTimeout();
+        }
     }
 
     /**
@@ -550,8 +671,10 @@ export class SnapMenu {
 
         // Start new timeout
         this._autoHideTimeoutId = imports.mainloop.timeout_add(AUTO_HIDE_DELAY_MS, () => {
-            log('[SnapMenu] Auto-hide timeout expired, hiding menu');
-            this.hide();
+            // Double-check that neither menu nor debug panel is hovered before hiding
+            if (!this._isMenuHovered && !this._isDebugPanelHovered) {
+                this.hide();
+            }
             this._autoHideTimeoutId = null;
             return false; // Don't repeat
         });
@@ -562,7 +685,6 @@ export class SnapMenu {
      */
     private _clearAutoHideTimeout(): void {
         if (this._autoHideTimeoutId !== null) {
-            log('[SnapMenu] Clearing auto-hide timeout');
             imports.mainloop.source_remove(this._autoHideTimeoutId);
             this._autoHideTimeoutId = null;
         }
