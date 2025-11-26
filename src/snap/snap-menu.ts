@@ -42,27 +42,6 @@ export class SnapMenu {
         // Initialize with default layout groups
         this._layoutGroups = [
             {
-                name: 'Two-Way Split',
-                layouts: [
-                    {
-                        label: 'Left Half',
-                        x: 0,
-                        y: 0,
-                        width: 0.5,
-                        height: 1,
-                        zIndex: 0,
-                    },
-                    {
-                        label: 'Right Half',
-                        x: 0.5,
-                        y: 0,
-                        width: 0.5,
-                        height: 1,
-                        zIndex: 0,
-                    },
-                ],
-            },
-            {
                 name: 'Three-Way Split',
                 layouts: [
                     {
@@ -86,6 +65,40 @@ export class SnapMenu {
                         x: 0.667,
                         y: 0,
                         width: 0.333,
+                        height: 1,
+                        zIndex: 0,
+                    },
+                ],
+            },
+            {
+                name: 'Center Half',
+                layouts: [
+                    {
+                        label: 'Center Half',
+                        x: 0.25,
+                        y: 0,
+                        width: 0.5,
+                        height: 1,
+                        zIndex: 0,
+                    },
+                ],
+            },
+            {
+                name: 'Two-Way Split',
+                layouts: [
+                    {
+                        label: 'Left Half',
+                        x: 0,
+                        y: 0,
+                        width: 0.5,
+                        height: 1,
+                        zIndex: 0,
+                    },
+                    {
+                        label: 'Right Half',
+                        x: 0.5,
+                        y: 0,
+                        width: 0.5,
                         height: 1,
                         zIndex: 0,
                     },
@@ -119,7 +132,7 @@ export class SnapMenu {
         // Simple approach: start with group size, then calculate menu size
         const groupWidth = 300; // Fixed group width
         const groupHeight = groupWidth * aspectRatio;
-        const groupSpacing = 15;
+        const groupSpacing = 12;
 
         // Menu size = group size + padding
         const menuPadding = 12;
@@ -363,15 +376,22 @@ export class SnapMenu {
         const buttonY = Math.floor(layout.y * groupHeight);
         const borderWidth = 1;
 
-        // Calculate width: stretch to next layout or to edge
+        // Calculate width: stretch to next layout, or use layout's own width
         let buttonWidth: number;
         if (nextLayout) {
             // Stretch to the start of next layout
             const nextX = Math.floor(nextLayout.x * groupWidth);
             buttonWidth = nextX - buttonX - borderWidth * 2;
         } else {
-            // No next layout, stretch to the edge
-            buttonWidth = groupWidth - buttonX - borderWidth * 2;
+            // No next layout: check if this layout extends to edge
+            const layoutEndX = Math.floor((layout.x + layout.width) * groupWidth);
+            if (layoutEndX === groupWidth) {
+                // Layout extends to edge, stretch to edge
+                buttonWidth = groupWidth - buttonX - borderWidth * 2;
+            } else {
+                // Layout doesn't extend to edge, use its own width
+                buttonWidth = Math.floor(layout.width * groupWidth) - borderWidth * 2;
+            }
         }
 
         const buttonHeight = Math.floor(layout.height * groupHeight) - borderWidth * 2;
