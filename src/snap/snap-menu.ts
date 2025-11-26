@@ -46,6 +46,7 @@ export interface SnapLayoutGroup {
 
 export class SnapMenu {
     private _container: St.BoxLayout | null = null;
+    private _background: St.BoxLayout | null = null;
     private _layoutGroups: SnapLayoutGroup[] = [];
     private _onLayoutSelected: ((layout: SnapLayout) => void) | null = null;
     private _layoutButtons: Map<St.Button, SnapLayout> = new Map();
@@ -177,7 +178,7 @@ export class SnapMenu {
         container.add_child(footer);
 
         // Create and setup background
-        const background = this._createBackground();
+        this._background = this._createBackground();
 
         // Position menu at cursor
         container.set_position(x, y);
@@ -188,9 +189,6 @@ export class SnapMenu {
             trackFullscreen: false,
         });
 
-        // Store background reference for cleanup
-        (container as any)._background = background;
-
         // Setup auto-hide on mouse leave
         this._setupAutoHide();
     }
@@ -200,21 +198,19 @@ export class SnapMenu {
      */
     hide(): void {
         if (this._container) {
-            const background = (this._container as any)._background;
-
             // Clear auto-hide timeout
             this._clearAutoHideTimeout();
 
             // Disconnect event handlers
-            if (this._clickOutsideId !== null && background) {
-                background.disconnect(this._clickOutsideId);
+            if (this._clickOutsideId !== null && this._background) {
+                this._background.disconnect(this._clickOutsideId);
                 this._clickOutsideId = null;
             }
-            if (this._leaveEventId !== null && this._container) {
+            if (this._leaveEventId !== null) {
                 this._container.disconnect(this._leaveEventId);
                 this._leaveEventId = null;
             }
-            if (this._enterEventId !== null && this._container) {
+            if (this._enterEventId !== null) {
                 this._container.disconnect(this._enterEventId);
                 this._enterEventId = null;
             }
@@ -224,12 +220,13 @@ export class SnapMenu {
             this._container.destroy();
 
             // Remove background
-            if (background) {
-                Main.layoutManager.removeChrome(background);
-                background.destroy();
+            if (this._background) {
+                Main.layoutManager.removeChrome(this._background);
+                this._background.destroy();
             }
 
             this._container = null;
+            this._background = null;
         }
     }
 
@@ -349,7 +346,7 @@ export class SnapMenu {
                 displayWidth,
                 displayHeight
             );
-            displaysContainer.add_child(miniatureDisplay as any);
+            displaysContainer.add_child(miniatureDisplay);
         }
 
         return displaysContainer;
@@ -444,21 +441,17 @@ export class SnapMenu {
             track_hover: true,
         });
 
-        // Set position using set_position method (cast to any due to type definition limitations)
-        (button as any).set_position(buttonX, buttonY);
+        // Set position
+        button.set_position(buttonX, buttonY);
 
         // Add hover effect
         button.connect('enter-event', () => {
-            (button as any).set_style(
-                this._getButtonStyle(true, buttonWidth, buttonHeight, layout.zIndex)
-            );
+            button.set_style(this._getButtonStyle(true, buttonWidth, buttonHeight, layout.zIndex));
             return false; // Clutter.EVENT_PROPAGATE
         });
 
         button.connect('leave-event', () => {
-            (button as any).set_style(
-                this._getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex)
-            );
+            button.set_style(this._getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex));
             return false; // Clutter.EVENT_PROPAGATE
         });
 

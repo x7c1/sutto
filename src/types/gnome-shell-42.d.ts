@@ -195,6 +195,8 @@ declare namespace St {
 
     interface Button extends Clutter.Actor {
         set_child(child: Clutter.Actor): void;
+        set_position(x: number, y: number): void;
+        set_style(style: string): void;
         connect(signal: string, callback: () => boolean): number;
         destroy(): void;
     }
@@ -231,6 +233,36 @@ declare namespace St {
 
     interface BoxLayoutConstructor {
         new (props?: BoxLayoutConstructorProperties): BoxLayout;
+    }
+
+    interface WidgetConstructorProperties {
+        style_class?: string;
+        style?: string;
+        layout_manager?: Clutter.LayoutManager;
+        x_align?: Clutter.ActorAlign;
+        y_align?: Clutter.ActorAlign;
+        x_expand?: boolean;
+        y_expand?: boolean;
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+        visible?: boolean;
+        reactive?: boolean;
+        can_focus?: boolean;
+        track_hover?: boolean;
+    }
+
+    interface Widget extends Clutter.Actor {
+        add_child(child: Clutter.Actor): void;
+        remove_child(child: Clutter.Actor): void;
+        set_position(x: number, y: number): void;
+        set_style(style: string): void;
+        destroy(): void;
+    }
+
+    interface WidgetConstructor {
+        new (props?: WidgetConstructorProperties): Widget;
     }
 }
 
@@ -276,6 +308,7 @@ declare const imports: {
             Label: St.LabelConstructor;
             Button: St.ButtonConstructor;
             BoxLayout: St.BoxLayoutConstructor;
+            Widget: St.WidgetConstructor;
             [key: string]: any;
         };
         Clutter: {
