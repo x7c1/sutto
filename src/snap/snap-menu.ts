@@ -127,7 +127,6 @@ export class SnapMenu {
                 if (this._onLayoutSelected) {
                     this._onLayoutSelected(layout);
                 }
-                this.hide();
             }
         );
         this._layoutButtons = displayResult.layoutButtons;

@@ -276,9 +276,5 @@ export class WindowSnapManager {
         // Move and resize window
         targetWindow.move_resize_frame(false, x, y, width, height);
         log('[WindowSnapManager] Window moved');
-
-        // Hide menu and clear state after applying layout
-        this._snapMenu.hide();
-        this._lastDraggedWindow = null;
     }
 }
