@@ -271,17 +271,12 @@ function buildNextLayoutMap(
 }
 
 /**
- * Resolve layout value (number or string expression) to pixels
- * @param value - Layout value (number in 0-1 range or string expression)
+ * Resolve layout value (string expression) to pixels
+ * @param value - Layout expression ('1/3', '50%', '100px', '50% - 10px', etc.)
  * @param containerSize - Container size in pixels (miniature display width or height)
  * @returns Resolved pixel value
  */
-function resolveLayoutValue(value: number | string, containerSize: number): number {
-    if (typeof value === 'number') {
-        // Backward compatibility: treat as percentage (0-1 range)
-        return Math.floor(value * containerSize);
-    }
-    // Parse and evaluate expression
+function resolveLayoutValue(value: string, containerSize: number): number {
     const expr = parse(value);
     return evaluate(expr, containerSize);
 }

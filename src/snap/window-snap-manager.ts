@@ -259,10 +259,7 @@ export class WindowSnapManager {
         const workArea = Main.layoutManager.getWorkAreaForMonitor(monitor);
 
         // Helper to resolve layout values
-        const resolve = (value: number | string, containerSize: number): number => {
-            if (typeof value === 'number') {
-                return Math.floor(value * containerSize);
-            }
+        const resolve = (value: string, containerSize: number): number => {
             const expr = parse(value);
             return evaluate(expr, containerSize);
         };
