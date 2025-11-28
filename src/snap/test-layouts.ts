@@ -185,24 +185,24 @@ export function getTestLayoutGroups(): SnapLayoutGroup[] {
             ],
         },
 
-        // Group H: Edge Cases (tiny windows with fixed pixel sizes)
+        // Group H: Edge Cases (small windows with fixed pixel sizes)
         {
             name: 'Test H - Edge Cases',
             layouts: [
                 {
-                    label: 'Tiny Top Left',
+                    label: 'Small Top Left',
                     x: '0',
                     y: '0',
-                    width: '100px',
-                    height: '100px',
+                    width: '400px',
+                    height: '400px',
                     zIndex: 0,
                 },
                 {
-                    label: 'Tiny Bottom Right',
-                    x: '100% - 100px',
-                    y: '100% - 100px',
-                    width: '100px',
-                    height: '100px',
+                    label: 'Small Bottom Right',
+                    x: '100% - 400px',
+                    y: '100% - 400px',
+                    width: '400px',
+                    height: '400px',
                     zIndex: 0,
                 },
             ],

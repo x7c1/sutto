@@ -316,13 +316,6 @@ function createLayoutButton(
     // Connect click event
     const clickEventId = button.connect('button-press-event', () => {
         log(`[SnapMenu] Layout selected: ${layout.label}`);
-        log(
-            `[SnapMenu] Button size: ${buttonWidth}x${buttonHeight}px (with border: ${buttonWidth + BUTTON_BORDER_WIDTH * 2}x${buttonHeight + BUTTON_BORDER_WIDTH * 2}px)`
-        );
-        log(`[SnapMenu] Button position: x=${buttonX}, y=${buttonY}`);
-        log(
-            `[SnapMenu] Layout definition: x=${layout.x}, y=${layout.y}, width=${layout.width}, height=${layout.height}`
-        );
         onLayoutSelected(layout);
         return true; // Clutter.EVENT_STOP
     });

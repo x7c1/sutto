@@ -61,7 +61,7 @@ function evaluateRecursive(
 /**
  * Resolve single unit to pixels
  */
-function resolveUnit(unit: LayoutUnit, containerSize: number, _screenSize?: number): number {
+function resolveUnit(unit: LayoutUnit, containerSize: number, screenSize?: number): number {
     switch (unit.type) {
         case 'zero':
             return 0;
@@ -73,8 +73,13 @@ function resolveUnit(unit: LayoutUnit, containerSize: number, _screenSize?: numb
             return containerSize * unit.value;
 
         case 'pixel':
-            // Pixel values are always used as-is (no scaling)
-            // TODO: Consider implementing scaling in the future
+            // When screenSize is provided, we're rendering on miniature display
+            // Scale down pixel values to maintain proportions
+            // Example: 100px on 1920px screen → 100 * (300/1920) = 15.6px on miniature
+            if (screenSize !== undefined) {
+                return unit.value * (containerSize / screenSize);
+            }
+            // When screenSize is not provided, use pixel values as-is (actual window positioning)
             return unit.value;
 
         default: {

@@ -206,4 +206,32 @@ describe('LayoutExpressionEvaluator', () => {
             expect(evaluate(expr, DISPLAY_WIDTH)).toBe(10000);
         });
     });
+
+    describe('Pixel scaling for miniature display', () => {
+        it('scales down pixel values for miniature display', () => {
+            // 100px on 1920px screen → scaled down to 300px miniature
+            // 100 * (300 / 1920) = 15.625 → 16
+            const expr = parse('100px');
+            expect(evaluate(expr, 300, 1920)).toBe(16);
+        });
+
+        it('does not scale when screenSize is not provided (actual window)', () => {
+            // Actual window positioning: use pixel values as-is
+            const expr = parse('100px');
+            expect(evaluate(expr, 1920)).toBe(100);
+        });
+
+        it('scales in composite expressions', () => {
+            // 100% - 100px on miniature
+            // 300 - (100 * 300/1920) = 300 - 15.625 = 284.375 → 284
+            const expr = parse('100% - 100px');
+            expect(evaluate(expr, 300, 1920)).toBe(284);
+        });
+
+        it('does not affect relative values', () => {
+            // Percentages and fractions are not affected by screenSize
+            expect(evaluate(parse('50%'), 300, 1920)).toBe(150);
+            expect(evaluate(parse('1/3'), 300, 1920)).toBe(100);
+        });
+    });
 });
