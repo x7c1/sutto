@@ -1,4 +1,4 @@
-import type { LayoutGroup, LayoutGroupCategory } from './types';
+import type { LayoutGroupCategory } from './types';
 
 // Timing
 export const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding menu when cursor leaves
@@ -22,73 +22,6 @@ export const BUTTON_BG_COLOR_HOVER = 'rgba(120, 120, 120, 0.8)';
 export const BUTTON_BORDER_COLOR = 'rgba(255, 255, 255, 0.3)';
 export const BUTTON_BORDER_COLOR_HOVER = 'rgba(255, 255, 255, 0.6)';
 export const FOOTER_TEXT_COLOR = 'rgba(255, 255, 255, 0.5)';
-
-// Default layout groups (legacy - used for backward compatibility)
-export const DEFAULT_LAYOUT_GROUPS: LayoutGroup[] = [
-    {
-        name: 'Three-Way Split',
-        layouts: [
-            {
-                label: 'Left Third',
-                x: '0',
-                y: '0',
-                width: '1/3',
-                height: '100%',
-                zIndex: 0,
-            },
-            {
-                label: 'Center Third',
-                x: '1/3',
-                y: '0',
-                width: '1/3',
-                height: '100%',
-                zIndex: 0,
-            },
-            {
-                label: 'Right Third',
-                x: '2/3',
-                y: '0',
-                width: '1/3',
-                height: '100%',
-                zIndex: 0,
-            },
-        ],
-    },
-    {
-        name: 'Center Half',
-        layouts: [
-            {
-                label: 'Center Half',
-                x: '25%',
-                y: '0',
-                width: '50%',
-                height: '100%',
-                zIndex: 0,
-            },
-        ],
-    },
-    {
-        name: 'Two-Way Split',
-        layouts: [
-            {
-                label: 'Left Half',
-                x: '0',
-                y: '0',
-                width: '50%',
-                height: '100%',
-                zIndex: 0,
-            },
-            {
-                label: 'Right Half',
-                x: '50%',
-                y: '0',
-                width: '50%',
-                height: '100%',
-                zIndex: 0,
-            },
-        ],
-    },
-];
 
 // Default categories (category-based structure)
 export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
@@ -395,46 +328,14 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
         name: 'Center-Focused Patterns',
         layoutGroups: [
             {
-                name: 'Center 50% with side columns',
+                name: 'Center 50%',
                 layouts: [
                     {
-                        label: 'Left-top',
-                        x: '0',
-                        y: '0',
-                        width: '25%',
-                        height: '50%',
-                        zIndex: 0,
-                    },
-                    {
-                        label: 'Left-bottom',
-                        x: '0',
-                        y: '50%',
-                        width: '25%',
-                        height: '50%',
-                        zIndex: 0,
-                    },
-                    {
-                        label: 'Center',
+                        label: 'Center 50%',
                         x: '25%',
                         y: '0',
                         width: '50%',
                         height: '100%',
-                        zIndex: 0,
-                    },
-                    {
-                        label: 'Right-top',
-                        x: '75%',
-                        y: '0',
-                        width: '25%',
-                        height: '50%',
-                        zIndex: 0,
-                    },
-                    {
-                        label: 'Right-bottom',
-                        x: '75%',
-                        y: '50%',
-                        width: '25%',
-                        height: '50%',
                         zIndex: 0,
                     },
                 ],

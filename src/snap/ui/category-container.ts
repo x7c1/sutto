@@ -27,7 +27,8 @@ export function createCategoryView(
     displayWidth: number,
     displayHeight: number,
     debugConfig: DebugConfig | null,
-    onLayoutSelected: (layout: Layout) => void
+    onLayoutSelected: (layout: Layout) => void,
+    isLastCategory: boolean = false
 ): CategoryView {
     // Category container: vertical layout to stack rows
     const categoryContainer = new St.BoxLayout({
@@ -35,7 +36,7 @@ export function createCategoryView(
         vertical: true, // Vertical layout: stack rows
         x_expand: false,
         y_expand: false,
-        style: `margin-bottom: ${CATEGORY_SPACING}px;`,
+        style: `${!isLastCategory ? `margin-bottom: ${CATEGORY_SPACING}px;` : ''}`,
     });
 
     const layoutButtons = new Map<St.Button, Layout>();

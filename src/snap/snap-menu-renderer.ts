@@ -4,6 +4,7 @@ const St = imports.gi.St;
 const Main = imports.ui.main;
 
 import type { DebugConfig } from './debug-config';
+import { FOOTER_MARGIN_TOP, FOOTER_TEXT_COLOR } from './snap-menu-constants';
 import type { Layout, LayoutGroup, LayoutGroupCategory } from './types';
 import { createCategoryView, createMiniatureDisplayView } from './ui';
 
@@ -71,9 +72,9 @@ export function createFooter(): St.Label {
         text: 'Powered by Snappa',
         style: `
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
+            color: ${FOOTER_TEXT_COLOR};
             text-align: center;
-            margin-top: 10px;
+            margin-top: ${FOOTER_MARGIN_TOP}px;
         `,
         x_align: 2, // CENTER
     });
@@ -149,13 +150,16 @@ export function createCategoriesContainer(
     const buttonEvents: RendererEventIds['buttonEvents'] = [];
 
     // Create one category view for each category
-    for (const category of categories) {
+    for (let i = 0; i < categories.length; i++) {
+        const category = categories[i];
+        const isLastCategory = i === categories.length - 1;
         const result = createCategoryView(
             category,
             displayWidth,
             displayHeight,
             debugConfig,
-            onLayoutSelected
+            onLayoutSelected,
+            isLastCategory
         );
         categoriesContainer.add_child(result.categoryContainer);
 
