@@ -35,7 +35,6 @@ const DEFAULT_DEBUG_CONFIG: DebugConfig = {
         'Test A - Bottom Left Fixed',
         'Test B - Bottom Third Split',
         'Test C - Top Right Panel',
-        'Test D - Grid 2x2',
         'Test I - Empty Group',
     ]),
 };

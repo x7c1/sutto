@@ -10,6 +10,7 @@ import {
     toggleDebugOption,
     toggleTestGroup,
 } from './debug-config';
+import { DEFAULT_CATEGORIES } from './snap-menu-constants';
 import { getTestLayoutGroups } from './test-layouts';
 
 // Constants
@@ -91,6 +92,9 @@ export class DebugPanel {
             `,
         });
         this._container.add_child(title);
+
+        // Add category structure section
+        this._addCategoryStructureSection();
 
         // Add sections
         this._addSection('Display Elements', [
@@ -205,6 +209,83 @@ export class DebugPanel {
             });
             this._checkboxes.set(option.key, checkbox);
             this._container.add_child(checkbox);
+        }
+    }
+
+    private _addCategoryStructureSection(): void {
+        if (!this._container) return;
+
+        // Section header
+        const header = new St.Label({
+            text: 'Category Structure',
+            style: `
+                color: ${SECTION_HEADER_COLOR};
+                font-size: 10pt;
+                font-weight: bold;
+                margin-top: ${SECTION_SPACING}px;
+                margin-bottom: ${SECTION_SPACING / 2}px;
+            `,
+        });
+        this._container.add_child(header);
+
+        // Add separator
+        const separator = new St.Widget({
+            style: `
+                background-color: ${PANEL_BORDER_COLOR};
+                height: 1px;
+                margin-bottom: ${SECTION_SPACING / 2}px;
+            `,
+        });
+        this._container.add_child(separator);
+
+        // Display total number of categories
+        const totalCategories = DEFAULT_CATEGORIES.length;
+        const summaryLabel = new St.Label({
+            text: `Total Categories: ${totalCategories}`,
+            style: `
+                color: ${TEXT_COLOR};
+                font-size: 9pt;
+                margin-bottom: ${SECTION_SPACING / 2}px;
+            `,
+        });
+        this._container.add_child(summaryLabel);
+
+        // Display each category with hierarchy
+        for (const category of DEFAULT_CATEGORIES) {
+            const displayCount = category.layoutGroups.length;
+            const totalButtons = category.layoutGroups.reduce(
+                (sum, group) => sum + group.layouts.length,
+                0
+            );
+
+            // Category name and display count
+            const categoryLabel = new St.Label({
+                text: `├─ ${category.name} (${displayCount} displays, ${totalButtons} buttons)`,
+                style: `
+                    color: rgba(120, 180, 255, 0.9);
+                    font-size: 8pt;
+                    margin-left: ${SECTION_SPACING}px;
+                    margin-top: ${SECTION_SPACING / 4}px;
+                `,
+            });
+            this._container.add_child(categoryLabel);
+
+            // Display each layout group (display)
+            for (let i = 0; i < category.layoutGroups.length; i++) {
+                const group = category.layoutGroups[i];
+                const isLastDisplay = i === category.layoutGroups.length - 1;
+                const displayPrefix = isLastDisplay ? '  └─' : '  ├─';
+
+                const displayLabel = new St.Label({
+                    text: `${displayPrefix} ${group.name} (${group.layouts.length} buttons)`,
+                    style: `
+                        color: rgba(180, 220, 180, 0.8);
+                        font-size: 7pt;
+                        margin-left: ${SECTION_SPACING * 2}px;
+                    `,
+                });
+                this._container.add_child(displayLabel);
+            }
         }
     }
 
