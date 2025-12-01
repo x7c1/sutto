@@ -11,12 +11,15 @@ import {
     BUTTON_BORDER_COLOR,
     BUTTON_BORDER_COLOR_HOVER,
     BUTTON_BORDER_WIDTH,
+    CATEGORY_SPACING,
     DISPLAY_BG_COLOR,
     DISPLAY_SPACING,
+    DISPLAY_SPACING_HORIZONTAL,
     FOOTER_MARGIN_TOP,
     FOOTER_TEXT_COLOR,
+    MAX_DISPLAYS_PER_ROW,
 } from './snap-menu-constants';
-import type { SnapLayout, SnapLayoutGroup } from './snap-menu-types';
+import type { MiniatureDisplayCategory, SnapLayout, SnapLayoutGroup } from './snap-menu-types';
 
 declare function log(message: string): void;
 
@@ -136,6 +139,121 @@ export function createDisplaysContainer(
 }
 
 /**
+ * Create categories container with category-based rendering
+ */
+export function createCategoriesContainer(
+    displayWidth: number,
+    displayHeight: number,
+    categories: MiniatureDisplayCategory[],
+    debugConfig: DebugConfig | null,
+    onLayoutSelected: (layout: SnapLayout) => void
+): {
+    displaysContainer: St.BoxLayout;
+    layoutButtons: Map<St.Button, SnapLayout>;
+    buttonEvents: RendererEventIds['buttonEvents'];
+} {
+    const categoriesContainer = new St.BoxLayout({
+        style_class: 'snap-categories-container',
+        vertical: true, // Vertical layout: stack categories
+        x_expand: false,
+        y_expand: false,
+    });
+
+    const layoutButtons = new Map<St.Button, SnapLayout>();
+    const buttonEvents: RendererEventIds['buttonEvents'] = [];
+
+    // Create one category container for each category
+    for (const category of categories) {
+        const result = createCategoryContainer(
+            category,
+            displayWidth,
+            displayHeight,
+            debugConfig,
+            onLayoutSelected
+        );
+        categoriesContainer.add_child(result.categoryContainer);
+
+        // Collect layout buttons and events
+        for (const [button, layout] of result.layoutButtons) {
+            layoutButtons.set(button, layout);
+        }
+        buttonEvents.push(...result.buttonEvents);
+    }
+
+    return { displaysContainer: categoriesContainer, layoutButtons, buttonEvents };
+}
+
+/**
+ * Create a category container with wrapping layout for miniature displays
+ * Displays are arranged in rows with a maximum of MAX_DISPLAYS_PER_ROW per row
+ */
+function createCategoryContainer(
+    category: MiniatureDisplayCategory,
+    displayWidth: number,
+    displayHeight: number,
+    debugConfig: DebugConfig | null,
+    onLayoutSelected: (layout: SnapLayout) => void
+): {
+    categoryContainer: St.BoxLayout;
+    layoutButtons: Map<St.Button, SnapLayout>;
+    buttonEvents: RendererEventIds['buttonEvents'];
+} {
+    // Category container: vertical layout to stack rows
+    const categoryContainer = new St.BoxLayout({
+        style_class: 'snap-category-container',
+        vertical: true, // Vertical layout: stack rows
+        x_expand: false,
+        y_expand: false,
+        style: `margin-bottom: ${CATEGORY_SPACING}px;`,
+    });
+
+    const layoutButtons = new Map<St.Button, SnapLayout>();
+    const buttonEvents: RendererEventIds['buttonEvents'] = [];
+
+    // Split displays into rows
+    const groups = category.layoutGroups;
+    const numRows = Math.ceil(groups.length / MAX_DISPLAYS_PER_ROW);
+
+    for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+        // Create a row container for this row
+        const rowContainer = new St.BoxLayout({
+            style_class: 'snap-category-row',
+            vertical: false, // Horizontal layout: arrange displays horizontally
+            x_expand: false,
+            y_expand: false,
+        });
+
+        // Add displays to this row (up to MAX_DISPLAYS_PER_ROW)
+        const startIndex = rowIndex * MAX_DISPLAYS_PER_ROW;
+        const endIndex = Math.min(startIndex + MAX_DISPLAYS_PER_ROW, groups.length);
+
+        for (let i = startIndex; i < endIndex; i++) {
+            const group = groups[i];
+            const isLastInRow = i === endIndex - 1; // Check if this is the last display in the row
+            const result = createMiniatureDisplay(
+                group,
+                displayWidth,
+                displayHeight,
+                debugConfig,
+                onLayoutSelected,
+                isLastInRow
+            );
+            rowContainer.add_child(result.miniatureDisplay);
+
+            // Collect layout buttons and events
+            for (const [button, layout] of result.layoutButtons) {
+                layoutButtons.set(button, layout);
+            }
+            buttonEvents.push(...result.buttonEvents);
+        }
+
+        categoryContainer.add_child(rowContainer);
+    }
+
+    return { categoryContainer, layoutButtons, buttonEvents };
+}
+
+/**
  * Create a miniature display with light black background for a specific group
  */
 function createMiniatureDisplay(
@@ -143,7 +261,8 @@ function createMiniatureDisplay(
     displayWidth: number,
     displayHeight: number,
     debugConfig: DebugConfig | null,
-    onLayoutSelected: (layout: SnapLayout) => void
+    onLayoutSelected: (layout: SnapLayout) => void,
+    isLastInRow: boolean = false
 ): {
     miniatureDisplay: St.Widget;
     layoutButtons: Map<St.Button, SnapLayout>;
@@ -158,6 +277,7 @@ function createMiniatureDisplay(
         height: ${displayHeight}px;
         border-radius: 4px;
         margin-bottom: ${DISPLAY_SPACING}px;
+        ${!isLastInRow ? `margin-right: ${DISPLAY_SPACING_HORIZONTAL}px;` : ''}
     `;
 
     if (showBackground) {

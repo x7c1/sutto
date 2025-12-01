@@ -11,3 +11,8 @@ export interface SnapLayoutGroup {
     name: string;
     layouts: SnapLayout[];
 }
+
+export interface MiniatureDisplayCategory {
+    name: string; // Category name (e.g., "Vertical Divisions")
+    layoutGroups: SnapLayoutGroup[]; // Array of layout groups (displays) in this category
+}

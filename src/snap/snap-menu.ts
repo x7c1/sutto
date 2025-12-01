@@ -15,15 +15,17 @@ import { DebugPanel } from './debug-panel';
 import { SnapMenuAutoHide } from './snap-menu-auto-hide';
 import {
     AUTO_HIDE_DELAY_MS,
-    DEFAULT_LAYOUT_GROUPS,
+    DEFAULT_CATEGORIES,
+    DISPLAY_SPACING_HORIZONTAL,
+    MAX_DISPLAYS_PER_ROW,
     MENU_BG_COLOR,
     MENU_BORDER_COLOR,
     MENU_PADDING,
     MINIATURE_DISPLAY_WIDTH,
 } from './snap-menu-constants';
 import type { RendererEventIds } from './snap-menu-renderer';
-import { createBackground, createDisplaysContainer, createFooter } from './snap-menu-renderer';
-import type { SnapLayout, SnapLayoutGroup } from './snap-menu-types';
+import { createBackground, createCategoriesContainer, createFooter } from './snap-menu-renderer';
+import type { MiniatureDisplayCategory, SnapLayout, SnapLayoutGroup } from './snap-menu-types';
 import { getTestLayoutGroups } from './test-layouts';
 
 declare function log(message: string): void;
@@ -34,7 +36,8 @@ export type { SnapLayout, SnapLayoutGroup };
 export class SnapMenu {
     private _container: St.BoxLayout | null = null;
     private _background: St.BoxLayout | null = null;
-    private _layoutGroups: SnapLayoutGroup[] = [];
+    private _categories: MiniatureDisplayCategory[] = [];
+    private _renderedCategories: MiniatureDisplayCategory[] = []; // Categories actually rendered (including test layouts)
     private _onLayoutSelected: ((layout: SnapLayout) => void) | null = null;
     private _layoutButtons: Map<St.Button, SnapLayout> = new Map();
     private _rendererEventIds: RendererEventIds | null = null;
@@ -51,6 +54,7 @@ export class SnapMenu {
 
         // Initialize debug mode if enabled
         if (isDebugMode()) {
+            log('[SnapMenu] Debug mode is enabled, initializing debug panel');
             loadDebugConfig();
             this._debugPanel = new DebugPanel();
             this._debugPanel.setOnConfigChanged(() => {
@@ -65,10 +69,12 @@ export class SnapMenu {
             this._debugPanel.setOnLeave(() => {
                 this._autoHide.setDebugPanelHovered(false, AUTO_HIDE_DELAY_MS);
             });
+        } else {
+            log('[SnapMenu] Debug mode is disabled');
         }
 
-        // Initialize with default layout groups
-        this._layoutGroups = DEFAULT_LAYOUT_GROUPS;
+        // Initialize with default categories
+        this._categories = DEFAULT_CATEGORIES;
     }
 
     /**
@@ -101,15 +107,25 @@ export class SnapMenu {
         const aspectRatio = screenHeight / screenWidth;
         const miniatureDisplayHeight = MINIATURE_DISPLAY_WIDTH * aspectRatio;
 
-        // Determine which layout groups to render
-        let layoutGroups = this._layoutGroups;
+        // Determine which categories to render
+        let categories = this._categories;
         if (this._debugPanel && debugConfig) {
             const testGroups = getTestLayoutGroups();
             const enabledTestGroups = testGroups.filter((g) =>
                 debugConfig.enabledTestGroups.has(g.name)
             );
-            layoutGroups = [...layoutGroups, ...enabledTestGroups];
+            // Add test groups as an additional category if any are enabled
+            if (enabledTestGroups.length > 0) {
+                const testCategory: MiniatureDisplayCategory = {
+                    name: 'Test Layouts',
+                    layoutGroups: enabledTestGroups,
+                };
+                categories = [...categories, testCategory];
+            }
         }
+
+        // Store rendered categories for debug panel positioning
+        this._renderedCategories = categories;
 
         // Create background
         const { background, clickOutsideId } = createBackground(() => {
@@ -117,11 +133,11 @@ export class SnapMenu {
         });
         this._background = background;
 
-        // Create displays container
-        const displayResult = createDisplaysContainer(
+        // Create categories container
+        const displayResult = createCategoriesContainer(
             MINIATURE_DISPLAY_WIDTH,
             miniatureDisplayHeight,
-            layoutGroups,
+            categories,
             debugConfig,
             (layout) => {
                 if (this._onLayoutSelected) {
@@ -177,9 +193,10 @@ export class SnapMenu {
 
         // Show debug panel if enabled
         if (this._debugPanel) {
-            const menuWidth = MINIATURE_DISPLAY_WIDTH + MENU_PADDING * 2;
             const menuHeight = 500;
-            this._debugPanel.show(x + menuWidth + 20, y, menuHeight);
+            const debugPanelX = this._calculateDebugPanelX(x, this._renderedCategories);
+            log(`[SnapMenu] Showing debug panel at: x=${debugPanelX}, y=${y}`);
+            this._debugPanel.show(debugPanelX, y, menuHeight);
         }
     }
 
@@ -243,7 +260,61 @@ export class SnapMenu {
     updatePosition(x: number, y: number): void {
         if (this._container) {
             this._container.set_position(x, y);
+
+            // Update debug panel position if enabled
+            if (this._debugPanel && this._renderedCategories.length > 0) {
+                const debugPanelX = this._calculateDebugPanelX(x, this._renderedCategories);
+                this._debugPanel.updatePosition(debugPanelX, y);
+            }
         }
+    }
+
+    /**
+     * Calculate debug panel X position based on menu position and actual rendered categories
+     */
+    private _calculateDebugPanelX(
+        menuX: number,
+        categoriesToRender: MiniatureDisplayCategory[]
+    ): number {
+        const debugPanelGap = 20;
+        const debugPanelWidth = 300;
+        const screenWidth = global.screen_width;
+
+        // Calculate menu width from ALL categories (including test layouts if enabled)
+        // Categories are stacked vertically with rows, each row has max MAX_DISPLAYS_PER_ROW displays
+        let maxCategoryWidth = 0;
+        for (const category of categoriesToRender) {
+            const numDisplays = category.layoutGroups.length;
+            if (numDisplays > 0) {
+                // Calculate width based on max displays per row
+                const displaysInWidestRow = Math.min(numDisplays, MAX_DISPLAYS_PER_ROW);
+                // Each display: width + right margin, except the last one has no right margin
+                const categoryWidth =
+                    displaysInWidestRow * MINIATURE_DISPLAY_WIDTH +
+                    (displaysInWidestRow - 1) * DISPLAY_SPACING_HORIZONTAL;
+                maxCategoryWidth = Math.max(maxCategoryWidth, categoryWidth);
+                log(
+                    `[SnapMenu] Category "${category.name}": ${numDisplays} displays (max ${displaysInWidestRow} per row), width=${categoryWidth}px`
+                );
+            }
+        }
+        const menuWidth = maxCategoryWidth + MENU_PADDING * 2;
+        log(
+            `[SnapMenu] Calculated menu width: ${menuWidth}px (maxCategoryWidth: ${maxCategoryWidth}px)`
+        );
+
+        // Try to place on the right side first
+        let debugPanelX = menuX + menuWidth + debugPanelGap;
+        if (debugPanelX + debugPanelWidth > screenWidth) {
+            // If not, place on the left side
+            debugPanelX = menuX - debugPanelWidth - debugPanelGap;
+            // If still off screen, clamp to left edge
+            if (debugPanelX < 0) {
+                debugPanelX = debugPanelGap;
+            }
+        }
+
+        return debugPanelX;
     }
 
     /**
