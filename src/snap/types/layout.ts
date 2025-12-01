@@ -4,5 +4,4 @@ export interface Layout {
     y: string; // expression: '0', '50%', '10px', etc.
     width: string; // expression: '1/3', '300px', '100% - 20px', etc.
     height: string; // expression: '100%', '1/2', '500px', etc.
-    zIndex: number; // stacking order for overlapping layouts
 }

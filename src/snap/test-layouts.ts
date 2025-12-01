@@ -18,7 +18,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '70%',
                     width: '300px',
                     height: '300px',
-                    zIndex: 0,
                 },
             ],
         },
@@ -33,7 +32,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '50%',
                     width: '1/3',
                     height: '50%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Bottom Center',
@@ -41,7 +39,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '50%',
                     width: '1/3',
                     height: '50%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Bottom Right',
@@ -49,7 +46,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '50%',
                     width: '1/3',
                     height: '50%',
-                    zIndex: 0,
                 },
             ],
         },
@@ -64,7 +60,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '0',
                     width: '25%',
                     height: '50%',
-                    zIndex: 0,
                 },
             ],
         },
@@ -79,7 +74,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '0',
                     width: '50%',
                     height: '50%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Top Right',
@@ -87,7 +81,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '0',
                     width: '50%',
                     height: '50%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Bottom Left',
@@ -95,7 +88,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '50%',
                     width: '50%',
                     height: '50%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Bottom Right',
@@ -103,7 +95,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '50%',
                     width: '50%',
                     height: '50%',
-                    zIndex: 0,
                 },
             ],
         },
@@ -118,7 +109,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '0',
                     width: '70%',
                     height: '100%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Top Right',
@@ -126,7 +116,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '0',
                     width: '30%',
                     height: '60%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Bottom Right',
@@ -134,7 +123,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '60%',
                     width: '30%',
                     height: '40%',
-                    zIndex: 0,
                 },
             ],
         },
@@ -149,7 +137,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '20%',
                     width: '60%',
                     height: '60%',
-                    zIndex: 0,
                 },
             ],
         },
@@ -164,7 +151,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '1%',
                     width: '1/3 - 2%',
                     height: '100% - 2%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Center Padded',
@@ -172,7 +158,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '1%',
                     width: '1/3 - 2%',
                     height: '100% - 2%',
-                    zIndex: 0,
                 },
                 {
                     label: 'Right Padded',
@@ -180,7 +165,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '1%',
                     width: '1/3 - 2%',
                     height: '100% - 2%',
-                    zIndex: 0,
                 },
             ],
         },
@@ -195,7 +179,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '0',
                     width: '400px',
                     height: '400px',
-                    zIndex: 0,
                 },
                 {
                     label: 'Small Bottom Right',
@@ -203,7 +186,6 @@ export function getTestLayoutGroups(): LayoutGroup[] {
                     y: '100% - 400px',
                     width: '400px',
                     height: '400px',
-                    zIndex: 0,
                 },
             ],
         },

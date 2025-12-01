@@ -50,7 +50,6 @@ function getButtonStyle(
     isHovered: boolean,
     buttonWidth: number,
     buttonHeight: number,
-    zIndex: number,
     debugConfig: DebugConfig | null
 ): string {
     const bgColor = isHovered ? BUTTON_BG_COLOR_HOVER : BUTTON_BG_COLOR;
@@ -70,7 +69,6 @@ function getButtonStyle(
         height: ${buttonHeight}px;
         margin: 0;
         padding: 0;
-        z-index: ${zIndex};
     `;
 }
 
@@ -100,7 +98,7 @@ export function createLayoutButton(
     // Create button with initial style
     const button = new St.Button({
         style_class: 'snap-layout-button',
-        style: getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex, debugConfig),
+        style: getButtonStyle(false, buttonWidth, buttonHeight, debugConfig),
         reactive: true,
         can_focus: true,
         track_hover: true,
@@ -126,16 +124,12 @@ export function createLayoutButton(
 
     // Add hover effect
     const enterEventId = button.connect('enter-event', () => {
-        button.set_style(
-            getButtonStyle(true, buttonWidth, buttonHeight, layout.zIndex, debugConfig)
-        );
+        button.set_style(getButtonStyle(true, buttonWidth, buttonHeight, debugConfig));
         return false; // Clutter.EVENT_PROPAGATE
     });
 
     const leaveEventId = button.connect('leave-event', () => {
-        button.set_style(
-            getButtonStyle(false, buttonWidth, buttonHeight, layout.zIndex, debugConfig)
-        );
+        button.set_style(getButtonStyle(false, buttonWidth, buttonHeight, debugConfig));
         return false; // Clutter.EVENT_PROPAGATE
     });
 

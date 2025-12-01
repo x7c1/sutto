@@ -319,15 +319,12 @@ export class SnapMenu {
 
     /**
      * Get layout at the given position, or null if position is not over a layout button
-     * If multiple layouts overlap at this position, returns the one with highest zIndex
+     * If multiple layouts overlap at this position, returns the first one found
      */
     getLayoutAtPosition(x: number, y: number): Layout | null {
         if (!this._container) {
             return null;
         }
-
-        let topLayout: Layout | null = null;
-        let topZIndex = -Infinity;
 
         // Check each layout button to see if position is within its bounds
         for (const [button, layout] of this._layoutButtons.entries()) {
@@ -335,22 +332,12 @@ export class SnapMenu {
             const [width, height] = button.get_transformed_size();
 
             if (x >= actorX && x <= actorX + width && y >= actorY && y <= actorY + height) {
-                // If this layout has a higher zIndex than current top, use it
-                if (layout.zIndex > topZIndex) {
-                    topLayout = layout;
-                    topZIndex = layout.zIndex;
-                }
+                log(`[SnapMenu] Position (${x}, ${y}) is over layout: ${layout.label}`);
+                return layout;
             }
         }
 
-        if (topLayout) {
-            log(
-                `[SnapMenu] Position (${x}, ${y}) is over layout: ${topLayout.label} (zIndex: ${topZIndex})`
-            );
-        } else {
-            log(`[SnapMenu] Position (${x}, ${y}) is not over any layout`);
-        }
-
-        return topLayout;
+        log(`[SnapMenu] Position (${x}, ${y}) is not over any layout`);
+        return null;
     }
 }

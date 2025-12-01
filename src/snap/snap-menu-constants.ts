@@ -38,7 +38,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '100%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Center Third',
@@ -46,7 +45,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '100%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Right Third',
@@ -54,7 +52,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '100%',
-                        zIndex: 0,
                     },
                 ],
             },
@@ -67,7 +64,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Top-center',
@@ -75,7 +71,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Top-right',
@@ -83,7 +78,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-left',
@@ -91,7 +85,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '1/3',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-center',
@@ -99,7 +92,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '1/3',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-right',
@@ -107,7 +99,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '1/3',
                         height: '50%',
-                        zIndex: 0,
                     },
                 ],
             },
@@ -120,7 +111,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                     {
                         label: 'Top-center',
@@ -128,7 +118,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                     {
                         label: 'Top-right',
@@ -136,7 +125,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                     {
                         label: 'Middle-left',
@@ -144,7 +132,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '1/3',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                     {
                         label: 'Middle-center',
@@ -152,7 +139,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '1/3',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                     {
                         label: 'Middle-right',
@@ -160,7 +146,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '1/3',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-left',
@@ -168,7 +153,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '2/3',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-center',
@@ -176,7 +160,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '2/3',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-right',
@@ -184,7 +167,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '2/3',
                         width: '1/3',
                         height: '1/3',
-                        zIndex: 0,
                     },
                 ],
             },
@@ -203,7 +185,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '50%',
                         height: '100%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Right Half',
@@ -211,7 +192,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '50%',
                         height: '100%',
-                        zIndex: 0,
                     },
                 ],
             },
@@ -224,7 +204,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '50%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Top-right',
@@ -232,7 +211,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '50%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-left',
@@ -240,7 +218,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '50%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-right',
@@ -248,7 +225,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '50%',
                         height: '50%',
-                        zIndex: 0,
                     },
                 ],
             },
@@ -261,7 +237,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '25%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Top-center-left',
@@ -269,7 +244,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '25%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Top-center-right',
@@ -277,7 +251,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '25%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Top-right',
@@ -285,7 +258,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '25%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-left',
@@ -293,7 +265,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '25%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-center-left',
@@ -301,7 +272,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '25%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-center-right',
@@ -309,7 +279,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '25%',
                         height: '50%',
-                        zIndex: 0,
                     },
                     {
                         label: 'Bottom-right',
@@ -317,7 +286,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '50%',
                         width: '25%',
                         height: '50%',
-                        zIndex: 0,
                     },
                 ],
             },
@@ -336,7 +304,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '50%',
                         height: '100%',
-                        zIndex: 0,
                     },
                 ],
             },
@@ -349,7 +316,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '70%',
                         height: '100%',
-                        zIndex: 0,
                     },
                 ],
             },
@@ -362,7 +328,6 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
                         y: '0',
                         width: '70%',
                         height: '100%',
-                        zIndex: 0,
                     },
                 ],
             },
