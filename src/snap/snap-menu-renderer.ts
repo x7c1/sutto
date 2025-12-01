@@ -5,18 +5,12 @@ const Main = imports.ui.main;
 
 import type { DebugConfig } from './debug-config';
 import { FOOTER_MARGIN_TOP, FOOTER_TEXT_COLOR } from './snap-menu-constants';
-import type { Layout, LayoutGroup, LayoutGroupCategory } from './types';
-import { createCategoryView, createMiniatureDisplayView } from './ui';
+import type { Layout, LayoutGroupCategory } from './types';
+import { createCategoryView } from './ui';
 
 declare function log(message: string): void;
 
-export interface RenderedWidgets {
-    background: St.BoxLayout;
-    footer: St.Label;
-    displaysContainer: St.BoxLayout;
-}
-
-export interface RendererEventIds {
+export interface MenuEventIds {
     clickOutsideId: number;
     buttonEvents: Array<{
         button: St.Button;
@@ -24,12 +18,6 @@ export interface RendererEventIds {
         leaveEventId: number;
         clickEventId: number;
     }>;
-}
-
-export interface RenderResult {
-    widgets: RenderedWidgets;
-    layoutButtons: Map<St.Button, Layout>;
-    eventIds: RendererEventIds;
 }
 
 /**
@@ -81,63 +69,18 @@ export function createFooter(): St.Label {
 }
 
 /**
- * Create displays container with miniature displays
+ * Create categories view with category-based rendering
  */
-export function createDisplaysContainer(
-    displayWidth: number,
-    displayHeight: number,
-    layoutGroups: LayoutGroup[],
-    debugConfig: DebugConfig | null,
-    onLayoutSelected: (layout: Layout) => void
-): {
-    displaysContainer: St.BoxLayout;
-    layoutButtons: Map<St.Button, Layout>;
-    buttonEvents: RendererEventIds['buttonEvents'];
-} {
-    const displaysContainer = new St.BoxLayout({
-        style_class: 'snap-displays-container',
-        vertical: true, // Vertical layout: stack miniature displays
-        x_expand: false,
-        y_expand: false,
-    });
-
-    const layoutButtons = new Map<St.Button, Layout>();
-    const buttonEvents: RendererEventIds['buttonEvents'] = [];
-
-    // Create one miniature display view for each layout group
-    for (const group of layoutGroups) {
-        const result = createMiniatureDisplayView(
-            group,
-            displayWidth,
-            displayHeight,
-            debugConfig,
-            onLayoutSelected
-        );
-        displaysContainer.add_child(result.miniatureDisplay);
-
-        // Collect layout buttons and events
-        for (const [button, layout] of result.layoutButtons) {
-            layoutButtons.set(button, layout);
-        }
-        buttonEvents.push(...result.buttonEvents);
-    }
-
-    return { displaysContainer, layoutButtons, buttonEvents };
-}
-
-/**
- * Create categories container with category-based rendering
- */
-export function createCategoriesContainer(
+export function createCategoriesView(
     displayWidth: number,
     displayHeight: number,
     categories: LayoutGroupCategory[],
     debugConfig: DebugConfig | null,
     onLayoutSelected: (layout: Layout) => void
 ): {
-    displaysContainer: St.BoxLayout;
+    categoriesContainer: St.BoxLayout;
     layoutButtons: Map<St.Button, Layout>;
-    buttonEvents: RendererEventIds['buttonEvents'];
+    buttonEvents: MenuEventIds['buttonEvents'];
 } {
     const categoriesContainer = new St.BoxLayout({
         style_class: 'snap-categories-container',
@@ -147,13 +90,13 @@ export function createCategoriesContainer(
     });
 
     const layoutButtons = new Map<St.Button, Layout>();
-    const buttonEvents: RendererEventIds['buttonEvents'] = [];
+    const buttonEvents: MenuEventIds['buttonEvents'] = [];
 
     // Create one category view for each category
     for (let i = 0; i < categories.length; i++) {
         const category = categories[i];
         const isLastCategory = i === categories.length - 1;
-        const result = createCategoryView(
+        const view = createCategoryView(
             category,
             displayWidth,
             displayHeight,
@@ -161,14 +104,14 @@ export function createCategoriesContainer(
             onLayoutSelected,
             isLastCategory
         );
-        categoriesContainer.add_child(result.categoryContainer);
+        categoriesContainer.add_child(view.categoryContainer);
 
         // Collect layout buttons and events
-        for (const [button, layout] of result.layoutButtons) {
+        for (const [button, layout] of view.layoutButtons) {
             layoutButtons.set(button, layout);
         }
-        buttonEvents.push(...result.buttonEvents);
+        buttonEvents.push(...view.buttonEvents);
     }
 
-    return { displaysContainer: categoriesContainer, layoutButtons, buttonEvents };
+    return { categoriesContainer, layoutButtons, buttonEvents };
 }

@@ -62,7 +62,7 @@ export function createCategoryView(
         for (let i = startIndex; i < endIndex; i++) {
             const group = groups[i];
             const isLastInRow = i === endIndex - 1; // Check if this is the last display in the row
-            const result = createMiniatureDisplayView(
+            const view = createMiniatureDisplayView(
                 group,
                 displayWidth,
                 displayHeight,
@@ -70,13 +70,13 @@ export function createCategoryView(
                 onLayoutSelected,
                 isLastInRow
             );
-            rowContainer.add_child(result.miniatureDisplay);
+            rowContainer.add_child(view.miniatureDisplay);
 
             // Collect layout buttons and events
-            for (const [button, layout] of result.layoutButtons) {
+            for (const [button, layout] of view.layoutButtons) {
                 layoutButtons.set(button, layout);
             }
-            buttonEvents.push(...result.buttonEvents);
+            buttonEvents.push(...view.buttonEvents);
         }
 
         categoryContainer.add_child(rowContainer);

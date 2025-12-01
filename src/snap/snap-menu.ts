@@ -23,8 +23,8 @@ import {
     MENU_PADDING,
     MINIATURE_DISPLAY_WIDTH,
 } from './snap-menu-constants';
-import type { RendererEventIds } from './snap-menu-renderer';
-import { createBackground, createCategoriesContainer, createFooter } from './snap-menu-renderer';
+import type { MenuEventIds } from './snap-menu-renderer';
+import { createBackground, createCategoriesView, createFooter } from './snap-menu-renderer';
 import { getTestLayoutGroups } from './test-layouts';
 import type { Layout, LayoutGroup, LayoutGroupCategory } from './types';
 
@@ -40,7 +40,7 @@ export class SnapMenu {
     private _renderedCategories: LayoutGroupCategory[] = []; // Categories actually rendered (including test layouts)
     private _onLayoutSelected: ((layout: Layout) => void) | null = null;
     private _layoutButtons: Map<St.Button, Layout> = new Map();
-    private _rendererEventIds: RendererEventIds | null = null;
+    private _rendererEventIds: MenuEventIds | null = null;
     private _autoHide: SnapMenuAutoHide = new SnapMenuAutoHide();
     private _debugPanel: DebugPanel | null = null;
     private _menuX: number = 0;
@@ -133,8 +133,8 @@ export class SnapMenu {
         });
         this._background = background;
 
-        // Create categories container
-        const displayResult = createCategoriesContainer(
+        // Create categories view
+        const categoriesView = createCategoriesView(
             MINIATURE_DISPLAY_WIDTH,
             miniatureDisplayHeight,
             categories,
@@ -145,7 +145,7 @@ export class SnapMenu {
                 }
             }
         );
-        this._layoutButtons = displayResult.layoutButtons;
+        this._layoutButtons = categoriesView.layoutButtons;
 
         // Create footer
         const footer = createFooter();
@@ -168,7 +168,7 @@ export class SnapMenu {
         this._container = container;
 
         // Add children to container
-        container.add_child(displayResult.displaysContainer);
+        container.add_child(categoriesView.categoriesContainer);
         if (!debugConfig || debugConfig.showFooter) {
             container.add_child(footer);
         }
@@ -188,7 +188,7 @@ export class SnapMenu {
         // Store event IDs for cleanup
         this._rendererEventIds = {
             clickOutsideId,
-            buttonEvents: displayResult.buttonEvents,
+            buttonEvents: categoriesView.buttonEvents,
         };
 
         // Show debug panel if enabled
