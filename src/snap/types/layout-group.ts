@@ -1,6 +1,6 @@
 import type { Layout } from './layout';
 
 export interface LayoutGroup {
-    name: string;
-    layouts: Layout[];
+  name: string;
+  layouts: Layout[];
 }

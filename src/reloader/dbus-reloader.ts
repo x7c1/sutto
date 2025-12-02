@@ -32,108 +32,108 @@ const DBUS_INTERFACE_XML = `
 `;
 
 export class DBusReloader {
-    private _reloader: Reloader;
-    private _dbusId: number | null;
+  private _reloader: Reloader;
+  private _dbusId: number | null;
 
-    /**
-     * Create a new DBusReloader instance
-     * @param originalUuid The extension's original UUID
-     * @param currentUuid The current UUID (for reloaded instances)
-     */
-    constructor(originalUuid: string, currentUuid?: string) {
-        this._reloader = new Reloader(originalUuid, currentUuid);
+  /**
+   * Create a new DBusReloader instance
+   * @param originalUuid The extension's original UUID
+   * @param currentUuid The current UUID (for reloaded instances)
+   */
+  constructor(originalUuid: string, currentUuid?: string) {
+    this._reloader = new Reloader(originalUuid, currentUuid);
+    this._dbusId = null;
+  }
+
+  /**
+   * Register the D-Bus interface
+   */
+  enable(): void {
+    try {
+      log('[DBusReloader] Starting D-Bus registration...');
+
+      // Get the session bus connection
+      const connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
+      log('[DBusReloader] Got session bus connection');
+
+      // Parse the XML interface definition
+      const nodeInfo = Gio.DBusNodeInfo.new_for_xml(DBUS_INTERFACE_XML);
+      log('[DBusReloader] Parsed XML interface definition');
+
+      const interfaceInfo = nodeInfo.lookup_interface('io.github.x7c1.Snappa');
+      log('[DBusReloader] Looked up interface info');
+
+      // Register the D-Bus object
+      this._dbusId = connection.register_object(
+        '/io/github/x7c1/Snappa',
+        interfaceInfo,
+        (
+          _connection: any,
+          _sender: string,
+          _object_path: string,
+          _interface_name: string,
+          method_name: string,
+          _parameters: any,
+          invocation: any
+        ) => {
+          log(`[DBusReloader] Method called: ${method_name}`);
+          if (method_name === 'Reload') {
+            this._handleReload(invocation);
+          }
+        },
+        null, // get_property
+        null // set_property
+      );
+
+      log(
+        `[DBusReloader] D-Bus interface registered at /io/github/x7c1/Snappa with ID: ${this._dbusId}`
+      );
+    } catch (e: unknown) {
+      log(`[DBusReloader] Failed to register D-Bus interface: ${this._getErrorMessage(e)}`);
+    }
+  }
+
+  /**
+   * Unregister the D-Bus interface
+   */
+  disable(): void {
+    if (this._dbusId !== null) {
+      try {
+        const connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
+        connection.unregister_object(this._dbusId);
         this._dbusId = null;
+        log('[DBusReloader] D-Bus interface unregistered');
+      } catch (e: unknown) {
+        log(`[DBusReloader] Failed to unregister: ${this._getErrorMessage(e)}`);
+      }
     }
+  }
 
-    /**
-     * Register the D-Bus interface
-     */
-    enable(): void {
-        try {
-            log('[DBusReloader] Starting D-Bus registration...');
+  /**
+   * Handle the Reload D-Bus method call
+   */
+  private _handleReload(invocation: Gio.DBusMethodInvocation): void {
+    try {
+      log('[DBusReloader] Reload method called via D-Bus');
+      this._reloader.reload();
 
-            // Get the session bus connection
-            const connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
-            log('[DBusReloader] Got session bus connection');
+      // Return success
+      invocation.return_value(GLib.Variant.new('(b)', [true]));
+    } catch (e: unknown) {
+      log(`[DBusReloader] Reload failed: ${this._getErrorMessage(e)}`);
 
-            // Parse the XML interface definition
-            const nodeInfo = Gio.DBusNodeInfo.new_for_xml(DBUS_INTERFACE_XML);
-            log('[DBusReloader] Parsed XML interface definition');
-
-            const interfaceInfo = nodeInfo.lookup_interface('io.github.x7c1.Snappa');
-            log('[DBusReloader] Looked up interface info');
-
-            // Register the D-Bus object
-            this._dbusId = connection.register_object(
-                '/io/github/x7c1/Snappa',
-                interfaceInfo,
-                (
-                    _connection: any,
-                    _sender: string,
-                    _object_path: string,
-                    _interface_name: string,
-                    method_name: string,
-                    _parameters: any,
-                    invocation: any
-                ) => {
-                    log(`[DBusReloader] Method called: ${method_name}`);
-                    if (method_name === 'Reload') {
-                        this._handleReload(invocation);
-                    }
-                },
-                null, // get_property
-                null // set_property
-            );
-
-            log(
-                `[DBusReloader] D-Bus interface registered at /io/github/x7c1/Snappa with ID: ${this._dbusId}`
-            );
-        } catch (e: unknown) {
-            log(`[DBusReloader] Failed to register D-Bus interface: ${this._getErrorMessage(e)}`);
-        }
+      // Return error
+      invocation.return_error_literal(0, 1, `Reload failed: ${this._getErrorMessage(e)}`);
     }
+  }
 
-    /**
-     * Unregister the D-Bus interface
-     */
-    disable(): void {
-        if (this._dbusId !== null) {
-            try {
-                const connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
-                connection.unregister_object(this._dbusId);
-                this._dbusId = null;
-                log('[DBusReloader] D-Bus interface unregistered');
-            } catch (e: unknown) {
-                log(`[DBusReloader] Failed to unregister: ${this._getErrorMessage(e)}`);
-            }
-        }
+  /**
+   * Type guard to safely extract error message
+   */
+  private _getErrorMessage(e: unknown): string {
+    if (e instanceof Error) {
+      return e.message;
     }
-
-    /**
-     * Handle the Reload D-Bus method call
-     */
-    private _handleReload(invocation: Gio.DBusMethodInvocation): void {
-        try {
-            log('[DBusReloader] Reload method called via D-Bus');
-            this._reloader.reload();
-
-            // Return success
-            invocation.return_value(GLib.Variant.new('(b)', [true]));
-        } catch (e: unknown) {
-            log(`[DBusReloader] Reload failed: ${this._getErrorMessage(e)}`);
-
-            // Return error
-            invocation.return_error_literal(0, 1, `Reload failed: ${this._getErrorMessage(e)}`);
-        }
-    }
-
-    /**
-     * Type guard to safely extract error message
-     */
-    private _getErrorMessage(e: unknown): string {
-        if (e instanceof Error) {
-            return e.message;
-        }
-        return String(e);
-    }
+    return String(e);
+  }
 }
