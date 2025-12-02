@@ -12,6 +12,7 @@ const Main = imports.ui.main;
 
 import { getDebugConfig, isDebugMode, loadDebugConfig } from './debug-config';
 import { DebugPanel } from './debug-panel';
+import { adjustMenuPosition } from './positioning';
 import { SnapMenuAutoHide } from './snap-menu-auto-hide';
 import {
   AUTO_HIDE_DELAY_MS,
@@ -134,12 +135,20 @@ export class SnapMenu {
     this.menuDimensions = this.calculateMenuDimensions(categories, aspectRatio, showFooter);
 
     // Adjust position for boundaries with center alignment
-    const adjusted = this.adjustPositionForBoundaries(
-      x,
-      y,
-      this.menuDimensions.width,
-      this.menuDimensions.height,
-      !!this.debugPanel
+    const adjusted = adjustMenuPosition(
+      { x, y },
+      this.menuDimensions,
+      {
+        screenWidth,
+        screenHeight,
+        edgePadding: MENU_EDGE_PADDING,
+      },
+      {
+        centerHorizontally: true,
+        reserveDebugPanelSpace: !!this.debugPanel,
+        debugPanelGap: 20,
+        debugPanelWidth: 300,
+      }
     );
 
     // Store adjusted menu position
@@ -305,12 +314,22 @@ export class SnapMenu {
       this.originalCursorY = y;
 
       // Adjust position for boundaries with center alignment
-      const adjusted = this.adjustPositionForBoundaries(
-        x,
-        y,
-        this.menuDimensions.width,
-        this.menuDimensions.height,
-        !!this.debugPanel
+      const screenWidth = global.screen_width;
+      const screenHeight = global.screen_height;
+      const adjusted = adjustMenuPosition(
+        { x, y },
+        this.menuDimensions,
+        {
+          screenWidth,
+          screenHeight,
+          edgePadding: MENU_EDGE_PADDING,
+        },
+        {
+          centerHorizontally: true,
+          reserveDebugPanelSpace: !!this.debugPanel,
+          debugPanelGap: 20,
+          debugPanelWidth: 300,
+        }
       );
 
       // Update stored menu position
@@ -327,58 +346,6 @@ export class SnapMenu {
         this.debugPanel.updatePosition(debugPanelX, adjusted.y);
       }
     }
-  }
-
-  /**
-   * Adjust menu position to keep it within screen boundaries
-   * Positions menu centered horizontally on cursor and ensures it stays within screen bounds
-   */
-  private adjustPositionForBoundaries(
-    x: number,
-    y: number,
-    menuWidth: number,
-    menuHeight: number,
-    debugPanelEnabled: boolean
-  ): { x: number; y: number } {
-    const screenWidth = global.screen_width;
-    const screenHeight = global.screen_height;
-    const debugPanelGap = 20;
-    const debugPanelWidth = 300;
-
-    // First: Center alignment - adjust X to center menu on cursor
-    let adjustedX = x - menuWidth / 2;
-
-    // Calculate maximum X position
-    let maxX: number;
-    if (debugPanelEnabled) {
-      // Reserve space for debug panel on the right
-      maxX = screenWidth - menuWidth - debugPanelGap - debugPanelWidth - MENU_EDGE_PADDING;
-    } else {
-      maxX = screenWidth - menuWidth - MENU_EDGE_PADDING;
-    }
-
-    // Check right edge: clamp to maxX
-    if (adjustedX > maxX) {
-      adjustedX = maxX;
-    }
-
-    // Check left edge: clamp to padding
-    if (adjustedX < MENU_EDGE_PADDING) {
-      adjustedX = MENU_EDGE_PADDING;
-    }
-
-    // Check bottom edge: shift up if needed
-    let adjustedY = y;
-    if (adjustedY + menuHeight > screenHeight - MENU_EDGE_PADDING) {
-      adjustedY = screenHeight - menuHeight - MENU_EDGE_PADDING;
-    }
-
-    // Check top edge: clamp to padding
-    if (adjustedY < MENU_EDGE_PADDING) {
-      adjustedY = MENU_EDGE_PADDING;
-    }
-
-    return { x: adjustedX, y: adjustedY };
   }
 
   /**

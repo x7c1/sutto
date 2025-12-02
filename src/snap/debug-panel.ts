@@ -10,6 +10,7 @@ import {
   toggleDebugOption,
   toggleTestGroup,
 } from './debug-config';
+import { adjustPanelPosition } from './positioning';
 import { DEFAULT_CATEGORIES, MENU_EDGE_PADDING } from './snap-menu-constants';
 import { getTestLayoutGroups } from './test-layouts';
 
@@ -40,34 +41,6 @@ export class DebugPanel {
   private enterEventId: number | null = null;
   private leaveEventId: number | null = null;
   private panelHeight: number = 0; // Store panel height for boundary checking
-
-  /**
-   * Adjust Y position to keep debug panel within screen boundaries
-   */
-  private adjustYForBoundaries(y: number, panelHeight: number): number {
-    const screenHeight = global.screen_height;
-    let adjustedY = y;
-
-    log(
-      `[DebugPanel] adjustYForBoundaries: y=${y}, panelHeight=${panelHeight}, screenHeight=${screenHeight}`
-    );
-
-    // Check bottom edge: shift up if needed
-    if (adjustedY + panelHeight > screenHeight - MENU_EDGE_PADDING) {
-      const oldY = adjustedY;
-      adjustedY = screenHeight - panelHeight - MENU_EDGE_PADDING;
-      log(`[DebugPanel] Bottom overflow: ${oldY} -> ${adjustedY}`);
-    }
-
-    // Check top edge: clamp to padding
-    if (adjustedY < MENU_EDGE_PADDING) {
-      const oldY = adjustedY;
-      adjustedY = MENU_EDGE_PADDING;
-      log(`[DebugPanel] Top overflow: ${oldY} -> ${adjustedY}`);
-    }
-
-    return adjustedY;
-  }
 
   /**
    * Set callback for when debug configuration changes
@@ -160,11 +133,22 @@ export class DebugPanel {
     );
 
     // Adjust Y position based on actual panel height
-    const adjustedY = this.adjustYForBoundaries(y, this.panelHeight);
-    log(`[DebugPanel] Adjusted Y: ${adjustedY} (original: ${y})`);
+    const screenWidth = global.screen_width;
+    const screenHeight = global.screen_height;
+    const adjusted = adjustPanelPosition(
+      { x, y },
+      { width: PANEL_WIDTH, height: this.panelHeight },
+      {
+        screenWidth,
+        screenHeight,
+        edgePadding: MENU_EDGE_PADDING,
+      },
+      { adjustYOnly: true }
+    );
+    log(`[DebugPanel] Adjusted Y: ${adjusted.y} (original: ${y})`);
 
     // Reposition panel at adjusted coordinates
-    this.container.set_position(x, adjustedY);
+    this.container.set_position(x, adjusted.y);
 
     // Setup hover events to notify parent menu
     this.enterEventId = this.container.connect('enter-event', () => {
@@ -211,9 +195,20 @@ export class DebugPanel {
   updatePosition(x: number, y: number): void {
     if (this.container && this.panelHeight > 0) {
       // Adjust Y position to keep panel within screen boundaries
-      const adjustedY = this.adjustYForBoundaries(y, this.panelHeight);
-      log(`[DebugPanel] Update position: Y ${y} -> ${adjustedY} (height: ${this.panelHeight})`);
-      this.container.set_position(x, adjustedY);
+      const screenWidth = global.screen_width;
+      const screenHeight = global.screen_height;
+      const adjusted = adjustPanelPosition(
+        { x, y },
+        { width: PANEL_WIDTH, height: this.panelHeight },
+        {
+          screenWidth,
+          screenHeight,
+          edgePadding: MENU_EDGE_PADDING,
+        },
+        { adjustYOnly: true }
+      );
+      log(`[DebugPanel] Update position: Y ${y} -> ${adjusted.y} (height: ${this.panelHeight})`);
+      this.container.set_position(x, adjusted.y);
     }
   }
 
