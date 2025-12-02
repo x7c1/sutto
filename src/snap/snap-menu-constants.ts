@@ -297,8 +297,34 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
     name: 'Center-Focused Patterns',
     layoutGroups: [
       {
+        name: 'Left 2/3',
+        layouts: [
+          {
+            label: 'Left 2/3',
+            x: '0',
+            y: '0',
+            width: '2/3',
+            height: '100%',
+          },
+          {
+            label: 'Right 1/3',
+            x: '2/3',
+            y: '0',
+            width: '1/3',
+            height: '100%',
+          },
+        ],
+      },
+      {
         name: 'Center 50%',
         layouts: [
+          {
+            label: 'Left 25%',
+            x: '0',
+            y: '0',
+            width: '25%',
+            height: '100%',
+          },
           {
             label: 'Center 50%',
             x: '25%',
@@ -306,28 +332,30 @@ export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
             width: '50%',
             height: '100%',
           },
-        ],
-      },
-      {
-        name: 'Left 70%',
-        layouts: [
           {
-            label: 'Left 70%',
-            x: '0',
+            label: 'Right 25%',
+            x: '75%',
             y: '0',
-            width: '70%',
+            width: '25%',
             height: '100%',
           },
         ],
       },
       {
-        name: 'Right 70%',
+        name: 'Right 2/3',
         layouts: [
           {
-            label: 'Right 70%',
-            x: '30%',
+            label: 'Left 1/3',
+            x: '0',
             y: '0',
-            width: '70%',
+            width: '1/3',
+            height: '100%',
+          },
+          {
+            label: 'Right 2/3',
+            x: '1/3',
+            y: '0',
+            width: '2/3',
             height: '100%',
           },
         ],
