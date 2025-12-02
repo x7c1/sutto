@@ -25,312 +25,312 @@ export const FOOTER_TEXT_COLOR = 'rgba(255, 255, 255, 0.5)';
 
 // Default categories (category-based structure)
 export const DEFAULT_CATEGORIES: LayoutGroupCategory[] = [
-    // Category 1: Vertical Division Patterns
-    {
-        name: 'Vertical Division Patterns',
-        layoutGroups: [
-            {
-                name: 'Vertical 3-split',
-                layouts: [
-                    {
-                        label: 'Left Third',
-                        x: '0',
-                        y: '0',
-                        width: '1/3',
-                        height: '100%',
-                    },
-                    {
-                        label: 'Center Third',
-                        x: '1/3',
-                        y: '0',
-                        width: '1/3',
-                        height: '100%',
-                    },
-                    {
-                        label: 'Right Third',
-                        x: '2/3',
-                        y: '0',
-                        width: '1/3',
-                        height: '100%',
-                    },
-                ],
-            },
-            {
-                name: 'Vertical 3-split × Horizontal 2-split',
-                layouts: [
-                    {
-                        label: 'Top-left',
-                        x: '0',
-                        y: '0',
-                        width: '1/3',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Top-center',
-                        x: '1/3',
-                        y: '0',
-                        width: '1/3',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Top-right',
-                        x: '2/3',
-                        y: '0',
-                        width: '1/3',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-left',
-                        x: '0',
-                        y: '50%',
-                        width: '1/3',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-center',
-                        x: '1/3',
-                        y: '50%',
-                        width: '1/3',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-right',
-                        x: '2/3',
-                        y: '50%',
-                        width: '1/3',
-                        height: '50%',
-                    },
-                ],
-            },
-            {
-                name: 'Grid 3×3',
-                layouts: [
-                    {
-                        label: 'Top-left',
-                        x: '0',
-                        y: '0',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                    {
-                        label: 'Top-center',
-                        x: '1/3',
-                        y: '0',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                    {
-                        label: 'Top-right',
-                        x: '2/3',
-                        y: '0',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                    {
-                        label: 'Middle-left',
-                        x: '0',
-                        y: '1/3',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                    {
-                        label: 'Middle-center',
-                        x: '1/3',
-                        y: '1/3',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                    {
-                        label: 'Middle-right',
-                        x: '2/3',
-                        y: '1/3',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                    {
-                        label: 'Bottom-left',
-                        x: '0',
-                        y: '2/3',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                    {
-                        label: 'Bottom-center',
-                        x: '1/3',
-                        y: '2/3',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                    {
-                        label: 'Bottom-right',
-                        x: '2/3',
-                        y: '2/3',
-                        width: '1/3',
-                        height: '1/3',
-                    },
-                ],
-            },
+  // Category 1: Vertical Division Patterns
+  {
+    name: 'Vertical Division Patterns',
+    layoutGroups: [
+      {
+        name: 'Vertical 3-split',
+        layouts: [
+          {
+            label: 'Left Third',
+            x: '0',
+            y: '0',
+            width: '1/3',
+            height: '100%',
+          },
+          {
+            label: 'Center Third',
+            x: '1/3',
+            y: '0',
+            width: '1/3',
+            height: '100%',
+          },
+          {
+            label: 'Right Third',
+            x: '2/3',
+            y: '0',
+            width: '1/3',
+            height: '100%',
+          },
         ],
-    },
-    // Category 2: Grid Patterns (Progressive Complexity)
-    {
-        name: 'Grid Patterns',
-        layoutGroups: [
-            {
-                name: 'Vertical 2-split',
-                layouts: [
-                    {
-                        label: 'Left Half',
-                        x: '0',
-                        y: '0',
-                        width: '50%',
-                        height: '100%',
-                    },
-                    {
-                        label: 'Right Half',
-                        x: '50%',
-                        y: '0',
-                        width: '50%',
-                        height: '100%',
-                    },
-                ],
-            },
-            {
-                name: 'Grid 2×2',
-                layouts: [
-                    {
-                        label: 'Top-left',
-                        x: '0',
-                        y: '0',
-                        width: '50%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Top-right',
-                        x: '50%',
-                        y: '0',
-                        width: '50%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-left',
-                        x: '0',
-                        y: '50%',
-                        width: '50%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-right',
-                        x: '50%',
-                        y: '50%',
-                        width: '50%',
-                        height: '50%',
-                    },
-                ],
-            },
-            {
-                name: 'Grid 4×2',
-                layouts: [
-                    {
-                        label: 'Top-left',
-                        x: '0',
-                        y: '0',
-                        width: '25%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Top-center-left',
-                        x: '25%',
-                        y: '0',
-                        width: '25%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Top-center-right',
-                        x: '50%',
-                        y: '0',
-                        width: '25%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Top-right',
-                        x: '75%',
-                        y: '0',
-                        width: '25%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-left',
-                        x: '0',
-                        y: '50%',
-                        width: '25%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-center-left',
-                        x: '25%',
-                        y: '50%',
-                        width: '25%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-center-right',
-                        x: '50%',
-                        y: '50%',
-                        width: '25%',
-                        height: '50%',
-                    },
-                    {
-                        label: 'Bottom-right',
-                        x: '75%',
-                        y: '50%',
-                        width: '25%',
-                        height: '50%',
-                    },
-                ],
-            },
+      },
+      {
+        name: 'Vertical 3-split × Horizontal 2-split',
+        layouts: [
+          {
+            label: 'Top-left',
+            x: '0',
+            y: '0',
+            width: '1/3',
+            height: '50%',
+          },
+          {
+            label: 'Top-center',
+            x: '1/3',
+            y: '0',
+            width: '1/3',
+            height: '50%',
+          },
+          {
+            label: 'Top-right',
+            x: '2/3',
+            y: '0',
+            width: '1/3',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-left',
+            x: '0',
+            y: '50%',
+            width: '1/3',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-center',
+            x: '1/3',
+            y: '50%',
+            width: '1/3',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-right',
+            x: '2/3',
+            y: '50%',
+            width: '1/3',
+            height: '50%',
+          },
         ],
-    },
-    // Category 3: Center-Focused Patterns
-    {
-        name: 'Center-Focused Patterns',
-        layoutGroups: [
-            {
-                name: 'Center 50%',
-                layouts: [
-                    {
-                        label: 'Center 50%',
-                        x: '25%',
-                        y: '0',
-                        width: '50%',
-                        height: '100%',
-                    },
-                ],
-            },
-            {
-                name: 'Left 70%',
-                layouts: [
-                    {
-                        label: 'Left 70%',
-                        x: '0',
-                        y: '0',
-                        width: '70%',
-                        height: '100%',
-                    },
-                ],
-            },
-            {
-                name: 'Right 70%',
-                layouts: [
-                    {
-                        label: 'Right 70%',
-                        x: '30%',
-                        y: '0',
-                        width: '70%',
-                        height: '100%',
-                    },
-                ],
-            },
+      },
+      {
+        name: 'Grid 3×3',
+        layouts: [
+          {
+            label: 'Top-left',
+            x: '0',
+            y: '0',
+            width: '1/3',
+            height: '1/3',
+          },
+          {
+            label: 'Top-center',
+            x: '1/3',
+            y: '0',
+            width: '1/3',
+            height: '1/3',
+          },
+          {
+            label: 'Top-right',
+            x: '2/3',
+            y: '0',
+            width: '1/3',
+            height: '1/3',
+          },
+          {
+            label: 'Middle-left',
+            x: '0',
+            y: '1/3',
+            width: '1/3',
+            height: '1/3',
+          },
+          {
+            label: 'Middle-center',
+            x: '1/3',
+            y: '1/3',
+            width: '1/3',
+            height: '1/3',
+          },
+          {
+            label: 'Middle-right',
+            x: '2/3',
+            y: '1/3',
+            width: '1/3',
+            height: '1/3',
+          },
+          {
+            label: 'Bottom-left',
+            x: '0',
+            y: '2/3',
+            width: '1/3',
+            height: '1/3',
+          },
+          {
+            label: 'Bottom-center',
+            x: '1/3',
+            y: '2/3',
+            width: '1/3',
+            height: '1/3',
+          },
+          {
+            label: 'Bottom-right',
+            x: '2/3',
+            y: '2/3',
+            width: '1/3',
+            height: '1/3',
+          },
         ],
-    },
+      },
+    ],
+  },
+  // Category 2: Grid Patterns (Progressive Complexity)
+  {
+    name: 'Grid Patterns',
+    layoutGroups: [
+      {
+        name: 'Vertical 2-split',
+        layouts: [
+          {
+            label: 'Left Half',
+            x: '0',
+            y: '0',
+            width: '50%',
+            height: '100%',
+          },
+          {
+            label: 'Right Half',
+            x: '50%',
+            y: '0',
+            width: '50%',
+            height: '100%',
+          },
+        ],
+      },
+      {
+        name: 'Grid 2×2',
+        layouts: [
+          {
+            label: 'Top-left',
+            x: '0',
+            y: '0',
+            width: '50%',
+            height: '50%',
+          },
+          {
+            label: 'Top-right',
+            x: '50%',
+            y: '0',
+            width: '50%',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-left',
+            x: '0',
+            y: '50%',
+            width: '50%',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-right',
+            x: '50%',
+            y: '50%',
+            width: '50%',
+            height: '50%',
+          },
+        ],
+      },
+      {
+        name: 'Grid 4×2',
+        layouts: [
+          {
+            label: 'Top-left',
+            x: '0',
+            y: '0',
+            width: '25%',
+            height: '50%',
+          },
+          {
+            label: 'Top-center-left',
+            x: '25%',
+            y: '0',
+            width: '25%',
+            height: '50%',
+          },
+          {
+            label: 'Top-center-right',
+            x: '50%',
+            y: '0',
+            width: '25%',
+            height: '50%',
+          },
+          {
+            label: 'Top-right',
+            x: '75%',
+            y: '0',
+            width: '25%',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-left',
+            x: '0',
+            y: '50%',
+            width: '25%',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-center-left',
+            x: '25%',
+            y: '50%',
+            width: '25%',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-center-right',
+            x: '50%',
+            y: '50%',
+            width: '25%',
+            height: '50%',
+          },
+          {
+            label: 'Bottom-right',
+            x: '75%',
+            y: '50%',
+            width: '25%',
+            height: '50%',
+          },
+        ],
+      },
+    ],
+  },
+  // Category 3: Center-Focused Patterns
+  {
+    name: 'Center-Focused Patterns',
+    layoutGroups: [
+      {
+        name: 'Center 50%',
+        layouts: [
+          {
+            label: 'Center 50%',
+            x: '25%',
+            y: '0',
+            width: '50%',
+            height: '100%',
+          },
+        ],
+      },
+      {
+        name: 'Left 70%',
+        layouts: [
+          {
+            label: 'Left 70%',
+            x: '0',
+            y: '0',
+            width: '70%',
+            height: '100%',
+          },
+        ],
+      },
+      {
+        name: 'Right 70%',
+        layouts: [
+          {
+            label: 'Right 70%',
+            x: '30%',
+            y: '0',
+            width: '70%',
+            height: '100%',
+          },
+        ],
+      },
+    ],
+  },
 ];

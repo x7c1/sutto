@@ -6,26 +6,24 @@ import { WindowSnapManager } from './snap/window-snap-manager';
 
 // Extension class
 class Extension {
-    private _dbusReloader: DBusReloader | null;
-    private _windowSnapManager: WindowSnapManager;
+  private dbusReloader: DBusReloader | null;
+  private windowSnapManager: WindowSnapManager;
 
-    constructor(metadata: ExtensionMetadata) {
-        // Initialize DBusReloader only in development mode
-        this._dbusReloader = __DEV__
-            ? new DBusReloader('snappa@x7c1.github.io', metadata.uuid)
-            : null;
-        this._windowSnapManager = new WindowSnapManager();
-    }
+  constructor(metadata: ExtensionMetadata) {
+    // Initialize DBusReloader only in development mode
+    this.dbusReloader = __DEV__ ? new DBusReloader('snappa@x7c1.github.io', metadata.uuid) : null;
+    this.windowSnapManager = new WindowSnapManager();
+  }
 
-    enable(): void {
-        this._dbusReloader?.enable();
-        this._windowSnapManager.enable();
-    }
+  enable(): void {
+    this.dbusReloader?.enable();
+    this.windowSnapManager.enable();
+  }
 
-    disable(): void {
-        this._dbusReloader?.disable();
-        this._windowSnapManager.disable();
-    }
+  disable(): void {
+    this.dbusReloader?.disable();
+    this.windowSnapManager.disable();
+  }
 }
 
 /**
@@ -34,5 +32,5 @@ class Extension {
  */
 // @ts-expect-error - Called by GNOME Shell runtime
 function init(metadata: ExtensionMetadata): Extension {
-    return new Extension(metadata);
+  return new Extension(metadata);
 }
