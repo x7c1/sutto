@@ -48,7 +48,7 @@ function calculateButtonWidth(layout: Layout, displayWidth: number, screenWidth?
  * Get button style based on hover state and selection state
  * Color priority: Hover > Selected > Normal
  */
-function getButtonStyle(
+export function getButtonStyle(
   isHovered: boolean,
   isSelected: boolean,
   buttonWidth: number,
@@ -135,14 +135,26 @@ export function createLayoutButton(
     button.set_child(sizeLabel);
   }
 
+  // Store button metadata for dynamic style updates
+  // We use 'as any' to add custom properties to the button
+  const buttonWithMeta = button as any;
+  buttonWithMeta._isSelected = isSelected;
+  buttonWithMeta._buttonWidth = buttonWidth;
+  buttonWithMeta._buttonHeight = buttonHeight;
+  buttonWithMeta._debugConfig = debugConfig;
+
   // Add hover effect
   const enterEventId = button.connect('enter-event', () => {
-    button.set_style(getButtonStyle(true, isSelected, buttonWidth, buttonHeight, debugConfig));
+    button.set_style(
+      getButtonStyle(true, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
+    );
     return false; // Clutter.EVENT_PROPAGATE
   });
 
   const leaveEventId = button.connect('leave-event', () => {
-    button.set_style(getButtonStyle(false, isSelected, buttonWidth, buttonHeight, debugConfig));
+    button.set_style(
+      getButtonStyle(false, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
+    );
     return false; // Clutter.EVENT_PROPAGATE
   });
 

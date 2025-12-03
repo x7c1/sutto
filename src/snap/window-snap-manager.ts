@@ -274,6 +274,8 @@ export class WindowSnapManager {
     const wmClass = targetWindow.get_wm_class();
     if (wmClass) {
       setSelectedLayout(wmClass, layout.id);
+      // Update menu button styles immediately
+      this.snapMenu.updateSelectedLayoutHighlight(layout.id);
     } else {
       log('[WindowSnapManager] Window has no WM_CLASS, skipping history update');
     }

@@ -17,6 +17,8 @@ import { adjustMenuPosition } from './positioning';
 import { SnapMenuAutoHide } from './snap-menu-auto-hide';
 import {
   AUTO_HIDE_DELAY_MS,
+  BUTTON_BG_COLOR,
+  BUTTON_BG_COLOR_SELECTED,
   CATEGORY_SPACING,
   DEFAULT_LAYOUT_SETTINGS,
   DISPLAY_SPACING,
@@ -442,5 +444,57 @@ export class SnapMenu {
 
     log(`[SnapMenu] Position (${x}, ${y}) is not over any layout`);
     return null;
+  }
+
+  /**
+   * Update button styles when a layout is selected
+   * Called after layout selection to immediately reflect the change in the menu
+   */
+  updateSelectedLayoutHighlight(newSelectedLayoutId: string): void {
+    if (!this.container) {
+      log('[SnapMenu] Cannot update highlights: menu not visible');
+      return;
+    }
+
+    log(`[SnapMenu] Updating button highlights for layout: ${newSelectedLayoutId}`);
+    let updatedCount = 0;
+
+    // Update all button background colors
+    for (const [button, layout] of this.layoutButtons.entries()) {
+      const isSelected = layout.id === newSelectedLayoutId;
+      const bgColor = isSelected ? BUTTON_BG_COLOR_SELECTED : BUTTON_BG_COLOR;
+
+      // Update button's stored selection state
+      const buttonWithMeta = button as any;
+      buttonWithMeta._isSelected = isSelected;
+
+      // Access style property through type assertion
+      const currentStyle = buttonWithMeta.style || '';
+
+      if (!currentStyle) {
+        log(`[SnapMenu] Warning: Button for layout ${layout.label} has no style`);
+        continue;
+      }
+
+      // Replace background-color in the style string
+      const newStyle = String(currentStyle).replace(
+        /background-color:\s*rgba?\([^)]+\)\s*;?/g,
+        `background-color: ${bgColor};`
+      );
+
+      if (newStyle !== currentStyle) {
+        button.set_style(newStyle);
+        updatedCount++;
+        if (isSelected) {
+          log(`[SnapMenu] Set layout ${layout.label} (${layout.id}) to SELECTED (blue)`);
+        }
+      } else {
+        log(
+          `[SnapMenu] Warning: Failed to update style for ${layout.label}. Style: ${String(currentStyle).substring(0, 100)}`
+        );
+      }
+    }
+
+    log(`[SnapMenu] Updated ${updatedCount} button(s) out of ${this.layoutButtons.size}`);
   }
 }
