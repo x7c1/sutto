@@ -1,8 +1,8 @@
 /// <reference path="./types/gnome-shell-42.d.ts" />
 /// <reference path="./types/build-mode.d.ts" />
 
+import { Controller } from './app/controller';
 import { DBusReloader } from './reloader/dbus-reloader';
-import { Controller } from './snappa/controller';
 
 // Extension class
 class Extension {

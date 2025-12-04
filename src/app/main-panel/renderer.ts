@@ -6,9 +6,9 @@ const Main = imports.ui.main;
 import {
   FOOTER_MARGIN_TOP,
   FOOTER_TEXT_COLOR,
-  MENU_BG_COLOR,
-  MENU_BORDER_COLOR,
-  MENU_PADDING,
+  PANEL_BG_COLOR,
+  PANEL_BORDER_COLOR,
+  PANEL_PADDING,
 } from '../constants';
 import type { DebugConfig } from '../debug-panel/config';
 import type { Layout, LayoutGroupCategory } from '../types';
@@ -16,7 +16,7 @@ import { createCategoryView } from '../ui';
 
 declare function log(message: string): void;
 
-export interface MenuEventIds {
+export interface PanelEventIds {
   clickOutsideId: number;
   buttonEvents: Array<{
     button: St.Button;
@@ -34,11 +34,11 @@ export interface BackgroundView {
 export interface CategoriesView {
   categoriesContainer: St.BoxLayout;
   layoutButtons: Map<St.Button, Layout>;
-  buttonEvents: MenuEventIds['buttonEvents'];
+  buttonEvents: PanelEventIds['buttonEvents'];
 }
 
 /**
- * Create background overlay to capture clicks outside menu
+ * Create background overlay to capture clicks outside panel
  */
 export function createBackground(onClickOutside: () => void): BackgroundView {
   const background = new St.BoxLayout({
@@ -50,15 +50,15 @@ export function createBackground(onClickOutside: () => void): BackgroundView {
     height: global.screen_height,
   });
 
-  // Add background first (behind menu)
+  // Add background first (behind panel)
   Main.layoutManager.addChrome(background, {
     affectsInputRegion: true,
     trackFullscreen: false,
   });
 
-  // Connect click on background to close menu
+  // Connect click on background to close panel
   const clickOutsideId = background.connect('button-press-event', () => {
-    log('[SnapMenu] Click on background, hiding menu');
+    log('[MainPanel] Click on background, hiding panel');
     onClickOutside();
     return true; // Stop event propagation
   });
@@ -101,7 +101,7 @@ export function createCategoriesView(
   });
 
   const layoutButtons = new Map<St.Button, Layout>();
-  const buttonEvents: MenuEventIds['buttonEvents'] = [];
+  const buttonEvents: PanelEventIds['buttonEvents'] = [];
 
   // Create one category view for each category
   for (let i = 0; i < categories.length; i++) {
@@ -129,16 +129,16 @@ export function createCategoriesView(
 }
 
 /**
- * Create main menu container
+ * Create main panel container
  */
-export function createMenuContainer(): St.BoxLayout {
+export function createPanelContainer(): St.BoxLayout {
   const container = new St.BoxLayout({
-    style_class: 'snap-menu',
+    style_class: 'main-panel',
     style: `
-      background-color: ${MENU_BG_COLOR};
-      border: 2px solid ${MENU_BORDER_COLOR};
+      background-color: ${PANEL_BG_COLOR};
+      border: 2px solid ${PANEL_BORDER_COLOR};
       border-radius: 8px;
-      padding: ${MENU_PADDING}px;
+      padding: ${PANEL_PADDING}px;
     `,
     vertical: true,
     visible: true,

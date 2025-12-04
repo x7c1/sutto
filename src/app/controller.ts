@@ -4,8 +4,8 @@
  * Controller
  *
  * Main controller for Snappa extension.
- * Monitors window dragging and displays a snap menu when the cursor reaches screen edges.
- * Allows users to quickly snap windows to predefined positions by dropping them on menu buttons.
+ * Monitors window dragging and displays the main panel when the cursor reaches screen edges.
+ * Allows users to quickly snap windows to predefined positions by dropping them on panel buttons.
  */
 
 const Meta = imports.gi.Meta;
@@ -13,14 +13,14 @@ const GLib = imports.gi.GLib;
 const Main = imports.ui.main;
 
 import { evaluate, parse } from './layout-expression';
+import { MainPanel } from './main-panel/index';
 import { loadLayoutHistory, setSelectedLayout } from './repository/layout-history';
-import { SnapMenu } from './snap-menu/index';
 import type { Layout } from './types';
 
 declare function log(message: string): void;
 
-const EDGE_THRESHOLD = 10; // pixels from screen edge to trigger menu
-const EDGE_DELAY = 200; // milliseconds to wait before showing menu
+const EDGE_THRESHOLD = 10; // pixels from screen edge to trigger panel
+const EDGE_DELAY = 200; // milliseconds to wait before showing panel
 const MONITOR_INTERVAL = 50; // milliseconds between cursor position checks
 
 export class Controller {
@@ -32,15 +32,15 @@ export class Controller {
   private isDragging: boolean = false;
   private edgeTimer: number | null = null;
   private isAtEdge: boolean = false;
-  private snapMenu: SnapMenu;
+  private mainPanel: MainPanel;
 
   constructor() {
     // Load layout history
     loadLayoutHistory();
 
-    // Initialize snap menu
-    this.snapMenu = new SnapMenu();
-    this.snapMenu.setOnLayoutSelected((layout) => {
+    // Initialize main panel
+    this.mainPanel = new MainPanel();
+    this.mainPanel.setOnLayoutSelected((layout) => {
       this.applyLayoutToCurrentWindow(layout);
     });
   }
@@ -124,8 +124,8 @@ export class Controller {
       // Clear edge timer
       this.clearEdgeTimer();
 
-      // Keep menu visible until a button is clicked
-      // (menu will be hidden when layout is applied)
+      // Keep panel visible until a button is clicked
+      // (panel will be hidden when layout is applied)
     }
   }
 
@@ -170,17 +170,17 @@ export class Controller {
       // Just reached edge - start timer
       this.isAtEdge = true;
       this.startEdgeTimer();
-    } else if (!atEdge && this.isAtEdge && !this.snapMenu.isVisible()) {
-      // Left edge and menu is not visible - cancel timer
+    } else if (!atEdge && this.isAtEdge && !this.mainPanel.isVisible()) {
+      // Left edge and panel is not visible - cancel timer
       this.isAtEdge = false;
       this.clearEdgeTimer();
     }
-    // Note: If menu is visible, keep isAtEdge true even if cursor is not at edge
-    // This prevents the menu from disappearing when user moves cursor to menu
+    // Note: If panel is visible, keep isAtEdge true even if cursor is not at edge
+    // This prevents the panel from disappearing when user moves cursor to panel
 
-    // Update menu position if visible
-    if (this.snapMenu.isVisible()) {
-      this.snapMenu.updatePosition(x, y);
+    // Update panel position if visible
+    if (this.mainPanel.isVisible()) {
+      this.mainPanel.updatePosition(x, y);
     }
   }
 
@@ -192,7 +192,7 @@ export class Controller {
 
     this.edgeTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, EDGE_DELAY, () => {
       if (this.isAtEdge && this.isDragging) {
-        this.showSnapMenu();
+        this.showMainPanel();
       }
       this.edgeTimer = null;
       return false; // Don't repeat
@@ -246,20 +246,20 @@ export class Controller {
   }
 
   /**
-   * Show snap menu at cursor position
+   * Show main panel at cursor position
    */
-  private showSnapMenu(): void {
-    if (this.snapMenu.isVisible()) {
+  private showMainPanel(): void {
+    if (this.mainPanel.isVisible()) {
       return; // Already visible
     }
 
     const [x, y] = this.getCursorPosition();
     const wmClass = this.getCurrentWindowWmClass();
-    this.snapMenu.show(x, y, wmClass);
+    this.mainPanel.show(x, y, wmClass);
   }
 
   /**
-   * Apply layout to currently dragged window (called when menu button is clicked)
+   * Apply layout to currently dragged window (called when panel button is clicked)
    */
   private applyLayoutToCurrentWindow(layout: Layout): void {
     log(`[Controller] Apply layout: ${layout.label} (ID: ${layout.id})`);
@@ -276,8 +276,8 @@ export class Controller {
     const wmClass = targetWindow.get_wm_class();
     if (wmClass) {
       setSelectedLayout(wmClass, layout.id);
-      // Update menu button styles immediately
-      this.snapMenu.updateSelectedLayoutHighlight(layout.id);
+      // Update panel button styles immediately
+      this.mainPanel.updateSelectedLayoutHighlight(layout.id);
     } else {
       log('[Controller] Window has no WM_CLASS, skipping history update');
     }

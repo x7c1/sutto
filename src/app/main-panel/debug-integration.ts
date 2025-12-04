@@ -1,7 +1,7 @@
 /// <reference path="../../types/gnome-shell-42.d.ts" />
 
 /**
- * SnapMenuDebugIntegration
+ * MainPanelDebugIntegration
  *
  * Manages debug panel integration and test layout merging.
  * Handles debug configuration changes and panel lifecycle.
@@ -13,19 +13,19 @@ import { DebugPanel } from '../debug-panel/index';
 import { getTestLayoutGroups } from '../debug-panel/test-layouts';
 import { ensureTestLayoutsImported } from '../repository/layouts';
 import type { LayoutGroupCategory } from '../types';
-import type { SnapMenuAutoHide } from './auto-hide';
+import type { MainPanelAutoHide } from './auto-hide';
 
 declare function log(message: string): void;
 
-export class SnapMenuDebugIntegration {
+export class MainPanelDebugIntegration {
   private debugPanel: DebugPanel | null = null;
 
   /**
    * Initialize debug panel if debug mode is enabled
    */
-  initialize(autoHide: SnapMenuAutoHide, onConfigChanged: () => void): void {
+  initialize(autoHide: MainPanelAutoHide, onConfigChanged: () => void): void {
     if (isDebugMode()) {
-      log('[SnapMenuDebugIntegration] Debug mode is enabled, initializing debug panel');
+      log('[MainPanelDebugIntegration] Debug mode is enabled, initializing debug panel');
       loadDebugConfig();
       this.debugPanel = new DebugPanel();
 
@@ -42,7 +42,7 @@ export class SnapMenuDebugIntegration {
         autoHide.setDebugPanelHovered(false, AUTO_HIDE_DELAY_MS);
       });
     } else {
-      log('[SnapMenuDebugIntegration] Debug mode is disabled');
+      log('[MainPanelDebugIntegration] Debug mode is disabled');
     }
   }
 
@@ -97,14 +97,14 @@ export class SnapMenuDebugIntegration {
   }
 
   /**
-   * Show debug panel relative to menu position
+   * Show debug panel relative to main panel position
    */
-  showRelativeTo(menuX: number, menuY: number, menuWidth: number, menuHeight: number): void {
+  showRelativeTo(panelX: number, panelY: number, panelWidth: number, panelHeight: number): void {
     if (this.debugPanel) {
       log(
-        `[SnapMenuDebugIntegration] Showing debug panel relative to menu at: x=${menuX}, y=${menuY}, width=${menuWidth}, height=${menuHeight}`
+        `[MainPanelDebugIntegration] Showing debug panel relative to main panel at: x=${panelX}, y=${panelY}, width=${panelWidth}, height=${panelHeight}`
       );
-      this.debugPanel.showRelativeTo(menuX, menuY, menuWidth, menuHeight);
+      this.debugPanel.showRelativeTo(panelX, panelY, panelWidth, panelHeight);
     }
   }
 

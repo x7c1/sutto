@@ -1,7 +1,7 @@
 /// <reference path="../../types/gnome-shell-42.d.ts" />
 
 /**
- * SnapMenuLayoutSelector
+ * MainPanelLayoutSelector
  *
  * Manages layout selection and button highlighting.
  * Handles layout-at-position detection and visual feedback.
@@ -15,7 +15,7 @@ const St = imports.gi.St;
 
 declare function log(message: string): void;
 
-export class SnapMenuLayoutSelector {
+export class MainPanelLayoutSelector {
   private onLayoutSelected: ((layout: Layout) => void) | null = null;
 
   /**
@@ -43,24 +43,24 @@ export class SnapMenuLayoutSelector {
       const [width, height] = button.get_transformed_size();
 
       if (x >= actorX && x <= actorX + width && y >= actorY && y <= actorY + height) {
-        log(`[SnapMenuLayoutSelector] Position (${x}, ${y}) is over layout: ${layout.label}`);
+        log(`[MainPanelLayoutSelector] Position (${x}, ${y}) is over layout: ${layout.label}`);
         return layout;
       }
     }
 
-    log(`[SnapMenuLayoutSelector] Position (${x}, ${y}) is not over any layout`);
+    log(`[MainPanelLayoutSelector] Position (${x}, ${y}) is not over any layout`);
     return null;
   }
 
   /**
    * Update button styles when a layout is selected
-   * Called after layout selection to immediately reflect the change in the menu
+   * Called after layout selection to immediately reflect the change in the panel
    */
   updateSelectedLayoutHighlight(
     newSelectedLayoutId: string,
     layoutButtons: Map<St.Button, Layout>
   ): void {
-    log(`[SnapMenuLayoutSelector] Updating button highlights for layout: ${newSelectedLayoutId}`);
+    log(`[MainPanelLayoutSelector] Updating button highlights for layout: ${newSelectedLayoutId}`);
     let updatedCount = 0;
 
     // Update all button background colors
@@ -76,7 +76,7 @@ export class SnapMenuLayoutSelector {
       const currentStyle = buttonWithMeta.style || '';
 
       if (!currentStyle) {
-        log(`[SnapMenuLayoutSelector] Warning: Button for layout ${layout.label} has no style`);
+        log(`[MainPanelLayoutSelector] Warning: Button for layout ${layout.label} has no style`);
         continue;
       }
 
@@ -91,16 +91,16 @@ export class SnapMenuLayoutSelector {
         updatedCount++;
         if (isSelected) {
           log(
-            `[SnapMenuLayoutSelector] Set layout ${layout.label} (${layout.id}) to SELECTED (blue)`
+            `[MainPanelLayoutSelector] Set layout ${layout.label} (${layout.id}) to SELECTED (blue)`
           );
         }
       } else {
         log(
-          `[SnapMenuLayoutSelector] Warning: Failed to update style for ${layout.label}. Style: ${String(currentStyle).substring(0, 100)}`
+          `[MainPanelLayoutSelector] Warning: Failed to update style for ${layout.label}. Style: ${String(currentStyle).substring(0, 100)}`
         );
       }
     }
 
-    log(`[SnapMenuLayoutSelector] Updated ${updatedCount} button(s) out of ${layoutButtons.size}`);
+    log(`[MainPanelLayoutSelector] Updated ${updatedCount} button(s) out of ${layoutButtons.size}`);
   }
 }

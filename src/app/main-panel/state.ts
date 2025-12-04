@@ -1,20 +1,20 @@
 /**
- * SnapMenuState
+ * MainPanelState
  *
- * Manages the state of the snap menu including cursor position,
- * menu position, dimensions, and current window information.
+ * Manages the state of the main panel including cursor position,
+ * panel position, dimensions, and current window information.
  */
 
 import type { LayoutGroupCategory } from '../types';
 
-export class SnapMenuState {
+export class MainPanelState {
   private categories: LayoutGroupCategory[] = [];
   private currentWmClass: string | null = null;
   private originalCursorX: number = 0;
   private originalCursorY: number = 0;
-  private menuX: number = 0;
-  private menuY: number = 0;
-  private menuDimensions: { width: number; height: number } | null = null;
+  private panelX: number = 0;
+  private panelY: number = 0;
+  private panelDimensions: { width: number; height: number } | null = null;
 
   /**
    * Get the current categories
@@ -60,32 +60,32 @@ export class SnapMenuState {
   }
 
   /**
-   * Get the adjusted menu position
+   * Get the adjusted panel position
    */
-  getMenuPosition(): { x: number; y: number } {
-    return { x: this.menuX, y: this.menuY };
+  getPanelPosition(): { x: number; y: number } {
+    return { x: this.panelX, y: this.panelY };
   }
 
   /**
-   * Update the menu position
+   * Update the panel position
    */
-  updateMenuPosition(x: number, y: number): void {
-    this.menuX = x;
-    this.menuY = y;
+  updatePanelPosition(x: number, y: number): void {
+    this.panelX = x;
+    this.panelY = y;
   }
 
   /**
-   * Get the menu dimensions
+   * Get the panel dimensions
    */
-  getMenuDimensions(): { width: number; height: number } | null {
-    return this.menuDimensions;
+  getPanelDimensions(): { width: number; height: number } | null {
+    return this.panelDimensions;
   }
 
   /**
-   * Set the menu dimensions
+   * Set the panel dimensions
    */
-  setMenuDimensions(dimensions: { width: number; height: number }): void {
-    this.menuDimensions = dimensions;
+  setPanelDimensions(dimensions: { width: number; height: number }): void {
+    this.panelDimensions = dimensions;
   }
 
   /**
@@ -94,9 +94,9 @@ export class SnapMenuState {
   reset(): void {
     this.originalCursorX = 0;
     this.originalCursorY = 0;
-    this.menuX = 0;
-    this.menuY = 0;
-    this.menuDimensions = null;
-    // Note: Keep currentWmClass and categories to preserve across menu reopens
+    this.panelX = 0;
+    this.panelY = 0;
+    this.panelDimensions = null;
+    // Note: Keep currentWmClass and categories to preserve across panel reopens
   }
 }

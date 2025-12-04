@@ -6,39 +6,39 @@ export interface AutoHideEventIds {
 }
 
 /**
- * Manages auto-hide behavior for the snap menu
+ * Manages auto-hide behavior for the main panel
  *
- * Coordinates hover states between the menu and debug panel,
+ * Coordinates hover states between the panel and debug panel,
  * and manages the auto-hide timeout logic.
  */
-export class SnapMenuAutoHide {
-  private isMenuHovered: boolean = false;
+export class MainPanelAutoHide {
+  private isPanelHovered: boolean = false;
   private isDebugPanelHovered: boolean = false;
   private autoHideTimeoutId: number | null = null;
   private onHide: (() => void) | null = null;
 
   /**
-   * Set callback for when menu should be hidden
+   * Set callback for when panel should be hidden
    */
   setOnHide(callback: () => void): void {
     this.onHide = callback;
   }
 
   /**
-   * Setup auto-hide event handlers on menu container
+   * Setup auto-hide event handlers on panel container
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setupAutoHide(container: any, autoHideDelayMs: number): AutoHideEventIds {
     // Connect leave-event to check and start auto-hide timer
     const leaveEventId = container.connect('leave-event', () => {
-      this.isMenuHovered = false;
+      this.isPanelHovered = false;
       this.checkAndStartAutoHide(autoHideDelayMs);
       return false; // Clutter.EVENT_PROPAGATE
     });
 
     // Connect enter-event to cancel auto-hide timer
     const enterEventId = container.connect('enter-event', () => {
-      this.isMenuHovered = true;
+      this.isPanelHovered = true;
       this.clearAutoHideTimeout();
       return false; // Clutter.EVENT_PROPAGATE
     });
@@ -47,10 +47,10 @@ export class SnapMenuAutoHide {
   }
 
   /**
-   * Update menu hover state (for external callers)
+   * Update panel hover state (for external callers)
    */
-  setMenuHovered(hovered: boolean): void {
-    this.isMenuHovered = hovered;
+  setPanelHovered(hovered: boolean): void {
+    this.isPanelHovered = hovered;
   }
 
   /**
@@ -69,16 +69,16 @@ export class SnapMenuAutoHide {
    * Reset hover states
    */
   resetHoverStates(): void {
-    this.isMenuHovered = false;
+    this.isPanelHovered = false;
     this.isDebugPanelHovered = false;
   }
 
   /**
-   * Check if both menu and debug panel are not hovered, then start auto-hide
+   * Check if both panel and debug panel are not hovered, then start auto-hide
    */
   private checkAndStartAutoHide(autoHideDelayMs: number): void {
-    // Only start auto-hide if both menu and debug panel are not hovered
-    if (!this.isMenuHovered && !this.isDebugPanelHovered) {
+    // Only start auto-hide if both panel and debug panel are not hovered
+    if (!this.isPanelHovered && !this.isDebugPanelHovered) {
       this.startAutoHideTimeout(autoHideDelayMs);
     }
   }
@@ -92,8 +92,8 @@ export class SnapMenuAutoHide {
 
     // Start new timeout
     this.autoHideTimeoutId = imports.mainloop.timeout_add(autoHideDelayMs, () => {
-      // Double-check that neither menu nor debug panel is hovered before hiding
-      if (!this.isMenuHovered && !this.isDebugPanelHovered) {
+      // Double-check that neither panel nor debug panel is hovered before hiding
+      if (!this.isPanelHovered && !this.isDebugPanelHovered) {
         if (this.onHide) {
           this.onHide();
         }
@@ -118,7 +118,7 @@ export class SnapMenuAutoHide {
    */
   cleanup(): void {
     this.clearAutoHideTimeout();
-    this.isMenuHovered = false;
+    this.isPanelHovered = false;
     this.isDebugPanelHovered = false;
   }
 }

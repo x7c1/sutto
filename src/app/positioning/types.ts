@@ -24,10 +24,10 @@ export interface ScreenBoundaries {
 }
 
 /**
- * Options for menu positioning
+ * Options for main panel positioning
  */
-export interface MenuPositionOptions {
-  /** Whether to center the menu horizontally on the cursor */
+export interface MainPanelPositionOptions {
+  /** Whether to center the panel horizontally on the cursor */
   centerHorizontally?: boolean;
   /** Whether to reserve space for debug panel on the right */
   reserveDebugPanelSpace?: boolean;
@@ -38,9 +38,9 @@ export interface MenuPositionOptions {
 }
 
 /**
- * Options for panel positioning
+ * Options for debug panel positioning
  */
-export interface PanelPositionOptions {
+export interface DebugPanelPositionOptions {
   /** Only adjust Y coordinate (keep X as-is) */
   adjustYOnly?: boolean;
 }

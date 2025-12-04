@@ -4,8 +4,8 @@ const St = imports.gi.St;
 const Clutter = imports.gi.Clutter;
 const Main = imports.ui.main;
 
-import { DEFAULT_LAYOUT_SETTINGS, MENU_EDGE_PADDING } from '../constants';
-import { adjustPanelPosition } from '../positioning';
+import { DEFAULT_LAYOUT_SETTINGS, PANEL_EDGE_PADDING } from '../constants';
+import { adjustDebugPanelPosition } from '../positioning';
 import { type DebugConfig, getDebugConfig, toggleDebugOption, toggleTestGroup } from './config';
 import { getTestLayoutGroups } from './test-layouts';
 
@@ -17,7 +17,7 @@ const PANEL_PADDING = 12;
 const SECTION_SPACING = 8;
 const CHECKBOX_SIZE = 16;
 const CHECKBOX_SPACING = 8;
-const DEBUG_PANEL_GAP = 20; // Gap between menu and debug panel
+const DEBUG_PANEL_GAP = 20; // Gap between main panel and debug panel
 
 // Colors
 const PANEL_BG_COLOR = 'rgba(40, 40, 40, 0.95)';
@@ -60,10 +60,15 @@ export class DebugPanel {
   }
 
   /**
-   * Show debug panel relative to the menu position
-   * Calculates its own position based on menu bounds
+   * Show debug panel relative to the main panel position
+   * Calculates its own position based on main panel bounds
    */
-  showRelativeTo(menuX: number, menuY: number, menuWidth: number, menuHeight: number): void {
+  showRelativeTo(
+    mainPanelX: number,
+    mainPanelY: number,
+    mainPanelWidth: number,
+    mainPanelHeight: number
+  ): void {
     // Clean up existing panel if any
     this.hide();
 
@@ -78,7 +83,7 @@ export class DebugPanel {
                 border-radius: 8px;
                 padding: ${PANEL_PADDING}px;
                 width: ${PANEL_WIDTH}px;
-                min-height: ${menuHeight}px;
+                min-height: ${mainPanelHeight}px;
             `,
     });
 
@@ -112,45 +117,45 @@ export class DebugPanel {
 
     this.addTestGroupsSection();
 
-    // Add panel to chrome (similar to SnapMenu)
+    // Add panel to chrome (similar to MainPanel)
     Main.layoutManager.addChrome(this.container, {
       affectsInputRegion: true,
       trackFullscreen: false,
     });
 
-    // Calculate debug panel position: to the right of menu with gap
-    const debugPanelX = menuX + menuWidth + DEBUG_PANEL_GAP;
+    // Calculate debug panel position: to the right of main panel with gap
+    const debugPanelX = mainPanelX + mainPanelWidth + DEBUG_PANEL_GAP;
 
     // Position panel temporarily at calculated position to allow size calculation
-    this.container.set_position(debugPanelX, menuY);
+    this.container.set_position(debugPanelX, mainPanelY);
 
     // Get preferred height to calculate actual panel size
     // Use PANEL_WIDTH as the for_width parameter since panel has fixed width
     const [, naturalHeight] = (this.container as any).get_preferred_height(PANEL_WIDTH);
-    this.panelHeight = naturalHeight > 0 ? naturalHeight : menuHeight;
+    this.panelHeight = naturalHeight > 0 ? naturalHeight : mainPanelHeight;
     log(
-      `[DebugPanel] Menu position: (${menuX}, ${menuY}), Menu width: ${menuWidth}, Debug panel X: ${debugPanelX}, Natural height: ${naturalHeight}, Using height: ${this.panelHeight}, Min height: ${menuHeight}`
+      `[DebugPanel] Main panel position: (${mainPanelX}, ${mainPanelY}), Main panel width: ${mainPanelWidth}, Debug panel X: ${debugPanelX}, Natural height: ${naturalHeight}, Using height: ${this.panelHeight}, Min height: ${mainPanelHeight}`
     );
 
     // Adjust Y position based on actual panel height
     const screenWidth = global.screen_width;
     const screenHeight = global.screen_height;
-    const adjusted = adjustPanelPosition(
-      { x: debugPanelX, y: menuY },
+    const adjusted = adjustDebugPanelPosition(
+      { x: debugPanelX, y: mainPanelY },
       { width: PANEL_WIDTH, height: this.panelHeight },
       {
         screenWidth,
         screenHeight,
-        edgePadding: MENU_EDGE_PADDING,
+        edgePadding: PANEL_EDGE_PADDING,
       },
       { adjustYOnly: true }
     );
-    log(`[DebugPanel] Adjusted Y: ${adjusted.y} (original: ${menuY})`);
+    log(`[DebugPanel] Adjusted Y: ${adjusted.y} (original: ${mainPanelY})`);
 
     // Reposition panel at adjusted coordinates
     this.container.set_position(debugPanelX, adjusted.y);
 
-    // Setup hover events to notify parent menu
+    // Setup hover events to notify parent main panel
     this.enterEventId = this.container.connect('enter-event', () => {
       if (this.onEnter) {
         this.onEnter();
@@ -197,13 +202,13 @@ export class DebugPanel {
       // Adjust Y position to keep panel within screen boundaries
       const screenWidth = global.screen_width;
       const screenHeight = global.screen_height;
-      const adjusted = adjustPanelPosition(
+      const adjusted = adjustDebugPanelPosition(
         { x, y },
         { width: PANEL_WIDTH, height: this.panelHeight },
         {
           screenWidth,
           screenHeight,
-          edgePadding: MENU_EDGE_PADDING,
+          edgePadding: PANEL_EDGE_PADDING,
         },
         { adjustYOnly: true }
       );

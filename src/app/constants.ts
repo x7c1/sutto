@@ -1,12 +1,12 @@
 import type { LayoutCategorySetting } from './types/layout-setting';
 
 // Timing
-export const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding menu when cursor leaves
+export const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding panel when cursor leaves
 
 // Dimensions
 export const MINIATURE_DISPLAY_WIDTH = 210; // Fixed width for miniature displays
-export const MENU_PADDING = 12; // Padding around menu content
-export const MENU_EDGE_PADDING = 10; // Minimum distance from screen edges
+export const PANEL_PADDING = 12; // Padding around panel content
+export const PANEL_EDGE_PADDING = 10; // Minimum distance from screen edges
 export const DISPLAY_SPACING = 12; // Spacing between miniature displays (vertical within categories, or old vertical spacing)
 export const CATEGORY_SPACING = 16; // Vertical spacing between categories
 export const DISPLAY_SPACING_HORIZONTAL = 12; // Horizontal spacing between displays within a category
@@ -15,8 +15,8 @@ export const BUTTON_BORDER_WIDTH = 1; // Border width for layout buttons
 export const FOOTER_MARGIN_TOP = 12; // Margin above footer
 
 // Colors
-export const MENU_BG_COLOR = 'rgba(40, 40, 40, 0.95)';
-export const MENU_BORDER_COLOR = 'rgba(255, 255, 255, 0.2)';
+export const PANEL_BG_COLOR = 'rgba(40, 40, 40, 0.95)'; // Main panel background
+export const PANEL_BORDER_COLOR = 'rgba(255, 255, 255, 0.2)'; // Main panel border
 export const DISPLAY_BG_COLOR = 'rgba(20, 20, 20, 0.9)';
 export const BUTTON_BG_COLOR = 'rgba(80, 80, 80, 0.6)';
 export const BUTTON_BG_COLOR_HOVER = 'rgba(120, 120, 120, 0.8)';

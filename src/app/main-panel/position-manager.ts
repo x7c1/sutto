@@ -1,9 +1,9 @@
 /// <reference path="../../types/gnome-shell-42.d.ts" />
 
 /**
- * SnapMenuPositionManager
+ * MainPanelPositionManager
  *
- * Manages menu positioning and dimension calculations.
+ * Manages panel positioning and dimension calculations.
  * Handles boundary adjustments.
  */
 
@@ -13,21 +13,21 @@ import {
   DISPLAY_SPACING_HORIZONTAL,
   FOOTER_MARGIN_TOP,
   MAX_DISPLAYS_PER_ROW,
-  MENU_EDGE_PADDING,
-  MENU_PADDING,
   MINIATURE_DISPLAY_WIDTH,
+  PANEL_EDGE_PADDING,
+  PANEL_PADDING,
 } from '../constants';
-import { adjustMenuPosition } from '../positioning';
+import { adjustMainPanelPosition } from '../positioning';
 import type { LayoutGroupCategory } from '../types';
 
 // @ts-expect-error - St is used for type annotations
 const St = imports.gi.St;
 
-export class SnapMenuPositionManager {
+export class MainPanelPositionManager {
   /**
-   * Calculate menu dimensions based on categories to render
+   * Calculate panel dimensions based on categories to render
    */
-  calculateMenuDimensions(
+  calculatePanelDimensions(
     categoriesToRender: LayoutGroupCategory[],
     aspectRatio: number,
     showFooter: boolean
@@ -53,10 +53,10 @@ export class SnapMenuPositionManager {
         maxCategoryWidth = Math.max(maxCategoryWidth, categoryWidth);
       }
     }
-    const menuWidth = maxCategoryWidth + MENU_PADDING * 2;
+    const panelWidth = maxCategoryWidth + PANEL_PADDING * 2;
 
     // Calculate height: sum of all category heights with spacing
-    let totalHeight = MENU_PADDING; // Top padding
+    let totalHeight = PANEL_PADDING; // Top padding
     for (let i = 0; i < categoriesToRender.length; i++) {
       const category = categoriesToRender[i];
       const numDisplays = category.layoutGroups.length;
@@ -78,30 +78,30 @@ export class SnapMenuPositionManager {
       totalHeight += FOOTER_MARGIN_TOP + 20; // 20px approximate footer text height
     }
 
-    totalHeight += MENU_PADDING; // Bottom padding
+    totalHeight += PANEL_PADDING; // Bottom padding
 
-    return { width: menuWidth, height: totalHeight };
+    return { width: panelWidth, height: totalHeight };
   }
 
   /**
-   * Adjust menu position for screen boundaries with center alignment
+   * Adjust panel position for screen boundaries with center alignment
    */
   adjustPosition(
     cursorX: number,
     cursorY: number,
-    menuDimensions: { width: number; height: number },
+    panelDimensions: { width: number; height: number },
     hasDebugPanel: boolean
   ): { x: number; y: number } {
     const screenWidth = global.screen_width;
     const screenHeight = global.screen_height;
 
-    const adjusted = adjustMenuPosition(
+    const adjusted = adjustMainPanelPosition(
       { x: cursorX, y: cursorY },
-      menuDimensions,
+      panelDimensions,
       {
         screenWidth,
         screenHeight,
-        edgePadding: MENU_EDGE_PADDING,
+        edgePadding: PANEL_EDGE_PADDING,
       },
       {
         centerHorizontally: true,
@@ -115,9 +115,9 @@ export class SnapMenuPositionManager {
   }
 
   /**
-   * Update menu container position
+   * Update panel container position
    */
-  updateMenuPosition(container: St.BoxLayout, x: number, y: number): void {
+  updatePanelPosition(container: St.BoxLayout, x: number, y: number): void {
     container.set_position(x, y);
   }
 }

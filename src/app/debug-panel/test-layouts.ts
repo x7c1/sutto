@@ -3,7 +3,7 @@ import type { LayoutGroupSetting } from '../types/layout-setting';
 /**
  * Test layout groups for debugging purposes
  *
- * These are settings (not layouts with IDs) - IDs are added when used by the menu.
+ * These are settings (not layouts with IDs) - IDs are added when imported to repository.
  * These layouts are only used when BUILD_MODE=debug and provide
  * comprehensive test cases for UI development and validation.
  */

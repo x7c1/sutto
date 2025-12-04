@@ -160,7 +160,7 @@ export function createLayoutButton(
 
   // Connect click event
   const clickEventId = button.connect('button-press-event', () => {
-    log(`[SnapMenu] Layout selected: ${layout.label}`);
+    log(`[MainPanel] Layout selected: ${layout.label}`);
     onLayoutSelected(layout);
     return true; // Clutter.EVENT_STOP
   });

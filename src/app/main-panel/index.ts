@@ -1,10 +1,10 @@
 /// <reference path="../../types/gnome-shell-42.d.ts" />
 
 /**
- * Snap Menu
+ * Main Panel
  *
- * Displays a menu with layout buttons for snapping windows to different positions.
- * The menu appears at the cursor position when the user drags a window to a screen edge.
+ * Displays a panel with layout buttons for snapping windows to different positions.
+ * The panel appears at the cursor position when the user drags a window to a screen edge.
  */
 
 const St = imports.gi.St;
@@ -14,33 +14,33 @@ import { AUTO_HIDE_DELAY_MS, DEFAULT_LAYOUT_SETTINGS, MINIATURE_DISPLAY_WIDTH } 
 import { getDebugConfig } from '../debug-panel/config';
 import { importSettings, loadLayouts } from '../repository/layouts';
 import type { Layout } from '../types';
-import { SnapMenuAutoHide } from './auto-hide';
-import { SnapMenuDebugIntegration } from './debug-integration';
-import { SnapMenuLayoutSelector } from './layout-selector';
-import { SnapMenuPositionManager } from './position-manager';
-import type { MenuEventIds } from './renderer';
+import { MainPanelAutoHide } from './auto-hide';
+import { MainPanelDebugIntegration } from './debug-integration';
+import { MainPanelLayoutSelector } from './layout-selector';
+import { MainPanelPositionManager } from './position-manager';
+import type { PanelEventIds } from './renderer';
 import {
   createBackground,
   createCategoriesView,
   createFooter,
-  createMenuContainer,
+  createPanelContainer,
 } from './renderer';
-import { SnapMenuState } from './state';
+import { MainPanelState } from './state';
 
 declare function log(message: string): void;
 
-export class SnapMenu {
+export class MainPanel {
   private container: St.BoxLayout | null = null;
   private background: St.BoxLayout | null = null;
   private layoutButtons: Map<St.Button, Layout> = new Map();
-  private rendererEventIds: MenuEventIds | null = null;
+  private rendererEventIds: PanelEventIds | null = null;
 
   // Component instances
-  private state: SnapMenuState = new SnapMenuState();
-  private positionManager: SnapMenuPositionManager = new SnapMenuPositionManager();
-  private layoutSelector: SnapMenuLayoutSelector = new SnapMenuLayoutSelector();
-  private debugIntegration: SnapMenuDebugIntegration = new SnapMenuDebugIntegration();
-  private autoHide: SnapMenuAutoHide = new SnapMenuAutoHide();
+  private state: MainPanelState = new MainPanelState();
+  private positionManager: MainPanelPositionManager = new MainPanelPositionManager();
+  private layoutSelector: MainPanelLayoutSelector = new MainPanelLayoutSelector();
+  private debugIntegration: MainPanelDebugIntegration = new MainPanelDebugIntegration();
+  private autoHide: MainPanelAutoHide = new MainPanelAutoHide();
 
   constructor() {
     // Setup auto-hide callback
@@ -50,7 +50,7 @@ export class SnapMenu {
 
     // Initialize debug integration
     this.debugIntegration.initialize(this.autoHide, () => {
-      // Refresh menu when debug config changes
+      // Refresh panel when debug config changes
       // Use original cursor position (not adjusted position) to avoid shifting
       // Pass current wmClass to preserve selection state
       if (this.container) {
@@ -64,7 +64,7 @@ export class SnapMenu {
     // First launch: import default settings if repository is empty
     let layouts = loadLayouts();
     if (layouts.length === 0) {
-      log('[SnapMenu] Layouts repository is empty, importing default settings');
+      log('[MainPanel] Layouts repository is empty, importing default settings');
       importSettings(DEFAULT_LAYOUT_SETTINGS);
       layouts = loadLayouts();
     }
@@ -82,10 +82,10 @@ export class SnapMenu {
   }
 
   /**
-   * Show the snap menu at the specified position
+   * Show the main panel at the specified position
    */
   show(x: number, y: number, wmClass: string | null = null): void {
-    // Hide existing menu if any
+    // Hide existing panel if any
     this.hide();
 
     // Store original cursor position and wmClass
@@ -106,32 +106,32 @@ export class SnapMenu {
     // Determine which categories to render (merge test categories if debug enabled)
     const baseCategories = this.state.getCategories();
     log(
-      `[SnapMenu] Base categories count: ${baseCategories.length}, items: ${baseCategories.map((c) => c.name).join(', ')}`
+      `[MainPanel] Base categories count: ${baseCategories.length}, items: ${baseCategories.map((c) => c.name).join(', ')}`
     );
     const categories = this.debugIntegration.mergeTestCategories(baseCategories);
     log(
-      `[SnapMenu] After merge categories count: ${categories.length}, items: ${categories.map((c) => c.name).join(', ')}`
+      `[MainPanel] After merge categories count: ${categories.length}, items: ${categories.map((c) => c.name).join(', ')}`
     );
 
-    // Calculate menu dimensions
+    // Calculate panel dimensions
     const showFooter = !debugConfig || debugConfig.showFooter;
-    const menuDimensions = this.positionManager.calculateMenuDimensions(
+    const panelDimensions = this.positionManager.calculatePanelDimensions(
       categories,
       aspectRatio,
       showFooter
     );
-    this.state.setMenuDimensions(menuDimensions);
+    this.state.setPanelDimensions(panelDimensions);
 
     // Adjust position for boundaries with center alignment
     const adjusted = this.positionManager.adjustPosition(
       x,
       y,
-      menuDimensions,
+      panelDimensions,
       this.debugIntegration.isEnabled()
     );
 
-    // Store adjusted menu position
-    this.state.updateMenuPosition(adjusted.x, adjusted.y);
+    // Store adjusted panel position
+    this.state.updatePanelPosition(adjusted.x, adjusted.y);
 
     // Create background
     const { background, clickOutsideId } = createBackground(() => {
@@ -141,7 +141,7 @@ export class SnapMenu {
 
     // Create categories view or empty message
     let categoriesElement: St.BoxLayout | St.Label;
-    let buttonEvents: MenuEventIds['buttonEvents'] = [];
+    let buttonEvents: PanelEventIds['buttonEvents'] = [];
 
     if (categories.length === 0) {
       // Show "No categories" message
@@ -180,7 +180,7 @@ export class SnapMenu {
     const footer = createFooter();
 
     // Create main container
-    const container = createMenuContainer();
+    const container = createPanelContainer();
     this.container = container;
 
     // Add children to container
@@ -189,11 +189,11 @@ export class SnapMenu {
       container.add_child(footer);
     }
 
-    // Position menu at adjusted coordinates
-    const { x: menuX, y: menuY } = this.state.getMenuPosition();
-    container.set_position(menuX, menuY);
+    // Position panel at adjusted coordinates
+    const { x: panelX, y: panelY } = this.state.getPanelPosition();
+    container.set_position(panelX, panelY);
 
-    // Add menu container to chrome
+    // Add panel container to chrome
     Main.layoutManager.addChrome(container, {
       affectsInputRegion: true,
       trackFullscreen: false,
@@ -208,12 +208,17 @@ export class SnapMenu {
       buttonEvents: buttonEvents,
     };
 
-    // Show debug panel if enabled - it will position itself relative to menu
-    this.debugIntegration.showRelativeTo(menuX, menuY, menuDimensions.width, menuDimensions.height);
+    // Show debug panel if enabled - it will position itself relative to panel
+    this.debugIntegration.showRelativeTo(
+      panelX,
+      panelY,
+      panelDimensions.width,
+      panelDimensions.height
+    );
   }
 
   /**
-   * Hide the snap menu
+   * Hide the main panel
    */
   hide(): void {
     if (this.container) {
@@ -238,7 +243,7 @@ export class SnapMenu {
         this.rendererEventIds = null;
       }
 
-      // Remove menu container
+      // Remove panel container
       Main.layoutManager.removeChrome(this.container);
       this.container.destroy();
 
@@ -261,18 +266,18 @@ export class SnapMenu {
   }
 
   /**
-   * Check if menu is currently shown
+   * Check if panel is currently shown
    */
   isVisible(): boolean {
     return this.container !== null;
   }
 
   /**
-   * Update menu position (for following cursor during drag)
+   * Update panel position (for following cursor during drag)
    */
   updatePosition(x: number, y: number): void {
-    const menuDimensions = this.state.getMenuDimensions();
-    if (this.container && menuDimensions) {
+    const panelDimensions = this.state.getPanelDimensions();
+    if (this.container && panelDimensions) {
       // Store original cursor position
       this.state.updateOriginalCursor(x, y);
 
@@ -280,22 +285,22 @@ export class SnapMenu {
       const adjusted = this.positionManager.adjustPosition(
         x,
         y,
-        menuDimensions,
+        panelDimensions,
         this.debugIntegration.isEnabled()
       );
 
-      // Update stored menu position
-      this.state.updateMenuPosition(adjusted.x, adjusted.y);
+      // Update stored panel position
+      this.state.updatePanelPosition(adjusted.x, adjusted.y);
 
       // Update container position
-      this.positionManager.updateMenuPosition(this.container, adjusted.x, adjusted.y);
+      this.positionManager.updatePanelPosition(this.container, adjusted.x, adjusted.y);
 
-      // Update debug panel position if enabled - it will reposition itself relative to menu
+      // Update debug panel position if enabled - it will reposition itself relative to panel
       this.debugIntegration.showRelativeTo(
         adjusted.x,
         adjusted.y,
-        menuDimensions.width,
-        menuDimensions.height
+        panelDimensions.width,
+        panelDimensions.height
       );
     }
   }
@@ -314,11 +319,11 @@ export class SnapMenu {
 
   /**
    * Update button styles when a layout is selected
-   * Called after layout selection to immediately reflect the change in the menu
+   * Called after layout selection to immediately reflect the change in the panel
    */
   updateSelectedLayoutHighlight(newSelectedLayoutId: string): void {
     if (!this.container) {
-      log('[SnapMenu] Cannot update highlights: menu not visible');
+      log('[MainPanel] Cannot update highlights: panel not visible');
       return;
     }
 
