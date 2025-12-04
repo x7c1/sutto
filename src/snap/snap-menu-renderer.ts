@@ -4,7 +4,13 @@ const St = imports.gi.St;
 const Main = imports.ui.main;
 
 import type { DebugConfig } from './debug-config';
-import { FOOTER_MARGIN_TOP, FOOTER_TEXT_COLOR } from './snap-menu-constants';
+import {
+  FOOTER_MARGIN_TOP,
+  FOOTER_TEXT_COLOR,
+  MENU_BG_COLOR,
+  MENU_BORDER_COLOR,
+  MENU_PADDING,
+} from './snap-menu-constants';
 import type { Layout, LayoutGroupCategory } from './types';
 import { createCategoryView } from './ui';
 
@@ -120,4 +126,26 @@ export function createCategoriesView(
   }
 
   return { categoriesContainer, layoutButtons, buttonEvents };
+}
+
+/**
+ * Create main menu container
+ */
+export function createMenuContainer(): St.BoxLayout {
+  const container = new St.BoxLayout({
+    style_class: 'snap-menu',
+    style: `
+      background-color: ${MENU_BG_COLOR};
+      border: 2px solid ${MENU_BORDER_COLOR};
+      border-radius: 8px;
+      padding: ${MENU_PADDING}px;
+    `,
+    vertical: true,
+    visible: true,
+    reactive: true,
+    can_focus: true,
+    track_hover: true,
+  });
+
+  return container;
 }

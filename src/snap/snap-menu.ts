@@ -10,31 +10,26 @@
 const St = imports.gi.St;
 const Main = imports.ui.main;
 
-import { getDebugConfig, isDebugMode, loadDebugConfig } from './debug-config';
-import { DebugPanel } from './debug-panel';
-import { ensureTestLayoutsImported, importSettings, loadLayouts } from './layouts-repository';
-import { adjustMenuPosition } from './positioning';
+import { getDebugConfig } from './debug-config';
+import { importSettings, loadLayouts } from './layouts-repository';
 import { SnapMenuAutoHide } from './snap-menu-auto-hide';
 import {
   AUTO_HIDE_DELAY_MS,
-  BUTTON_BG_COLOR,
-  BUTTON_BG_COLOR_SELECTED,
-  CATEGORY_SPACING,
   DEFAULT_LAYOUT_SETTINGS,
-  DISPLAY_SPACING,
-  DISPLAY_SPACING_HORIZONTAL,
-  FOOTER_MARGIN_TOP,
-  MAX_DISPLAYS_PER_ROW,
-  MENU_BG_COLOR,
-  MENU_BORDER_COLOR,
-  MENU_EDGE_PADDING,
-  MENU_PADDING,
   MINIATURE_DISPLAY_WIDTH,
 } from './snap-menu-constants';
+import { SnapMenuDebugIntegration } from './snap-menu-debug-integration';
+import { SnapMenuLayoutSelector } from './snap-menu-layout-selector';
+import { SnapMenuPositionManager } from './snap-menu-position-manager';
 import type { MenuEventIds } from './snap-menu-renderer';
-import { createBackground, createCategoriesView, createFooter } from './snap-menu-renderer';
-import { getTestLayoutGroups } from './test-layouts';
-import type { Layout, LayoutGroup, LayoutGroupCategory } from './types';
+import {
+  createBackground,
+  createCategoriesView,
+  createFooter,
+  createMenuContainer,
+} from './snap-menu-renderer';
+import { SnapMenuState } from './snap-menu-state';
+import type { Layout, LayoutGroup } from './types';
 
 declare function log(message: string): void;
 
@@ -44,18 +39,15 @@ export type { Layout as SnapLayout, LayoutGroup as SnapLayoutGroup };
 export class SnapMenu {
   private container: St.BoxLayout | null = null;
   private background: St.BoxLayout | null = null;
-  private categories: LayoutGroupCategory[] = [];
-  private onLayoutSelected: ((layout: Layout) => void) | null = null;
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private rendererEventIds: MenuEventIds | null = null;
+
+  // Component instances
+  private state: SnapMenuState = new SnapMenuState();
+  private positionManager: SnapMenuPositionManager = new SnapMenuPositionManager();
+  private layoutSelector: SnapMenuLayoutSelector = new SnapMenuLayoutSelector();
+  private debugIntegration: SnapMenuDebugIntegration = new SnapMenuDebugIntegration();
   private autoHide: SnapMenuAutoHide = new SnapMenuAutoHide();
-  private debugPanel: DebugPanel | null = null;
-  private menuX: number = 0; // Adjusted menu position
-  private menuY: number = 0; // Adjusted menu position
-  private originalCursorX: number = 0; // Original cursor X position (before adjustment)
-  private originalCursorY: number = 0; // Original cursor Y position (before adjustment)
-  private currentWmClass: string | null = null; // Current window WM_CLASS
-  private menuDimensions: { width: number; height: number } | null = null;
 
   constructor() {
     // Setup auto-hide callback
@@ -63,28 +55,17 @@ export class SnapMenu {
       this.hide();
     });
 
-    // Initialize debug mode if enabled
-    if (isDebugMode()) {
-      log('[SnapMenu] Debug mode is enabled, initializing debug panel');
-      loadDebugConfig();
-      this.debugPanel = new DebugPanel();
-      this.debugPanel.setOnConfigChanged(() => {
-        // Refresh menu when debug config changes
-        // Use original cursor position (not adjusted position) to avoid shifting
-        // Pass current wmClass to preserve selection state
-        if (this.container) {
-          this.show(this.originalCursorX, this.originalCursorY, this.currentWmClass);
-        }
-      });
-      this.debugPanel.setOnEnter(() => {
-        this.autoHide.setDebugPanelHovered(true, AUTO_HIDE_DELAY_MS);
-      });
-      this.debugPanel.setOnLeave(() => {
-        this.autoHide.setDebugPanelHovered(false, AUTO_HIDE_DELAY_MS);
-      });
-    } else {
-      log('[SnapMenu] Debug mode is disabled');
-    }
+    // Initialize debug integration
+    this.debugIntegration.initialize(this.autoHide, () => {
+      // Refresh menu when debug config changes
+      // Use original cursor position (not adjusted position) to avoid shifting
+      // Pass current wmClass to preserve selection state
+      if (this.container) {
+        const { x, y } = this.state.getOriginalCursor();
+        const wmClass = this.state.getCurrentWmClass();
+        this.show(x, y, wmClass);
+      }
+    });
 
     // Initialize layouts repository
     // First launch: import default settings if repository is empty
@@ -94,14 +75,17 @@ export class SnapMenu {
       importSettings(DEFAULT_LAYOUT_SETTINGS);
       layouts = loadLayouts();
     }
-    this.categories = layouts;
+
+    // Filter out Test Layouts from base categories (they are added dynamically in debug mode)
+    const baseCategories = layouts.filter((c) => c.name !== 'Test Layouts');
+    this.state.setCategories(baseCategories);
   }
 
   /**
    * Set callback for when a layout is selected
    */
   setOnLayoutSelected(callback: (layout: Layout) => void): void {
-    this.onLayoutSelected = callback;
+    this.layoutSelector.setOnLayoutSelected(callback);
   }
 
   /**
@@ -111,69 +95,50 @@ export class SnapMenu {
     // Hide existing menu if any
     this.hide();
 
-    // Store original cursor position (before any adjustments)
-    this.originalCursorX = x;
-    this.originalCursorY = y;
-    this.currentWmClass = wmClass;
+    // Store original cursor position and wmClass
+    this.state.updateOriginalCursor(x, y);
+    this.state.setCurrentWmClass(wmClass);
 
     // Reset auto-hide states
     this.autoHide.resetHoverStates();
 
     // Get debug configuration
-    const debugConfig = this.debugPanel ? getDebugConfig() : null;
+    const debugConfig = this.debugIntegration.isEnabled() ? getDebugConfig() : null;
 
     // Get screen dimensions and calculate aspect ratio
     const screenWidth = global.screen_width;
     const screenHeight = global.screen_height;
     const aspectRatio = screenHeight / screenWidth;
-    const miniatureDisplayHeight = MINIATURE_DISPLAY_WIDTH * aspectRatio;
 
-    // Determine which categories to render
-    let categories = this.categories;
-    if (this.debugPanel && debugConfig) {
-      const testGroupSettings = getTestLayoutGroups();
-      const enabledTestGroupSettings = testGroupSettings.filter((g) =>
-        debugConfig.enabledTestGroups.has(g.name)
-      );
-      // Import test layouts to repository and get the category with stable IDs
-      if (enabledTestGroupSettings.length > 0) {
-        const testCategory = ensureTestLayoutsImported(enabledTestGroupSettings);
-        if (testCategory) {
-          // Filter to only enabled groups
-          const enabledGroupNames = new Set(enabledTestGroupSettings.map((g) => g.name));
-          const filteredTestCategory: LayoutGroupCategory = {
-            name: testCategory.name,
-            layoutGroups: testCategory.layoutGroups.filter((g) => enabledGroupNames.has(g.name)),
-          };
-          categories = [...categories, filteredTestCategory];
-        }
-      }
-    }
+    // Determine which categories to render (merge test categories if debug enabled)
+    const baseCategories = this.state.getCategories();
+    log(
+      `[SnapMenu] Base categories count: ${baseCategories.length}, items: ${baseCategories.map((c) => c.name).join(', ')}`
+    );
+    const categories = this.debugIntegration.mergeTestCategories(baseCategories);
+    log(
+      `[SnapMenu] After merge categories count: ${categories.length}, items: ${categories.map((c) => c.name).join(', ')}`
+    );
 
     // Calculate menu dimensions
     const showFooter = !debugConfig || debugConfig.showFooter;
-    this.menuDimensions = this.calculateMenuDimensions(categories, aspectRatio, showFooter);
+    const menuDimensions = this.positionManager.calculateMenuDimensions(
+      categories,
+      aspectRatio,
+      showFooter
+    );
+    this.state.setMenuDimensions(menuDimensions);
 
     // Adjust position for boundaries with center alignment
-    const adjusted = adjustMenuPosition(
-      { x, y },
-      this.menuDimensions,
-      {
-        screenWidth,
-        screenHeight,
-        edgePadding: MENU_EDGE_PADDING,
-      },
-      {
-        centerHorizontally: true,
-        reserveDebugPanelSpace: !!this.debugPanel,
-        debugPanelGap: 20,
-        debugPanelWidth: 300,
-      }
+    const adjusted = this.positionManager.adjustPosition(
+      x,
+      y,
+      menuDimensions,
+      this.debugIntegration.isEnabled()
     );
 
     // Store adjusted menu position
-    this.menuX = adjusted.x;
-    this.menuY = adjusted.y;
+    this.state.updateMenuPosition(adjusted.x, adjusted.y);
 
     // Create background
     const { background, clickOutsideId } = createBackground(() => {
@@ -199,6 +164,8 @@ export class SnapMenu {
       });
       this.layoutButtons.clear();
     } else {
+      const miniatureDisplayHeight = MINIATURE_DISPLAY_WIDTH * aspectRatio;
+      const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
       const categoriesView = createCategoriesView(
         MINIATURE_DISPLAY_WIDTH,
         miniatureDisplayHeight,
@@ -206,8 +173,8 @@ export class SnapMenu {
         debugConfig,
         wmClass,
         (layout) => {
-          if (this.onLayoutSelected) {
-            this.onLayoutSelected(layout);
+          if (onLayoutSelected) {
+            onLayoutSelected(layout);
           }
         }
       );
@@ -220,20 +187,7 @@ export class SnapMenu {
     const footer = createFooter();
 
     // Create main container
-    const container = new St.BoxLayout({
-      style_class: 'snap-menu',
-      style: `
-                background-color: ${MENU_BG_COLOR};
-                border: 2px solid ${MENU_BORDER_COLOR};
-                border-radius: 8px;
-                padding: ${MENU_PADDING}px;
-            `,
-      vertical: true,
-      visible: true,
-      reactive: true,
-      can_focus: true,
-      track_hover: true,
-    });
+    const container = createMenuContainer();
     this.container = container;
 
     // Add children to container
@@ -243,7 +197,8 @@ export class SnapMenu {
     }
 
     // Position menu at adjusted coordinates
-    container.set_position(this.menuX, this.menuY);
+    const { x: menuX, y: menuY } = this.state.getMenuPosition();
+    container.set_position(menuX, menuY);
 
     // Add menu container to chrome
     Main.layoutManager.addChrome(container, {
@@ -260,15 +215,8 @@ export class SnapMenu {
       buttonEvents: buttonEvents,
     };
 
-    // Show debug panel if enabled (always on the right side of menu)
-    if (this.debugPanel) {
-      const debugPanelGap = 20;
-      const debugPanelX = this.menuX + this.menuDimensions.width + debugPanelGap;
-      log(
-        `[SnapMenu] Showing debug panel at: x=${debugPanelX}, y=${this.menuY}, menuHeight=${this.menuDimensions.height}`
-      );
-      this.debugPanel.show(debugPanelX, this.menuY, this.menuDimensions.height);
-    }
+    // Show debug panel if enabled - it will position itself relative to menu
+    this.debugIntegration.showRelativeTo(menuX, menuY, menuDimensions.width, menuDimensions.height);
   }
 
   /**
@@ -308,14 +256,14 @@ export class SnapMenu {
       }
 
       // Hide debug panel
-      if (this.debugPanel) {
-        this.debugPanel.hide();
-      }
+      this.debugIntegration.hide();
 
       this.container = null;
       this.background = null;
       this.layoutButtons.clear();
-      // Note: Keep currentWmClass to preserve it across menu reopens
+
+      // Reset state (but keep currentWmClass and categories)
+      this.state.reset();
     }
   }
 
@@ -330,103 +278,33 @@ export class SnapMenu {
    * Update menu position (for following cursor during drag)
    */
   updatePosition(x: number, y: number): void {
-    if (this.container && this.menuDimensions) {
+    const menuDimensions = this.state.getMenuDimensions();
+    if (this.container && menuDimensions) {
       // Store original cursor position
-      this.originalCursorX = x;
-      this.originalCursorY = y;
+      this.state.updateOriginalCursor(x, y);
 
       // Adjust position for boundaries with center alignment
-      const screenWidth = global.screen_width;
-      const screenHeight = global.screen_height;
-      const adjusted = adjustMenuPosition(
-        { x, y },
-        this.menuDimensions,
-        {
-          screenWidth,
-          screenHeight,
-          edgePadding: MENU_EDGE_PADDING,
-        },
-        {
-          centerHorizontally: true,
-          reserveDebugPanelSpace: !!this.debugPanel,
-          debugPanelGap: 20,
-          debugPanelWidth: 300,
-        }
+      const adjusted = this.positionManager.adjustPosition(
+        x,
+        y,
+        menuDimensions,
+        this.debugIntegration.isEnabled()
       );
 
       // Update stored menu position
-      this.menuX = adjusted.x;
-      this.menuY = adjusted.y;
+      this.state.updateMenuPosition(adjusted.x, adjusted.y);
 
       // Update container position
-      this.container.set_position(adjusted.x, adjusted.y);
+      this.positionManager.updateMenuPosition(this.container, adjusted.x, adjusted.y);
 
-      // Update debug panel position if enabled (always on the right side)
-      if (this.debugPanel) {
-        const debugPanelGap = 20;
-        const debugPanelX = adjusted.x + this.menuDimensions.width + debugPanelGap;
-        this.debugPanel.updatePosition(debugPanelX, adjusted.y);
-      }
+      // Update debug panel position if enabled - it will reposition itself relative to menu
+      this.debugIntegration.showRelativeTo(
+        adjusted.x,
+        adjusted.y,
+        menuDimensions.width,
+        menuDimensions.height
+      );
     }
-  }
-
-  /**
-   * Calculate menu dimensions based on categories to render
-   */
-  private calculateMenuDimensions(
-    categoriesToRender: LayoutGroupCategory[],
-    aspectRatio: number,
-    showFooter: boolean
-  ): { width: number; height: number } {
-    // Handle empty categories case
-    if (categoriesToRender.length === 0) {
-      const minWidth = 200; // Minimum width for "No categories" message
-      const minHeight = 120 + (showFooter ? FOOTER_MARGIN_TOP + 20 : 0);
-      return { width: minWidth, height: minHeight };
-    }
-
-    const miniatureDisplayHeight = MINIATURE_DISPLAY_WIDTH * aspectRatio;
-
-    // Calculate width: maximum category width
-    let maxCategoryWidth = 0;
-    for (const category of categoriesToRender) {
-      const numDisplays = category.layoutGroups.length;
-      if (numDisplays > 0) {
-        const displaysInWidestRow = Math.min(numDisplays, MAX_DISPLAYS_PER_ROW);
-        const categoryWidth =
-          displaysInWidestRow * MINIATURE_DISPLAY_WIDTH +
-          (displaysInWidestRow - 1) * DISPLAY_SPACING_HORIZONTAL;
-        maxCategoryWidth = Math.max(maxCategoryWidth, categoryWidth);
-      }
-    }
-    const menuWidth = maxCategoryWidth + MENU_PADDING * 2;
-
-    // Calculate height: sum of all category heights with spacing
-    let totalHeight = MENU_PADDING; // Top padding
-    for (let i = 0; i < categoriesToRender.length; i++) {
-      const category = categoriesToRender[i];
-      const numDisplays = category.layoutGroups.length;
-      if (numDisplays > 0) {
-        const numRows = Math.ceil(numDisplays / MAX_DISPLAYS_PER_ROW);
-        // Each row has display height + bottom margin (DISPLAY_SPACING)
-        const categoryHeight = numRows * (miniatureDisplayHeight + DISPLAY_SPACING);
-        totalHeight += categoryHeight;
-
-        // Add category spacing except for last category
-        if (i < categoriesToRender.length - 1) {
-          totalHeight += CATEGORY_SPACING;
-        }
-      }
-    }
-
-    // Add footer height if showing footer
-    if (showFooter) {
-      totalHeight += FOOTER_MARGIN_TOP + 20; // 20px approximate footer text height
-    }
-
-    totalHeight += MENU_PADDING; // Bottom padding
-
-    return { width: menuWidth, height: totalHeight };
   }
 
   /**
@@ -438,19 +316,7 @@ export class SnapMenu {
       return null;
     }
 
-    // Check each layout button to see if position is within its bounds
-    for (const [button, layout] of this.layoutButtons.entries()) {
-      const [actorX, actorY] = button.get_transformed_position();
-      const [width, height] = button.get_transformed_size();
-
-      if (x >= actorX && x <= actorX + width && y >= actorY && y <= actorY + height) {
-        log(`[SnapMenu] Position (${x}, ${y}) is over layout: ${layout.label}`);
-        return layout;
-      }
-    }
-
-    log(`[SnapMenu] Position (${x}, ${y}) is not over any layout`);
-    return null;
+    return this.layoutSelector.getLayoutAtPosition(x, y, this.layoutButtons);
   }
 
   /**
@@ -463,45 +329,6 @@ export class SnapMenu {
       return;
     }
 
-    log(`[SnapMenu] Updating button highlights for layout: ${newSelectedLayoutId}`);
-    let updatedCount = 0;
-
-    // Update all button background colors
-    for (const [button, layout] of this.layoutButtons.entries()) {
-      const isSelected = layout.id === newSelectedLayoutId;
-      const bgColor = isSelected ? BUTTON_BG_COLOR_SELECTED : BUTTON_BG_COLOR;
-
-      // Update button's stored selection state
-      const buttonWithMeta = button as any;
-      buttonWithMeta._isSelected = isSelected;
-
-      // Access style property through type assertion
-      const currentStyle = buttonWithMeta.style || '';
-
-      if (!currentStyle) {
-        log(`[SnapMenu] Warning: Button for layout ${layout.label} has no style`);
-        continue;
-      }
-
-      // Replace background-color in the style string
-      const newStyle = String(currentStyle).replace(
-        /background-color:\s*rgba?\([^)]+\)\s*;?/g,
-        `background-color: ${bgColor};`
-      );
-
-      if (newStyle !== currentStyle) {
-        button.set_style(newStyle);
-        updatedCount++;
-        if (isSelected) {
-          log(`[SnapMenu] Set layout ${layout.label} (${layout.id}) to SELECTED (blue)`);
-        }
-      } else {
-        log(
-          `[SnapMenu] Warning: Failed to update style for ${layout.label}. Style: ${String(currentStyle).substring(0, 100)}`
-        );
-      }
-    }
-
-    log(`[SnapMenu] Updated ${updatedCount} button(s) out of ${this.layoutButtons.size}`);
+    this.layoutSelector.updateSelectedLayoutHighlight(newSelectedLayoutId, this.layoutButtons);
   }
 }
