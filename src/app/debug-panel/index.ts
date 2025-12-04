@@ -6,6 +6,7 @@ const Main = imports.ui.main;
 
 import { DEFAULT_LAYOUT_SETTINGS, PANEL_EDGE_PADDING } from '../constants';
 import { adjustDebugPanelPosition } from '../positioning';
+import type { Position, Size } from '../types';
 import { type DebugConfig, getDebugConfig, toggleDebugOption, toggleTestGroup } from './config';
 import { getTestLayoutGroups } from './test-layouts';
 
@@ -63,12 +64,7 @@ export class DebugPanel {
    * Show debug panel relative to the main panel position
    * Calculates its own position based on main panel bounds
    */
-  showRelativeTo(
-    mainPanelX: number,
-    mainPanelY: number,
-    mainPanelWidth: number,
-    mainPanelHeight: number
-  ): void {
+  showRelativeTo(mainPanelPosition: Position, mainPanelSize: Size): void {
     // Clean up existing panel if any
     this.hide();
 
@@ -83,7 +79,7 @@ export class DebugPanel {
                 border-radius: 8px;
                 padding: ${PANEL_PADDING}px;
                 width: ${PANEL_WIDTH}px;
-                min-height: ${mainPanelHeight}px;
+                min-height: ${mainPanelSize.height}px;
             `,
     });
 
@@ -124,36 +120,21 @@ export class DebugPanel {
     });
 
     // Calculate debug panel position: to the right of main panel with gap
-    const debugPanelX = mainPanelX + mainPanelWidth + DEBUG_PANEL_GAP;
+    const debugPanelX = mainPanelPosition.x + mainPanelSize.width + DEBUG_PANEL_GAP;
 
     // Position panel temporarily at calculated position to allow size calculation
-    this.container.set_position(debugPanelX, mainPanelY);
+    this.container.set_position(debugPanelX, mainPanelPosition.y);
 
     // Get preferred height to calculate actual panel size
     // Use PANEL_WIDTH as the for_width parameter since panel has fixed width
     const [, naturalHeight] = (this.container as any).get_preferred_height(PANEL_WIDTH);
-    this.panelHeight = naturalHeight > 0 ? naturalHeight : mainPanelHeight;
+    this.panelHeight = naturalHeight > 0 ? naturalHeight : mainPanelSize.height;
     log(
-      `[DebugPanel] Main panel position: (${mainPanelX}, ${mainPanelY}), Main panel width: ${mainPanelWidth}, Debug panel X: ${debugPanelX}, Natural height: ${naturalHeight}, Using height: ${this.panelHeight}, Min height: ${mainPanelHeight}`
+      `[DebugPanel] Main panel position: (${mainPanelPosition.x}, ${mainPanelPosition.y}), Main panel width: ${mainPanelSize.width}, Debug panel X: ${debugPanelX}, Natural height: ${naturalHeight}, Using height: ${this.panelHeight}, Min height: ${mainPanelSize.height}`
     );
 
-    // Adjust Y position based on actual panel height
-    const screenWidth = global.screen_width;
-    const screenHeight = global.screen_height;
-    const adjusted = adjustDebugPanelPosition(
-      { x: debugPanelX, y: mainPanelY },
-      { width: PANEL_WIDTH, height: this.panelHeight },
-      {
-        screenWidth,
-        screenHeight,
-        edgePadding: PANEL_EDGE_PADDING,
-      },
-      { adjustYOnly: true }
-    );
-    log(`[DebugPanel] Adjusted Y: ${adjusted.y} (original: ${mainPanelY})`);
-
-    // Reposition panel at adjusted coordinates
-    this.container.set_position(debugPanelX, adjusted.y);
+    // Adjust and set final position using updatePosition
+    this.updatePosition({ x: debugPanelX, y: mainPanelPosition.y });
 
     // Setup hover events to notify parent main panel
     this.enterEventId = this.container.connect('enter-event', () => {
@@ -197,13 +178,13 @@ export class DebugPanel {
   /**
    * Update panel position
    */
-  updatePosition(x: number, y: number): void {
+  updatePosition(position: Position): void {
     if (this.container && this.panelHeight > 0) {
       // Adjust Y position to keep panel within screen boundaries
       const screenWidth = global.screen_width;
       const screenHeight = global.screen_height;
       const adjusted = adjustDebugPanelPosition(
-        { x, y },
+        position,
         { width: PANEL_WIDTH, height: this.panelHeight },
         {
           screenWidth,
@@ -212,8 +193,10 @@ export class DebugPanel {
         },
         { adjustYOnly: true }
       );
-      log(`[DebugPanel] Update position: Y ${y} -> ${adjusted.y} (height: ${this.panelHeight})`);
-      this.container.set_position(x, adjusted.y);
+      log(
+        `[DebugPanel] Update position: Y ${position.y} -> ${adjusted.y} (height: ${this.panelHeight})`
+      );
+      this.container.set_position(position.x, adjusted.y);
     }
   }
 

@@ -15,7 +15,7 @@ const Main = imports.ui.main;
 import { evaluate, parse } from './layout-expression';
 import { MainPanel } from './main-panel/index';
 import { loadLayoutHistory, setSelectedLayout } from './repository/layout-history';
-import type { Layout } from './types';
+import type { Layout, Position } from './types';
 
 declare function log(message: string): void;
 
@@ -163,8 +163,8 @@ export class Controller {
    * Handle cursor motion during drag
    */
   private onMotion(): void {
-    const [x, y] = this.getCursorPosition();
-    const atEdge = this.isAtScreenEdge(x, y);
+    const cursor = this.getCursorPosition();
+    const atEdge = this.isAtScreenEdge(cursor);
 
     if (atEdge && !this.isAtEdge) {
       // Just reached edge - start timer
@@ -180,7 +180,7 @@ export class Controller {
 
     // Update panel position if visible
     if (this.mainPanel.isVisible()) {
-      this.mainPanel.updatePosition(x, y);
+      this.mainPanel.updatePosition(cursor);
     }
   }
 
@@ -212,24 +212,24 @@ export class Controller {
   /**
    * Get current cursor position
    */
-  private getCursorPosition(): [number, number] {
+  private getCursorPosition(): Position {
     const [x, y] = global.get_pointer();
-    return [x, y];
+    return { x, y };
   }
 
   /**
    * Check if cursor is at screen edge
    */
-  private isAtScreenEdge(x: number, y: number): boolean {
+  private isAtScreenEdge(cursor: Position): boolean {
     // Get primary monitor geometry
     const monitor = global.display.get_current_monitor();
     const geometry = global.display.get_monitor_geometry(monitor);
 
     // Check if cursor is within EDGE_THRESHOLD of any edge
-    const atLeft = x <= geometry.x + EDGE_THRESHOLD;
-    const atRight = x >= geometry.x + geometry.width - EDGE_THRESHOLD;
-    const atTop = y <= geometry.y + EDGE_THRESHOLD;
-    const atBottom = y >= geometry.y + geometry.height - EDGE_THRESHOLD;
+    const atLeft = cursor.x <= geometry.x + EDGE_THRESHOLD;
+    const atRight = cursor.x >= geometry.x + geometry.width - EDGE_THRESHOLD;
+    const atTop = cursor.y <= geometry.y + EDGE_THRESHOLD;
+    const atBottom = cursor.y >= geometry.y + geometry.height - EDGE_THRESHOLD;
 
     return atLeft || atRight || atTop || atBottom;
   }
@@ -253,9 +253,9 @@ export class Controller {
       return; // Already visible
     }
 
-    const [x, y] = this.getCursorPosition();
+    const cursor = this.getCursorPosition();
     const wmClass = this.getCurrentWindowWmClass();
-    this.mainPanel.show(x, y, wmClass);
+    this.mainPanel.show(cursor, wmClass);
   }
 
   /**

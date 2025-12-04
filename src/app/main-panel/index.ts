@@ -13,7 +13,7 @@ const Main = imports.ui.main;
 import { AUTO_HIDE_DELAY_MS, DEFAULT_LAYOUT_SETTINGS, MINIATURE_DISPLAY_WIDTH } from '../constants';
 import { getDebugConfig } from '../debug-panel/config';
 import { importSettings, loadLayouts } from '../repository/layouts';
-import type { Layout } from '../types';
+import type { Layout, Position } from '../types';
 import { MainPanelAutoHide } from './auto-hide';
 import { MainPanelDebugIntegration } from './debug-integration';
 import { MainPanelLayoutSelector } from './layout-selector';
@@ -54,9 +54,9 @@ export class MainPanel {
       // Use original cursor position (not adjusted position) to avoid shifting
       // Pass current wmClass to preserve selection state
       if (this.container) {
-        const { x, y } = this.state.getOriginalCursor();
+        const cursor = this.state.getOriginalCursor();
         const wmClass = this.state.getCurrentWmClass();
-        this.show(x, y, wmClass);
+        this.show(cursor, wmClass);
       }
     });
 
@@ -84,12 +84,12 @@ export class MainPanel {
   /**
    * Show the main panel at the specified position
    */
-  show(x: number, y: number, wmClass: string | null = null): void {
+  show(cursor: Position, wmClass: string | null = null): void {
     // Hide existing panel if any
     this.hide();
 
     // Store original cursor position and wmClass
-    this.state.updateOriginalCursor(x, y);
+    this.state.updateOriginalCursor(cursor);
     this.state.setCurrentWmClass(wmClass);
 
     // Reset auto-hide states
@@ -124,14 +124,13 @@ export class MainPanel {
 
     // Adjust position for boundaries with center alignment
     const adjusted = this.positionManager.adjustPosition(
-      x,
-      y,
+      cursor,
       panelDimensions,
       this.debugIntegration.isEnabled()
     );
 
     // Store adjusted panel position
-    this.state.updatePanelPosition(adjusted.x, adjusted.y);
+    this.state.updatePanelPosition(adjusted);
 
     // Create background
     const { background, clickOutsideId } = createBackground(() => {
@@ -190,8 +189,8 @@ export class MainPanel {
     }
 
     // Position panel at adjusted coordinates
-    const { x: panelX, y: panelY } = this.state.getPanelPosition();
-    container.set_position(panelX, panelY);
+    const position = this.state.getPanelPosition();
+    container.set_position(position.x, position.y);
 
     // Add panel container to chrome
     Main.layoutManager.addChrome(container, {
@@ -209,12 +208,7 @@ export class MainPanel {
     };
 
     // Show debug panel if enabled - it will position itself relative to panel
-    this.debugIntegration.showRelativeTo(
-      panelX,
-      panelY,
-      panelDimensions.width,
-      panelDimensions.height
-    );
+    this.debugIntegration.showRelativeTo(position, panelDimensions);
   }
 
   /**
@@ -275,46 +269,28 @@ export class MainPanel {
   /**
    * Update panel position (for following cursor during drag)
    */
-  updatePosition(x: number, y: number): void {
+  updatePosition(cursor: Position): void {
     const panelDimensions = this.state.getPanelDimensions();
     if (this.container && panelDimensions) {
       // Store original cursor position
-      this.state.updateOriginalCursor(x, y);
+      this.state.updateOriginalCursor(cursor);
 
       // Adjust position for boundaries with center alignment
       const adjusted = this.positionManager.adjustPosition(
-        x,
-        y,
+        cursor,
         panelDimensions,
         this.debugIntegration.isEnabled()
       );
 
       // Update stored panel position
-      this.state.updatePanelPosition(adjusted.x, adjusted.y);
+      this.state.updatePanelPosition(adjusted);
 
       // Update container position
-      this.positionManager.updatePanelPosition(this.container, adjusted.x, adjusted.y);
+      this.positionManager.updatePanelPosition(this.container, adjusted);
 
       // Update debug panel position if enabled - it will reposition itself relative to panel
-      this.debugIntegration.showRelativeTo(
-        adjusted.x,
-        adjusted.y,
-        panelDimensions.width,
-        panelDimensions.height
-      );
+      this.debugIntegration.showRelativeTo(adjusted, panelDimensions);
     }
-  }
-
-  /**
-   * Get layout at the given position, or null if position is not over a layout button
-   * If multiple layouts overlap at this position, returns the first one found
-   */
-  getLayoutAtPosition(x: number, y: number): Layout | null {
-    if (!this.container) {
-      return null;
-    }
-
-    return this.layoutSelector.getLayoutAtPosition(x, y, this.layoutButtons);
   }
 
   /**

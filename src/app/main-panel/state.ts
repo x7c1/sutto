@@ -5,7 +5,7 @@
  * panel position, dimensions, and current window information.
  */
 
-import type { LayoutGroupCategory } from '../types';
+import type { LayoutGroupCategory, Position, Size } from '../types';
 
 export class MainPanelState {
   private categories: LayoutGroupCategory[] = [];
@@ -14,7 +14,7 @@ export class MainPanelState {
   private originalCursorY: number = 0;
   private panelX: number = 0;
   private panelY: number = 0;
-  private panelDimensions: { width: number; height: number } | null = null;
+  private panelDimensions: Size | null = null;
 
   /**
    * Get the current categories
@@ -47,44 +47,44 @@ export class MainPanelState {
   /**
    * Get the original cursor position (before adjustment)
    */
-  getOriginalCursor(): { x: number; y: number } {
+  getOriginalCursor(): Position {
     return { x: this.originalCursorX, y: this.originalCursorY };
   }
 
   /**
    * Update the original cursor position
    */
-  updateOriginalCursor(x: number, y: number): void {
-    this.originalCursorX = x;
-    this.originalCursorY = y;
+  updateOriginalCursor(position: Position): void {
+    this.originalCursorX = position.x;
+    this.originalCursorY = position.y;
   }
 
   /**
    * Get the adjusted panel position
    */
-  getPanelPosition(): { x: number; y: number } {
+  getPanelPosition(): Position {
     return { x: this.panelX, y: this.panelY };
   }
 
   /**
    * Update the panel position
    */
-  updatePanelPosition(x: number, y: number): void {
-    this.panelX = x;
-    this.panelY = y;
+  updatePanelPosition(position: Position): void {
+    this.panelX = position.x;
+    this.panelY = position.y;
   }
 
   /**
    * Get the panel dimensions
    */
-  getPanelDimensions(): { width: number; height: number } | null {
+  getPanelDimensions(): Size | null {
     return this.panelDimensions;
   }
 
   /**
    * Set the panel dimensions
    */
-  setPanelDimensions(dimensions: { width: number; height: number }): void {
+  setPanelDimensions(dimensions: Size): void {
     this.panelDimensions = dimensions;
   }
 

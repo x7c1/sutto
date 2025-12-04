@@ -18,7 +18,7 @@ import {
   PANEL_PADDING,
 } from '../constants';
 import { adjustMainPanelPosition } from '../positioning';
-import type { LayoutGroupCategory } from '../types';
+import type { LayoutGroupCategory, Position, Size } from '../types';
 
 // @ts-expect-error - St is used for type annotations
 const St = imports.gi.St;
@@ -31,7 +31,7 @@ export class MainPanelPositionManager {
     categoriesToRender: LayoutGroupCategory[],
     aspectRatio: number,
     showFooter: boolean
-  ): { width: number; height: number } {
+  ): Size {
     // Handle empty categories case
     if (categoriesToRender.length === 0) {
       const minWidth = 200; // Minimum width for "No categories" message
@@ -86,17 +86,12 @@ export class MainPanelPositionManager {
   /**
    * Adjust panel position for screen boundaries with center alignment
    */
-  adjustPosition(
-    cursorX: number,
-    cursorY: number,
-    panelDimensions: { width: number; height: number },
-    hasDebugPanel: boolean
-  ): { x: number; y: number } {
+  adjustPosition(cursor: Position, panelDimensions: Size, hasDebugPanel: boolean): Position {
     const screenWidth = global.screen_width;
     const screenHeight = global.screen_height;
 
     const adjusted = adjustMainPanelPosition(
-      { x: cursorX, y: cursorY },
+      cursor,
       panelDimensions,
       {
         screenWidth,
@@ -117,7 +112,7 @@ export class MainPanelPositionManager {
   /**
    * Update panel container position
    */
-  updatePanelPosition(container: St.BoxLayout, x: number, y: number): void {
-    container.set_position(x, y);
+  updatePanelPosition(container: St.BoxLayout, position: Position): void {
+    container.set_position(position.x, position.y);
   }
 }

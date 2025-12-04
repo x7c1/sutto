@@ -12,7 +12,7 @@ import { getDebugConfig, isDebugMode, loadDebugConfig } from '../debug-panel/con
 import { DebugPanel } from '../debug-panel/index';
 import { getTestLayoutGroups } from '../debug-panel/test-layouts';
 import { ensureTestLayoutsImported } from '../repository/layouts';
-import type { LayoutGroupCategory } from '../types';
+import type { LayoutGroupCategory, Position, Size } from '../types';
 import type { MainPanelAutoHide } from './auto-hide';
 
 declare function log(message: string): void;
@@ -99,12 +99,12 @@ export class MainPanelDebugIntegration {
   /**
    * Show debug panel relative to main panel position
    */
-  showRelativeTo(panelX: number, panelY: number, panelWidth: number, panelHeight: number): void {
+  showRelativeTo(position: Position, size: Size): void {
     if (this.debugPanel) {
       log(
-        `[MainPanelDebugIntegration] Showing debug panel relative to main panel at: x=${panelX}, y=${panelY}, width=${panelWidth}, height=${panelHeight}`
+        `[MainPanelDebugIntegration] Showing debug panel relative to main panel at: x=${position.x}, y=${position.y}, width=${size.width}, height=${size.height}`
       );
-      this.debugPanel.showRelativeTo(panelX, panelY, panelWidth, panelHeight);
+      this.debugPanel.showRelativeTo(position, size);
     }
   }
 
@@ -114,15 +114,6 @@ export class MainPanelDebugIntegration {
   hide(): void {
     if (this.debugPanel) {
       this.debugPanel.hide();
-    }
-  }
-
-  /**
-   * Update debug panel position
-   */
-  updatePosition(x: number, y: number): void {
-    if (this.debugPanel) {
-      this.debugPanel.updatePosition(x, y);
     }
   }
 }
