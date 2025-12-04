@@ -3,15 +3,16 @@
 const St = imports.gi.St;
 const Main = imports.ui.main;
 
-import type { DebugConfig } from '../debug-config';
-import { evaluate, parse } from '../layout-expression';
 import {
   BUTTON_BG_COLOR,
   BUTTON_BG_COLOR_HOVER,
+  BUTTON_BG_COLOR_SELECTED,
   BUTTON_BORDER_COLOR,
   BUTTON_BORDER_COLOR_HOVER,
   BUTTON_BORDER_WIDTH,
-} from '../snap-menu-constants';
+} from '../constants';
+import type { DebugConfig } from '../debug-panel/config';
+import { evaluate, parse } from '../layout-expression';
 import type { Layout } from '../types';
 
 declare function log(message: string): void;
@@ -44,15 +45,26 @@ function calculateButtonWidth(layout: Layout, displayWidth: number, screenWidth?
 }
 
 /**
- * Get button style based on hover state
+ * Get button style based on hover state and selection state
+ * Color priority: Hover > Selected > Normal
  */
-function getButtonStyle(
+export function getButtonStyle(
   isHovered: boolean,
+  isSelected: boolean,
   buttonWidth: number,
   buttonHeight: number,
   debugConfig: DebugConfig | null
 ): string {
-  const bgColor = isHovered ? BUTTON_BG_COLOR_HOVER : BUTTON_BG_COLOR;
+  // Color priority: Hover > Selected > Normal
+  let bgColor: string;
+  if (isHovered) {
+    bgColor = BUTTON_BG_COLOR_HOVER;
+  } else if (isSelected) {
+    bgColor = BUTTON_BG_COLOR_SELECTED;
+  } else {
+    bgColor = BUTTON_BG_COLOR;
+  }
+
   const borderColor = isHovered ? BUTTON_BORDER_COLOR_HOVER : BUTTON_BORDER_COLOR;
 
   // Apply debug configuration for button borders
@@ -80,6 +92,7 @@ export function createLayoutButton(
   displayWidth: number,
   displayHeight: number,
   debugConfig: DebugConfig | null,
+  isSelected: boolean,
   onLayoutSelected: (layout: Layout) => void
 ): LayoutButtonView {
   // Get screen work area for scaling fixed pixel values
@@ -95,10 +108,10 @@ export function createLayoutButton(
   const buttonHeight =
     resolveLayoutValue(layout.height, displayHeight, workArea.height) - BUTTON_BORDER_WIDTH * 2;
 
-  // Create button with initial style
+  // Create button with initial style (not hovered, but might be selected)
   const button = new St.Button({
     style_class: 'snap-layout-button',
-    style: getButtonStyle(false, buttonWidth, buttonHeight, debugConfig),
+    style: getButtonStyle(false, isSelected, buttonWidth, buttonHeight, debugConfig),
     reactive: true,
     can_focus: true,
     track_hover: true,
@@ -110,10 +123,10 @@ export function createLayoutButton(
   // Add size label if debug mode is enabled
   if (debugConfig?.showSizeLabels) {
     const sizeLabel = new St.Label({
-      text: `${buttonWidth}×${buttonHeight}`,
+      text: `${buttonWidth}x${buttonHeight}`,
       style: `
                 color: rgba(255, 255, 255, 0.9);
-                font-size: 10px;
+                font-size: 7pt;
                 background-color: rgba(0, 0, 0, 0.7);
                 padding: 2px 4px;
                 border-radius: 2px;
@@ -122,20 +135,32 @@ export function createLayoutButton(
     button.set_child(sizeLabel);
   }
 
+  // Store button metadata for dynamic style updates
+  // We use 'as any' to add custom properties to the button
+  const buttonWithMeta = button as any;
+  buttonWithMeta._isSelected = isSelected;
+  buttonWithMeta._buttonWidth = buttonWidth;
+  buttonWithMeta._buttonHeight = buttonHeight;
+  buttonWithMeta._debugConfig = debugConfig;
+
   // Add hover effect
   const enterEventId = button.connect('enter-event', () => {
-    button.set_style(getButtonStyle(true, buttonWidth, buttonHeight, debugConfig));
+    button.set_style(
+      getButtonStyle(true, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
+    );
     return false; // Clutter.EVENT_PROPAGATE
   });
 
   const leaveEventId = button.connect('leave-event', () => {
-    button.set_style(getButtonStyle(false, buttonWidth, buttonHeight, debugConfig));
+    button.set_style(
+      getButtonStyle(false, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
+    );
     return false; // Clutter.EVENT_PROPAGATE
   });
 
   // Connect click event
   const clickEventId = button.connect('button-press-event', () => {
-    log(`[SnapMenu] Layout selected: ${layout.label}`);
+    log(`[MainPanel] Layout selected: ${layout.label}`);
     onLayoutSelected(layout);
     return true; // Clutter.EVENT_STOP
   });

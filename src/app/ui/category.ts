@@ -2,8 +2,8 @@
 
 const St = imports.gi.St;
 
-import type { DebugConfig } from '../debug-config';
-import { CATEGORY_SPACING, MAX_DISPLAYS_PER_ROW } from '../snap-menu-constants';
+import { CATEGORY_SPACING, MAX_DISPLAYS_PER_ROW } from '../constants';
+import type { DebugConfig } from '../debug-panel/config';
 import type { Layout, LayoutGroupCategory } from '../types';
 import { createMiniatureDisplayView } from './miniature-display';
 
@@ -27,6 +27,7 @@ export function createCategoryView(
   displayWidth: number,
   displayHeight: number,
   debugConfig: DebugConfig | null,
+  window: Meta.Window | null,
   onLayoutSelected: (layout: Layout) => void,
   isLastCategory: boolean = false
 ): CategoryView {
@@ -67,6 +68,7 @@ export function createCategoryView(
         displayWidth,
         displayHeight,
         debugConfig,
+        window,
         onLayoutSelected,
         isLastInRow
       );

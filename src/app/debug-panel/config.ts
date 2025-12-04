@@ -1,7 +1,8 @@
-/// <reference path="../types/build-mode.d.ts" />
+/// <reference path="../../types/build-mode.d.ts" />
 
-const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
+
+import { getExtensionDataPath } from '../repository/extension-path';
 
 declare function log(message: string): void;
 
@@ -76,16 +77,7 @@ export function toggleTestGroup(groupName: string): void {
 const CONFIG_FILE_NAME = 'debug-config.json';
 
 function getConfigFilePath(): string {
-  const dataDir = GLib.get_user_data_dir();
-  // We'll need to get the extension UUID dynamically
-  // For now, use a placeholder that will be replaced
-  return GLib.build_filenamev([
-    dataDir,
-    'gnome-shell',
-    'extensions',
-    'snappa@snappa.dev',
-    CONFIG_FILE_NAME,
-  ]);
+  return getExtensionDataPath(CONFIG_FILE_NAME);
 }
 
 export function loadDebugConfig(): void {

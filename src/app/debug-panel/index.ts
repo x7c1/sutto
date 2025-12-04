@@ -1,17 +1,13 @@
-/// <reference path="../types/gnome-shell-42.d.ts" />
+/// <reference path="../../types/gnome-shell-42.d.ts" />
 
 const St = imports.gi.St;
 const Clutter = imports.gi.Clutter;
 const Main = imports.ui.main;
 
-import {
-  type DebugConfig,
-  getDebugConfig,
-  toggleDebugOption,
-  toggleTestGroup,
-} from './debug-config';
-import { adjustPanelPosition } from './positioning';
-import { DEFAULT_CATEGORIES, MENU_EDGE_PADDING } from './snap-menu-constants';
+import { DEFAULT_LAYOUT_SETTINGS, PANEL_EDGE_PADDING } from '../constants';
+import { adjustDebugPanelPosition } from '../positioning';
+import type { Position, Size } from '../types';
+import { type DebugConfig, getDebugConfig, toggleDebugOption, toggleTestGroup } from './config';
 import { getTestLayoutGroups } from './test-layouts';
 
 declare function log(message: string): void;
@@ -22,6 +18,7 @@ const PANEL_PADDING = 12;
 const SECTION_SPACING = 8;
 const CHECKBOX_SIZE = 16;
 const CHECKBOX_SPACING = 8;
+const DEBUG_PANEL_GAP = 20; // Gap between main panel and debug panel
 
 // Colors
 const PANEL_BG_COLOR = 'rgba(40, 40, 40, 0.95)';
@@ -64,9 +61,10 @@ export class DebugPanel {
   }
 
   /**
-   * Show the debug panel at the specified position
+   * Show debug panel relative to the main panel position
+   * Calculates its own position based on main panel bounds
    */
-  show(x: number, y: number, height: number): void {
+  showRelativeTo(mainPanelPosition: Position, mainPanelSize: Size): void {
     // Clean up existing panel if any
     this.hide();
 
@@ -81,7 +79,7 @@ export class DebugPanel {
                 border-radius: 8px;
                 padding: ${PANEL_PADDING}px;
                 width: ${PANEL_WIDTH}px;
-                min-height: ${height}px;
+                min-height: ${mainPanelSize.height}px;
             `,
     });
 
@@ -115,42 +113,30 @@ export class DebugPanel {
 
     this.addTestGroupsSection();
 
-    // Add panel to chrome (similar to SnapMenu)
+    // Add panel to chrome (similar to MainPanel)
     Main.layoutManager.addChrome(this.container, {
       affectsInputRegion: true,
       trackFullscreen: false,
     });
 
-    // Position panel temporarily at requested Y to allow size calculation
-    this.container.set_position(x, y);
+    // Calculate debug panel position: to the right of main panel with gap
+    const debugPanelX = mainPanelPosition.x + mainPanelSize.width + DEBUG_PANEL_GAP;
+
+    // Position panel temporarily at calculated position to allow size calculation
+    this.container.set_position(debugPanelX, mainPanelPosition.y);
 
     // Get preferred height to calculate actual panel size
     // Use PANEL_WIDTH as the for_width parameter since panel has fixed width
     const [, naturalHeight] = (this.container as any).get_preferred_height(PANEL_WIDTH);
-    this.panelHeight = naturalHeight > 0 ? naturalHeight : height;
+    this.panelHeight = naturalHeight > 0 ? naturalHeight : mainPanelSize.height;
     log(
-      `[DebugPanel] Requested Y: ${y}, Natural height: ${naturalHeight}, Using height: ${this.panelHeight}, Min height: ${height}`
+      `[DebugPanel] Main panel position: (${mainPanelPosition.x}, ${mainPanelPosition.y}), Main panel width: ${mainPanelSize.width}, Debug panel X: ${debugPanelX}, Natural height: ${naturalHeight}, Using height: ${this.panelHeight}, Min height: ${mainPanelSize.height}`
     );
 
-    // Adjust Y position based on actual panel height
-    const screenWidth = global.screen_width;
-    const screenHeight = global.screen_height;
-    const adjusted = adjustPanelPosition(
-      { x, y },
-      { width: PANEL_WIDTH, height: this.panelHeight },
-      {
-        screenWidth,
-        screenHeight,
-        edgePadding: MENU_EDGE_PADDING,
-      },
-      { adjustYOnly: true }
-    );
-    log(`[DebugPanel] Adjusted Y: ${adjusted.y} (original: ${y})`);
+    // Adjust and set final position using updatePosition
+    this.updatePosition({ x: debugPanelX, y: mainPanelPosition.y });
 
-    // Reposition panel at adjusted coordinates
-    this.container.set_position(x, adjusted.y);
-
-    // Setup hover events to notify parent menu
+    // Setup hover events to notify parent main panel
     this.enterEventId = this.container.connect('enter-event', () => {
       if (this.onEnter) {
         this.onEnter();
@@ -192,23 +178,25 @@ export class DebugPanel {
   /**
    * Update panel position
    */
-  updatePosition(x: number, y: number): void {
+  updatePosition(position: Position): void {
     if (this.container && this.panelHeight > 0) {
       // Adjust Y position to keep panel within screen boundaries
       const screenWidth = global.screen_width;
       const screenHeight = global.screen_height;
-      const adjusted = adjustPanelPosition(
-        { x, y },
+      const adjusted = adjustDebugPanelPosition(
+        position,
         { width: PANEL_WIDTH, height: this.panelHeight },
         {
           screenWidth,
           screenHeight,
-          edgePadding: MENU_EDGE_PADDING,
+          edgePadding: PANEL_EDGE_PADDING,
         },
         { adjustYOnly: true }
       );
-      log(`[DebugPanel] Update position: Y ${y} -> ${adjusted.y} (height: ${this.panelHeight})`);
-      this.container.set_position(x, adjusted.y);
+      log(
+        `[DebugPanel] Update position: Y ${position.y} -> ${adjusted.y} (height: ${this.panelHeight})`
+      );
+      this.container.set_position(position.x, adjusted.y);
     }
   }
 
@@ -284,7 +272,7 @@ export class DebugPanel {
     this.container.add_child(separator);
 
     // Display total number of categories
-    const totalCategories = DEFAULT_CATEGORIES.length;
+    const totalCategories = DEFAULT_LAYOUT_SETTINGS.length;
     const summaryLabel = new St.Label({
       text: `Total Categories: ${totalCategories}`,
       style: `
@@ -296,10 +284,10 @@ export class DebugPanel {
     this.container.add_child(summaryLabel);
 
     // Display each category with hierarchy
-    for (const category of DEFAULT_CATEGORIES) {
+    for (const category of DEFAULT_LAYOUT_SETTINGS) {
       const displayCount = category.layoutGroups.length;
       const totalButtons = category.layoutGroups.reduce(
-        (sum, group) => sum + group.layouts.length,
+        (sum: number, group) => sum + group.layouts.length,
         0
       );
 

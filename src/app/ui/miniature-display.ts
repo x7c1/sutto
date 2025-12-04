@@ -2,12 +2,9 @@
 
 const St = imports.gi.St;
 
-import type { DebugConfig } from '../debug-config';
-import {
-  DISPLAY_BG_COLOR,
-  DISPLAY_SPACING,
-  DISPLAY_SPACING_HORIZONTAL,
-} from '../snap-menu-constants';
+import { DISPLAY_BG_COLOR, DISPLAY_SPACING, DISPLAY_SPACING_HORIZONTAL } from '../constants';
+import type { DebugConfig } from '../debug-panel/config';
+import { getSelectedLayoutId } from '../repository/layout-history';
 import type { Layout, LayoutGroup } from '../types';
 import { createLayoutButton } from './layout-button';
 
@@ -30,6 +27,7 @@ export function createMiniatureDisplayView(
   displayWidth: number,
   displayHeight: number,
   debugConfig: DebugConfig | null,
+  window: Meta.Window | null,
   onLayoutSelected: (layout: Layout) => void,
   isLastInRow: boolean = false
 ): MiniatureDisplayView {
@@ -63,13 +61,28 @@ export function createMiniatureDisplayView(
   const layoutButtons = new Map<St.Button, Layout>();
   const buttonEvents: MiniatureDisplayView['buttonEvents'] = [];
 
+  // Get selected layout ID for this window using three-tier lookup
+  let selectedLayoutId: string | null = null;
+  if (window) {
+    const windowId = window.get_id();
+    const wmClass = window.get_wm_class();
+    const title = window.get_title();
+    if (wmClass !== null) {
+      selectedLayoutId = getSelectedLayoutId(windowId, wmClass, title);
+    }
+  }
+
   // Add layout buttons from this group to the miniature display
   for (const layout of group.layouts) {
+    // Determine if this layout is selected
+    const isSelected = selectedLayoutId !== null && layout.id === selectedLayoutId;
+
     const result = createLayoutButton(
       layout,
       displayWidth,
       displayHeight,
       debugConfig,
+      isSelected,
       onLayoutSelected
     );
     layoutButtons.set(result.button, layout);
@@ -89,7 +102,7 @@ export function createMiniatureDisplayView(
       text: group.name,
       style: `
                 color: rgba(0, 200, 255, 0.9);
-                font-size: 9px;
+                font-size: 7pt;
                 background-color: rgba(0, 0, 0, 0.8);
                 padding: 2px 4px;
                 border-radius: 2px;
@@ -103,7 +116,7 @@ export function createMiniatureDisplayView(
       text: `Spacing: ${DISPLAY_SPACING}px`,
       style: `
                 color: rgba(255, 255, 0, 0.9);
-                font-size: 8px;
+                font-size: 7pt;
                 background-color: rgba(0, 0, 0, 0.7);
                 padding: 2px 4px;
                 border-radius: 2px;

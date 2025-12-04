@@ -5,22 +5,22 @@
  */
 
 import type {
+  DebugPanelPositionOptions,
   Dimensions,
-  MenuPositionOptions,
-  PanelPositionOptions,
+  MainPanelPositionOptions,
   Position,
   ScreenBoundaries,
 } from './types';
 
 /**
- * Adjust menu position to keep it within screen boundaries
+ * Adjust main panel position to keep it within screen boundaries
  * Supports horizontal centering and debug panel space reservation
  */
-export function adjustMenuPosition(
+export function adjustMainPanelPosition(
   cursorPosition: Position,
-  menuDimensions: Dimensions,
+  panelDimensions: Dimensions,
   boundaries: ScreenBoundaries,
-  options: MenuPositionOptions = {}
+  options: MainPanelPositionOptions = {}
 ): Position {
   const {
     centerHorizontally = true,
@@ -34,7 +34,7 @@ export function adjustMenuPosition(
 
   // Apply horizontal centering if requested
   if (centerHorizontally) {
-    adjustedX = cursorPosition.x - menuDimensions.width / 2;
+    adjustedX = cursorPosition.x - panelDimensions.width / 2;
   }
 
   // Calculate maximum X position
@@ -43,12 +43,12 @@ export function adjustMenuPosition(
     // Reserve space for debug panel on the right
     maxX =
       boundaries.screenWidth -
-      menuDimensions.width -
+      panelDimensions.width -
       debugPanelGap -
       debugPanelWidth -
       boundaries.edgePadding;
   } else {
-    maxX = boundaries.screenWidth - menuDimensions.width - boundaries.edgePadding;
+    maxX = boundaries.screenWidth - panelDimensions.width - boundaries.edgePadding;
   }
 
   // Check right edge: clamp to maxX
@@ -62,8 +62,8 @@ export function adjustMenuPosition(
   }
 
   // Check bottom edge: shift up if needed
-  if (adjustedY + menuDimensions.height > boundaries.screenHeight - boundaries.edgePadding) {
-    adjustedY = boundaries.screenHeight - menuDimensions.height - boundaries.edgePadding;
+  if (adjustedY + panelDimensions.height > boundaries.screenHeight - boundaries.edgePadding) {
+    adjustedY = boundaries.screenHeight - panelDimensions.height - boundaries.edgePadding;
   }
 
   // Check top edge: clamp to padding
@@ -75,14 +75,14 @@ export function adjustMenuPosition(
 }
 
 /**
- * Adjust panel position to keep it within screen boundaries
- * By default, only adjusts Y coordinate (useful for panels positioned relative to menu)
+ * Adjust debug panel position to keep it within screen boundaries
+ * By default, only adjusts Y coordinate (useful for panels positioned relative to main panel)
  */
-export function adjustPanelPosition(
+export function adjustDebugPanelPosition(
   position: Position,
   panelDimensions: Dimensions,
   boundaries: ScreenBoundaries,
-  options: PanelPositionOptions = {}
+  options: DebugPanelPositionOptions = {}
 ): Position {
   const { adjustYOnly = true } = options;
 

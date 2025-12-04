@@ -1,10 +1,11 @@
 /// <reference path="../types/gnome-shell-42.d.ts" />
 
 /**
- * Window Snap Manager
+ * Controller
  *
- * Monitors window dragging and displays a snap menu when the cursor reaches screen edges.
- * Allows users to quickly snap windows to predefined positions by dropping them on menu buttons.
+ * Main controller for Snappa extension.
+ * Monitors window dragging and displays the main panel when the cursor reaches screen edges.
+ * Allows users to quickly snap windows to predefined positions by dropping them on panel buttons.
  */
 
 const Meta = imports.gi.Meta;
@@ -12,15 +13,17 @@ const GLib = imports.gi.GLib;
 const Main = imports.ui.main;
 
 import { evaluate, parse } from './layout-expression';
-import { type SnapLayout, SnapMenu } from './snap-menu';
+import { MainPanel } from './main-panel/index';
+import { loadLayoutHistory, setSelectedLayout } from './repository/layout-history';
+import type { Layout, Position } from './types';
 
 declare function log(message: string): void;
 
-const EDGE_THRESHOLD = 10; // pixels from screen edge to trigger menu
-const EDGE_DELAY = 200; // milliseconds to wait before showing menu
+const EDGE_THRESHOLD = 10; // pixels from screen edge to trigger panel
+const EDGE_DELAY = 200; // milliseconds to wait before showing panel
 const MONITOR_INTERVAL = 50; // milliseconds between cursor position checks
 
-export class WindowSnapManager {
+export class Controller {
   private grabOpBeginId: number | null = null;
   private grabOpEndId: number | null = null;
   private motionId: number | null = null;
@@ -29,18 +32,21 @@ export class WindowSnapManager {
   private isDragging: boolean = false;
   private edgeTimer: number | null = null;
   private isAtEdge: boolean = false;
-  private snapMenu: SnapMenu;
+  private mainPanel: MainPanel;
 
   constructor() {
-    // Initialize snap menu
-    this.snapMenu = new SnapMenu();
-    this.snapMenu.setOnLayoutSelected((layout) => {
+    // Load layout history
+    loadLayoutHistory();
+
+    // Initialize main panel
+    this.mainPanel = new MainPanel();
+    this.mainPanel.setOnLayoutSelected((layout) => {
       this.applyLayoutToCurrentWindow(layout);
     });
   }
 
   /**
-   * Enable the window snap manager
+   * Enable the controller
    */
   enable(): void {
     // Connect to grab-op-begin signal to detect window dragging
@@ -61,7 +67,7 @@ export class WindowSnapManager {
   }
 
   /**
-   * Disable the window snap manager
+   * Disable the controller
    */
   disable(): void {
     // Stop motion monitoring
@@ -118,8 +124,8 @@ export class WindowSnapManager {
       // Clear edge timer
       this.clearEdgeTimer();
 
-      // Keep menu visible until a button is clicked
-      // (menu will be hidden when layout is applied)
+      // Keep panel visible until a button is clicked
+      // (panel will be hidden when layout is applied)
     }
   }
 
@@ -157,24 +163,24 @@ export class WindowSnapManager {
    * Handle cursor motion during drag
    */
   private onMotion(): void {
-    const [x, y] = this.getCursorPosition();
-    const atEdge = this.isAtScreenEdge(x, y);
+    const cursor = this.getCursorPosition();
+    const atEdge = this.isAtScreenEdge(cursor);
 
     if (atEdge && !this.isAtEdge) {
       // Just reached edge - start timer
       this.isAtEdge = true;
       this.startEdgeTimer();
-    } else if (!atEdge && this.isAtEdge && !this.snapMenu.isVisible()) {
-      // Left edge and menu is not visible - cancel timer
+    } else if (!atEdge && this.isAtEdge && !this.mainPanel.isVisible()) {
+      // Left edge and panel is not visible - cancel timer
       this.isAtEdge = false;
       this.clearEdgeTimer();
     }
-    // Note: If menu is visible, keep isAtEdge true even if cursor is not at edge
-    // This prevents the menu from disappearing when user moves cursor to menu
+    // Note: If panel is visible, keep isAtEdge true even if cursor is not at edge
+    // This prevents the panel from disappearing when user moves cursor to panel
 
-    // Update menu position if visible
-    if (this.snapMenu.isVisible()) {
-      this.snapMenu.updatePosition(x, y);
+    // Update panel position if visible
+    if (this.mainPanel.isVisible()) {
+      this.mainPanel.updatePosition(cursor);
     }
   }
 
@@ -186,7 +192,7 @@ export class WindowSnapManager {
 
     this.edgeTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, EDGE_DELAY, () => {
       if (this.isAtEdge && this.isDragging) {
-        this.showSnapMenu();
+        this.showMainPanel();
       }
       this.edgeTimer = null;
       return false; // Don't repeat
@@ -206,52 +212,72 @@ export class WindowSnapManager {
   /**
    * Get current cursor position
    */
-  private getCursorPosition(): [number, number] {
+  private getCursorPosition(): Position {
     const [x, y] = global.get_pointer();
-    return [x, y];
+    return { x, y };
   }
 
   /**
    * Check if cursor is at screen edge
    */
-  private isAtScreenEdge(x: number, y: number): boolean {
+  private isAtScreenEdge(cursor: Position): boolean {
     // Get primary monitor geometry
     const monitor = global.display.get_current_monitor();
     const geometry = global.display.get_monitor_geometry(monitor);
 
     // Check if cursor is within EDGE_THRESHOLD of any edge
-    const atLeft = x <= geometry.x + EDGE_THRESHOLD;
-    const atRight = x >= geometry.x + geometry.width - EDGE_THRESHOLD;
-    const atTop = y <= geometry.y + EDGE_THRESHOLD;
-    const atBottom = y >= geometry.y + geometry.height - EDGE_THRESHOLD;
+    const atLeft = cursor.x <= geometry.x + EDGE_THRESHOLD;
+    const atRight = cursor.x >= geometry.x + geometry.width - EDGE_THRESHOLD;
+    const atTop = cursor.y <= geometry.y + EDGE_THRESHOLD;
+    const atBottom = cursor.y >= geometry.y + geometry.height - EDGE_THRESHOLD;
 
     return atLeft || atRight || atTop || atBottom;
   }
 
   /**
-   * Show snap menu at cursor position
+   * Get current window
    */
-  private showSnapMenu(): void {
-    if (this.snapMenu.isVisible()) {
-      return; // Already visible
-    }
-
-    const [x, y] = this.getCursorPosition();
-    this.snapMenu.show(x, y);
+  private getCurrentWindow(): Meta.Window | null {
+    return this.currentWindow || this.lastDraggedWindow;
   }
 
   /**
-   * Apply layout to currently dragged window (called when menu button is clicked)
+   * Show main panel at cursor position
    */
-  private applyLayoutToCurrentWindow(layout: SnapLayout): void {
-    log(`[WindowSnapManager] Apply layout: ${layout.label}`);
+  private showMainPanel(): void {
+    if (this.mainPanel.isVisible()) {
+      return; // Already visible
+    }
+
+    const cursor = this.getCursorPosition();
+    const window = this.getCurrentWindow();
+    this.mainPanel.show(cursor, window);
+  }
+
+  /**
+   * Apply layout to currently dragged window (called when panel button is clicked)
+   */
+  private applyLayoutToCurrentWindow(layout: Layout): void {
+    log(`[Controller] Apply layout: ${layout.label} (ID: ${layout.id})`);
 
     // Use lastDraggedWindow since currentWindow might be null if drag just ended
     const targetWindow = this.currentWindow || this.lastDraggedWindow;
 
     if (!targetWindow) {
-      log('[WindowSnapManager] No window to apply layout to');
+      log('[Controller] No window to apply layout to');
       return;
+    }
+
+    // Record layout selection in history
+    const windowId = targetWindow.get_id();
+    const wmClass = targetWindow.get_wm_class();
+    const title = targetWindow.get_title();
+    if (wmClass) {
+      setSelectedLayout(windowId, wmClass, title, layout.id);
+      // Update panel button styles immediately
+      this.mainPanel.updateSelectedLayoutHighlight(layout.id);
+    } else {
+      log('[Controller] Window has no WM_CLASS, skipping history update');
     }
 
     // Get work area (excludes panels, top bar, etc.)
@@ -271,17 +297,17 @@ export class WindowSnapManager {
     const height = resolve(layout.height, workArea.height);
 
     log(
-      `[WindowSnapManager] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`
+      `[Controller] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`
     );
 
     // Unmaximize window if maximized
     if (targetWindow.get_maximized()) {
-      log('[WindowSnapManager] Unmaximizing window');
+      log('[Controller] Unmaximizing window');
       targetWindow.unmaximize(3); // Both horizontally and vertically
     }
 
     // Move and resize window
     targetWindow.move_resize_frame(false, x, y, width, height);
-    log('[WindowSnapManager] Window moved');
+    log('[Controller] Window moved');
   }
 }

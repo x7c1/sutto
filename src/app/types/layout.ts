@@ -1,4 +1,6 @@
 export interface Layout {
+  id: string; // Unique identifier (UUID)
+  hash: string; // Coordinate-based hash for duplicate detection
   label: string;
   x: string; // expression: '1/3', '50%', '100px', '50% - 10px', etc.
   y: string; // expression: '0', '50%', '10px', etc.
