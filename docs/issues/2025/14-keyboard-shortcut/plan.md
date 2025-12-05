@@ -1,4 +1,4 @@
-# Keyboard Shortcut for Snap Menu
+# Keyboard Shortcut for Main Panel
 
 ## Overview
 
@@ -8,7 +8,7 @@ Implement keyboard shortcut functionality to invoke the main panel without requi
 
 ### Current Situation
 - The main panel can only be invoked by dragging a window to screen edges
-- No keyboard-based method exists to open the menu
+- No keyboard-based method exists to open the main panel
 - Users who prefer keyboard workflows cannot access snap functionality efficiently
 
 ### Problem Statement
@@ -26,20 +26,20 @@ Users want to invoke the main panel using keyboard shortcuts for:
 - **Preferences UI**: Native GNOME extension preferences window with keyboard shortcut picker
 - **Default State**: No keyboard shortcut assigned by default (respects user's existing keybindings)
 - **Target Window Selection**: Apply layout to the currently focused window
-- **Cursor Positioning**: Menu appears at current cursor position (similar to drag behavior)
+- **Cursor Positioning**: Main panel appears at current cursor position (similar to drag behavior)
 - **Standard GNOME Integration**: Use GNOME Shell's built-in keybinding system (not D-Bus)
 
 ### Technical Requirements
 - Must work with GNOME Shell 42 APIs
 - Use GNOME Shell's keybinding system for native integration
 - Follow GNOME extension conventions for keyboard shortcuts
-- Integrate with existing WindowSnapManager and Controller architecture
+- Integrate with existing Controller architecture
 - No external dependencies or D-Bus setup required
 - Default shortcut: None (disabled by default, user must explicitly configure)
 
 ### User Experience Requirements
 - Shortcut works when any window is focused
-- Menu behavior identical to drag-triggered menu
+- Main panel behavior identical to drag-triggered panel
 - Layout selection history works the same way
 - Graceful handling when no window is focused
 - Preferences accessible via GNOME Extensions app (right-click → Preferences)
@@ -128,44 +128,107 @@ This is because preferences run in a separate GTK process, not in GNOME Shell.
 
 **esbuild.config.js modifications**:
 
+**Current structure** (lines 11-27):
 ```javascript
-// Current: Single entry point
 const buildConfig = {
     entryPoints: ['src/extension.ts'],
     bundle: true,
     outfile: 'dist/extension.js',
-    // ...
+    platform: 'neutral',
+    target: 'es2020',
+    format: 'cjs',
+    treeShaking: false,
+    banner: {
+        js: '// GNOME Shell Extension - Bundled with esbuild',
+    },
+    logLevel: 'info',
+    define: {
+        '__DEV__': JSON.stringify(isDev),
+    },
 };
-
-// After: Multiple entry points
-async function build() {
-    // Build extension.js (GNOME Shell runtime)
-    await esbuild.build({
-        entryPoints: ['src/extension.ts'],
-        bundle: true,
-        outfile: 'dist/extension.js',
-        platform: 'neutral',
-        target: 'es2020',
-        format: 'cjs',
-        treeShaking: false,
-        define: {
-            '__DEV__': JSON.stringify(isDev),
-        },
-    });
-
-    // Build prefs.js (GTK4 preferences window)
-    await esbuild.build({
-        entryPoints: ['src/prefs.ts'],
-        bundle: true,
-        outfile: 'dist/prefs.js',
-        platform: 'neutral',
-        target: 'es2020',
-        format: 'cjs', // or 'esm' depending on GNOME Shell version
-        treeShaking: false,
-        // Note: No __DEV__ needed for prefs
-    });
-}
 ```
+
+**After: Multiple build targets**
+
+Replace the single `buildConfig` with separate configs and build both:
+
+```javascript
+async function build() {
+    try {
+        // Ensure dist directory exists
+        if (!fs.existsSync('dist')) {
+            fs.mkdirSync('dist', { recursive: true });
+        }
+
+        // Build extension.js (GNOME Shell runtime)
+        await esbuild.build({
+            entryPoints: ['src/extension.ts'],
+            bundle: true,
+            outfile: 'dist/extension.js',
+            platform: 'neutral',
+            target: 'es2020',
+            format: 'cjs',
+            treeShaking: false,
+            banner: {
+                js: '// GNOME Shell Extension - Bundled with esbuild',
+            },
+            logLevel: 'info',
+            define: {
+                '__DEV__': JSON.stringify(isDev),
+            },
+        });
+
+        // Build prefs.js (GTK4 preferences window)
+        await esbuild.build({
+            entryPoints: ['src/prefs.ts'],
+            bundle: true,
+            outfile: 'dist/prefs.js',
+            platform: 'neutral',
+            target: 'es2020',
+            format: 'cjs',
+            treeShaking: false,
+            banner: {
+                js: '// GNOME Shell Extension Preferences - Bundled with esbuild',
+            },
+            logLevel: 'info',
+            // Note: No __DEV__ needed for prefs
+        });
+
+        // Compile GSettings schema if it exists (added in Phase 3)
+        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml';
+        if (fs.existsSync(schemaPath)) {
+            console.log('Compiling GSettings schema...');
+            try {
+                execSync('glib-compile-schemas dist/schemas/', { stdio: 'inherit' });
+                console.log('✓ Schema compiled successfully!');
+            } catch (error) {
+                console.error('✗ Schema compilation failed:', error.message);
+            }
+        }
+
+        // Check metadata.json exists
+        const metadataSource = 'dist/metadata.json';
+        if (!fs.existsSync(metadataSource)) {
+            console.log('Note: metadata.json should be in dist/ directory');
+        }
+
+        console.log('✓ Build complete!');
+    } catch (error) {
+        console.error('✗ Build failed:', error);
+        process.exit(1);
+    }
+}
+
+build();
+```
+
+**Key changes**:
+1. Remove single `buildConfig` constant
+2. Add `async function build()` wrapper
+3. Build `extension.js` with existing config
+4. Build `prefs.js` with similar config (no `__DEV__`)
+5. Add schema compilation step (conditional)
+6. Keep existing metadata.json check
 
 **Key differences**:
 - `extension.ts`: Uses `imports.gi.Shell`, `imports.ui.main`
@@ -201,7 +264,7 @@ dist/
 │                                                     │
 │ Keyboard Shortcut                                   │
 │ ┌───────────────────────────────────────────────┐  │
-│ │ Show Snap Menu                                │  │
+│ │ Show Main Panel                               │  │
 │ │                                                │  │
 │ │ Current: Disabled                         [✕] │  │
 │ │ Click to set shortcut                         │  │
@@ -221,7 +284,7 @@ dist/
 ```typescript
 private createShortcutRow(): Adw.ActionRow {
   const row = new Adw.ActionRow({
-    title: 'Show Snap Menu',
+    title: 'Show Main Panel',
     subtitle: 'Keyboard shortcut to invoke main panel for focused window'
   });
 
@@ -263,7 +326,7 @@ private createShortcutRow(): Adw.ActionRow {
 }
 
 private updateShortcutLabel(button: Gtk.Button): void {
-  const shortcuts = this.settings.get_strv('show-menu-shortcut');
+  const shortcuts = this.settings.get_strv('show-panel-shortcut');
   if (shortcuts.length > 0) {
     button.set_label(shortcuts[0]);
   } else {
@@ -307,7 +370,7 @@ private captureShortcut(button: Gtk.Button): void {
     const accelerator = Gtk.accelerator_name(keyval, mask);
 
     // Save to settings
-    this.settings.set_strv('show-menu-shortcut', [accelerator]);
+    this.settings.set_strv('show-panel-shortcut', [accelerator]);
     this.updateShortcutLabel(button);
 
     dialog.close();
@@ -319,7 +382,7 @@ private captureShortcut(button: Gtk.Button): void {
 }
 
 private clearShortcut(button: Gtk.Button): void {
-  this.settings.set_strv('show-menu-shortcut', []);
+  this.settings.set_strv('show-panel-shortcut', []);
   this.updateShortcutLabel(button);
 }
 ```
@@ -337,7 +400,7 @@ private clearShortcut(button: Gtk.Button): void {
 #### Tasks
 - Create GSettings schema file for keybinding configuration
 - Define default keyboard shortcut binding
-- Enable user customization via GNOME Settings > Keyboard > Shortcuts
+- Enable user customization via dedicated Preferences UI (accessible from GNOME Extensions app)
 
 #### Files to Create
 - **`schemas/org.gnome.shell.extensions.snappa.gschema.xml`**:
@@ -345,7 +408,7 @@ private clearShortcut(button: Gtk.Button): void {
   <?xml version="1.0" encoding="UTF-8"?>
   <schemalist>
     <schema id="org.gnome.shell.extensions.snappa" path="/org/gnome/shell/extensions/snappa/">
-      <key name="show-menu-shortcut" type="as">
+      <key name="show-panel-shortcut" type="as">
         <default>[]</default>
         <summary>Show main panel shortcut</summary>
         <description>Keyboard shortcut to show the main panel for the focused window. Empty array means disabled (default).</description>
@@ -391,12 +454,57 @@ dist/                                                 ← Direct management (lik
 - Schema file is exactly where GNOME Shell expects it
 
 **Build Script Update**:
-Add schema compilation to build process:
-```bash
-# In build script or npm scripts
-mkdir -p dist/schemas
-glib-compile-schemas dist/schemas/
+
+The schema compilation needs to be integrated into the build process. There are two approaches:
+
+**Option 1: Add to esbuild.config.js (Recommended)**
+
+Modify `esbuild.config.js` to compile schema after building JavaScript:
+
+```javascript
+const { execSync } = require('child_process');
+
+async function build() {
+    try {
+        // ... existing build code ...
+
+        // Compile GSettings schema if it exists
+        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml';
+        if (fs.existsSync(schemaPath)) {
+            console.log('Compiling GSettings schema...');
+            try {
+                execSync('glib-compile-schemas dist/schemas/', { stdio: 'inherit' });
+                console.log('✓ Schema compiled successfully!');
+            } catch (error) {
+                console.error('✗ Schema compilation failed:', error.message);
+                // Don't fail the build - schema might not be needed yet
+            }
+        }
+
+        console.log('✓ Build complete!');
+    } catch (error) {
+        console.error('✗ Build failed:', error);
+        process.exit(1);
+    }
+}
 ```
+
+**Option 2: Add npm script (Alternative)**
+
+Add a dedicated script in `package.json`:
+
+```json
+"scripts": {
+  "build": "tsc --noEmit && node esbuild.config.js && npm run compile-schema",
+  "compile-schema": "test -f dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml && glib-compile-schemas dist/schemas/ || echo 'No schema to compile'"
+}
+```
+
+**Recommendation**: Use Option 1 (esbuild.config.js) because:
+- Schema compilation happens automatically during build
+- Single command for complete build
+- Consistent with current build architecture
+- Error handling is clearer
 
 ### Phase 4: Extension Settings Integration
 
@@ -431,8 +539,12 @@ glib-compile-schemas dist/schemas/
       this.settings = new Gio.Settings({ settings_schema: schema });
     }
 
-    getShowMenuShortcut(): string[] {
-      return this.settings.get_strv('show-menu-shortcut');
+    getShowPanelShortcut(): string[] {
+      return this.settings.get_strv('show-panel-shortcut');
+    }
+
+    getGSettings(): Gio.Settings {
+      return this.settings;
     }
   }
   ```
@@ -453,7 +565,7 @@ glib-compile-schemas dist/schemas/
   - Store settings as instance variable
   - Register keybinding in `enable()` method
   - Unregister keybinding in `disable()` method
-  - Implement `onShowMenuShortcut()` callback method
+  - Implement `onShowPanelShortcut()` callback method
 
 #### Implementation Details
 
@@ -463,13 +575,13 @@ enable(): void {
   // Existing grab-op-begin/end signal connections...
 
   // Register keyboard shortcut
-  const shortcut = this.settings.getShowMenuShortcut();
+  const shortcut = this.settings.getShowPanelShortcut();
   Main.wm.addKeybinding(
-    'show-menu-shortcut',
+    'show-panel-shortcut',
     this.settings.getGSettings(),  // Pass Gio.Settings object
     Meta.KeyBindingFlags.NONE,
     Shell.ActionMode.NORMAL,
-    () => this.onShowMenuShortcut()
+    () => this.onShowPanelShortcut()
   );
 }
 ```
@@ -480,13 +592,13 @@ disable(): void {
   // Existing cleanup code...
 
   // Unregister keyboard shortcut
-  Main.wm.removeKeybinding('show-menu-shortcut');
+  Main.wm.removeKeybinding('show-panel-shortcut');
 }
 ```
 
 **Shortcut Callback Implementation**:
 ```typescript
-private onShowMenuShortcut(): void {
+private onShowPanelShortcut(): void {
   // Get currently focused window
   const focusWindow = global.display.get_focus_window();
 
@@ -570,18 +682,18 @@ private onShowMenuShortcut(): void {
 #### Verification Steps
 ```bash
 # Compile schema
-glib-compile-schemas schemas/
+glib-compile-schemas dist/schemas/
 
 # Verify compiled schema exists
-ls -l schemas/gschemas.compiled
+ls -l dist/schemas/gschemas.compiled
 
 # Test schema loading (after installation)
 gsettings list-schemas | grep snappa
 gsettings list-keys org.gnome.shell.extensions.snappa
-gsettings get org.gnome.shell.extensions.snappa show-menu-shortcut
+gsettings get org.gnome.shell.extensions.snappa show-panel-shortcut
 ```
 
-### Phase 8: Settings Button in Menu Footer
+### Phase 8: Settings Button in Main Panel Footer
 
 **Goal**: Add settings icon to main panel footer for quick access to preferences
 
@@ -693,7 +805,7 @@ show(cursor: Position, window: Meta.Window | null = null): void {
   // Create footer with settings button
   const footer = createFooter(() => {
     this.openPreferences();
-    this.hide();  // Close menu after opening preferences
+    this.hide();  // Close panel after opening preferences
   });
 
   this.container.add_child(footer);
@@ -741,10 +853,11 @@ private openPreferences(): void {
   - Change `createFooter()` return type: `St.Label` → `St.BoxLayout`
   - Add `onSettingsClick` callback parameter
   - Create footer box with label and icon button
+  - **Note**: This is a breaking change to the existing `createFooter()` function
 
 - `src/app/main-panel/index.ts`:
   - Add `openPreferences()` method
-  - Update `show()` to pass callback to `createFooter()`
+  - Update `show()` to pass callback to `createFooter()` (currently called without arguments at line 179)
 
 #### Visual Design
 
@@ -783,7 +896,7 @@ Extension
   → ExtensionSettings (load schema)
   → Controller (register keybinding)
     → Main.wm.addKeybinding()
-    → onShowMenuShortcut()
+    → onShowPanelShortcut()
       → get focused window
       → get cursor position
       → mainPanel.show()
@@ -813,17 +926,17 @@ Extension
 - `src/types/gtk4.d.ts` - GTK4 type definitions
 - `src/types/adwaita.d.ts` - Libadwaita type definitions
 - `src/types/gdk4.d.ts` - GDK4 type definitions (key events)
-- `schemas/org.gnome.shell.extensions.snappa.gschema.xml` - GSettings schema definition
+- `dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml` - GSettings schema definition
 - `src/settings/extension-settings.ts` - Settings manager class
 
 **Modified Files (7)**:
-- `src/extension.ts` - Initialize settings, pass to Controller
-- `src/app/controller.ts` - Register/unregister keybinding, implement callback
-- `src/types/gnome-shell-42.d.ts` - Add keybinding API type definitions
+- `src/extension.ts` - Initialize settings, pass to Controller constructor
+- `src/app/controller.ts` - Accept settings in constructor, register/unregister keybinding, implement callback
+- `src/types/gnome-shell-42.d.ts` - Add keybinding API type definitions (Shell.ActionMode, WM interface, Meta.KeyBindingFlags)
 - `esbuild.config.js` - Add second build target for `prefs.ts` → `dist/prefs.js`
 - `.gitignore` - Allow `dist/schemas/` but ignore `gschemas.compiled`
-- `src/app/main-panel/renderer.ts` - Update `createFooter()` to include settings icon
-- `src/app/main-panel/index.ts` - Add `openPreferences()` method
+- `src/app/main-panel/renderer.ts` - Update `createFooter()` signature and implementation (breaking change)
+- `src/app/main-panel/index.ts` - Add `openPreferences()` method, update `createFooter()` call
 
 **Documentation Files (1)**:
 - `README.md` - Add keyboard shortcut and preferences UI documentation
@@ -845,7 +958,7 @@ Extension
 - Open preferences and set shortcut to `Super+Space`
 - Focus any window (e.g., Firefox)
 - Press configured shortcut (`Super+Space`)
-- **Expected**: Snap menu appears at cursor position
+- **Expected**: Main panel appears at cursor position
 - Select a layout
 - **Expected**: Window applies layout correctly
 
@@ -862,15 +975,15 @@ Extension
 - **Expected**: Nothing happens (logged message)
 - Focus window
 - Press shortcut
-- **Expected**: Menu appears
+- **Expected**: Main panel appears
 
 #### Integration with Existing Features
 - Open main panel via shortcut
 - **Expected**: Layout history highlighting works
 - Select layout
-- Reopen menu via drag
+- Reopen panel via drag
 - **Expected**: Same layout highlighted
-- Reopen menu via shortcut
+- Reopen panel via shortcut
 - **Expected**: Same layout highlighted
 
 #### Shortcut Customization via Preferences UI
@@ -881,7 +994,7 @@ Extension
 - Click settings/gear icon (or right-click → Preferences)
 - **Expected**: Preferences window opens showing "Disabled"
 
-**Method 2: From Snap Menu (Quick Access)**
+**Method 2: From Main Panel (Quick Access)**
 - Drag window to edge to show main panel
 - Click ⚙️ icon in footer
 - **Expected**: Preferences window opens, main panel closes
@@ -891,7 +1004,7 @@ Extension
 - **Expected**: Shortcut updates to "Super + Space"
 - Close preferences
 - Test shortcut (`Super+Space`)
-- **Expected**: Opens menu
+- **Expected**: Opens panel
 - Reopen preferences
 - Click on shortcut button showing "Super + Space"
 - Press `Ctrl+Alt+S`
@@ -899,14 +1012,14 @@ Extension
 - Test old shortcut (`Super+Space`)
 - **Expected**: Does not work
 - Test new shortcut (`Ctrl+Alt+S`)
-- **Expected**: Opens menu
+- **Expected**: Opens panel
 
 #### Preferences UI Interaction
 - Open preferences window
 - **Expected**: Current shortcut displayed
 - Click clear button (✕)
 - **Expected**: Shortcut changes to "Disabled"
-- Try to invoke menu with any key
+- Try to invoke panel with any key
 - **Expected**: Nothing happens (shortcut disabled)
 - Open preferences again
 - Set new shortcut
@@ -915,18 +1028,18 @@ Extension
 #### Multiple Windows
 - Open two windows (Firefox, Terminal)
 - Focus Firefox, press shortcut
-- **Expected**: Menu shows with Firefox's layout history
-- Select layout, close menu
+- **Expected**: Panel shows with Firefox's layout history
+- Select layout, close panel
 - Focus Terminal, press shortcut
-- **Expected**: Menu shows with Terminal's layout history
+- **Expected**: Panel shows with Terminal's layout history
 
 ### Edge Cases
-- Press shortcut while menu already open
-- **Expected**: Menu remains open (or closes then reopens)
+- Press shortcut while panel already open
+- **Expected**: Panel remains open (or closes then reopens)
 - Press shortcut with maximized window
-- **Expected**: Menu opens, layout application unmaximizes window
+- **Expected**: Panel opens, layout application unmaximizes window
 - Press shortcut rapidly multiple times
-- **Expected**: No crashes, menu responds smoothly
+- **Expected**: No crashes, panel responds smoothly
 
 ### Quality Checks
 - Run `npm run build` - Must succeed
@@ -939,13 +1052,19 @@ Extension
 
 ### Phase 1: Preferences UI Foundation (Estimated: 3 points)
 - Set up GTK4/Libadwaita infrastructure
-- Create `prefs.ts` entry point
-- Create basic type definitions (GTK4, Adwaita, GDK4)
+- Create `prefs.ts` entry point with basic structure
+- Create basic type definitions:
+  - `src/types/gtk4.d.ts` - GTK4 types (Button, Label, Box, etc.)
+  - `src/types/adwaita.d.ts` - Libadwaita types (PreferencesWindow, PreferencesPage, PreferencesGroup, ActionRow)
+  - `src/types/gdk4.d.ts` - GDK4 types (KEY_* constants, event controller types)
 - **Update esbuild.config.js to build both `extension.js` and `prefs.js`**
-  - Add second build target for `src/prefs.ts`
+  - Replace single `buildConfig` with `async function build()`
+  - Add first build target: `src/extension.ts` → `dist/extension.js` (existing config)
+  - Add second build target: `src/prefs.ts` → `dist/prefs.js` (new config, no `__DEV__`)
+  - Add `execSync` import: `const { execSync } = require('child_process');`
   - Ensure both outputs go to `dist/` directory
   - Verify both files are generated on `npm run build`
-- Test preferences window opens from Extensions app
+- Test preferences window opens from Extensions app (right-click → Preferences)
 
 ### Phase 2: Keyboard Shortcut Picker (Estimated: 3 points)
 - Implement shortcut display row with button
@@ -975,8 +1094,11 @@ Extension
   - Ignore compiled schema: `dist/schemas/gschemas.compiled`
 
 ### Phase 4: Settings Integration (Estimated: 1 point)
-- Implement `ExtensionSettings` class
+- Implement `ExtensionSettings` class with methods:
+  - `getShowPanelShortcut()`: Returns keyboard shortcut array
+  - `getGSettings()`: Returns raw Gio.Settings object (needed for keybinding registration)
 - Integrate settings loading in Extension class
+- Update Controller constructor to accept `ExtensionSettings` parameter
 - Pass settings to Controller
 - Connect preferences to schema
 
@@ -1005,13 +1127,22 @@ Extension
   # After installing extension
   gsettings list-schemas | grep snappa
   gsettings list-keys org.gnome.shell.extensions.snappa
-  gsettings get org.gnome.shell.extensions.snappa show-menu-shortcut
+  gsettings get org.gnome.shell.extensions.snappa show-panel-shortcut
   ```
 - Verify `.gitignore` correctly handles version control
   - `dist/schemas/*.gschema.xml` should be committed (like metadata.json)
   - `dist/schemas/gschemas.compiled` should not be committed (build artifact)
 
-### Phase 8: Documentation (Estimated: 1 point)
+### Phase 8: Settings Button in Main Panel Footer (Estimated: 1 point)
+- Update `createFooter()` in `src/app/main-panel/renderer.ts`:
+  - Change signature to accept `onSettingsClick` callback
+  - Change return type from `St.Label` to `St.BoxLayout`
+  - This is a breaking change - update all call sites
+- Add `openPreferences()` method to `MainPanel` class
+- Update `MainPanel.show()` to pass callback when calling `createFooter()`
+- Test settings icon hover effect and preferences window opening
+
+### Phase 9: Documentation (Estimated: 1 point)
 - Update README with usage instructions
 - Document preferences UI access
 - Add screenshots of preferences window
@@ -1030,14 +1161,20 @@ Extension
 - Performance verification
 - Final quality checks
 
-**Total Estimated Effort**: 17 points (16 + 1 for settings icon)
+**Total Estimated Effort**: 17 points
+
+**Note on Breaking Changes**:
+- Phase 8 introduces a breaking change to `createFooter()` function signature
+- Current code: `createFooter()` returns `St.Label`
+- New code: `createFooter(onSettingsClick: () => void)` returns `St.BoxLayout`
+- Must update call site in `MainPanel.show()` (currently line 179: `const footer = createFooter();`)
 
 ## Success Criteria
 
 - Users can invoke main panel using keyboard shortcut (when configured)
 - Shortcut is disabled by default (no keybinding conflicts on installation)
 - Shortcut is configurable via preferences UI
-- Menu behavior identical to drag-triggered menu
+- Main panel behavior identical to drag-triggered panel
 - Layout history works correctly with keyboard invocation
 - Schema compiles and loads successfully
 - All existing tests pass
@@ -1072,7 +1209,7 @@ Extension
 - **Mitigation**: Check for null window and log gracefully, similar to WM_CLASS handling
 
 ### Risk 4: Keyboard vs. Mouse Workflow Differences
-- **Risk**: Keyboard-invoked menu might behave differently than drag-invoked
+- **Risk**: Keyboard-invoked panel might behave differently than drag-invoked
 - **Mitigation**: Reuse exact same code path (mainPanel.show()), only entry point differs
 
 ## Future Enhancements
@@ -1082,14 +1219,14 @@ Extension
 - Example: `<Super>1` for Halves, `<Super>2` for Thirds, etc.
 
 ### Quick Layout Application
-- Skip menu, apply last-used layout directly
-- Example: User configures second shortcut to apply most recent layout without showing menu
+- Skip panel, apply last-used layout directly
+- Example: User configures second shortcut to apply most recent layout without showing panel
 - Note: Would also be disabled by default, requiring explicit user configuration
 
 ### Layout Selection via Keyboard
-- Navigate menu using arrow keys
+- Navigate panel using arrow keys
 - Select layout with Enter key
-- Close menu with Escape
+- Close panel with Escape
 
 ### Workspace-Aware Shortcuts
 - Different default layouts per workspace
