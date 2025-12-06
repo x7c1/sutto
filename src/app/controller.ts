@@ -451,17 +451,21 @@ export class Controller {
 
     log(`[Controller] Focused window: ${focusWindow.get_title()}`);
 
-    // Get current cursor position
-    const cursor = this.getCursorPosition();
-    log(`[Controller] Cursor position: x=${cursor.x}, y=${cursor.y}`);
+    // Get window frame rectangle to position panel at window center
+    const frameRect = focusWindow.get_frame_rect();
+    const windowCenter = {
+      x: frameRect.x + frameRect.width / 2,
+      y: frameRect.y + frameRect.height / 2,
+    };
+    log(`[Controller] Window center position: x=${windowCenter.x}, y=${windowCenter.y}`);
 
     // Store window reference (similar to drag behavior)
     this.currentWindow = focusWindow;
     this.lastDraggedWindow = focusWindow;
 
-    // Show main panel at cursor position
+    // Show main panel at window center position with vertical centering
     log('[Controller] Showing main panel...');
-    this.mainPanel.show(cursor, focusWindow);
+    this.mainPanel.show(windowCenter, focusWindow, true);
     log('[Controller] Main panel shown');
   }
 

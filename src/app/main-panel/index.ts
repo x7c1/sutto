@@ -103,7 +103,7 @@ export class MainPanel {
   /**
    * Show the main panel at the specified position
    */
-  show(cursor: Position, window: Meta.Window | null = null): void {
+  show(cursor: Position, window: Meta.Window | null = null, centerVertically = false): void {
     // Hide existing panel if any
     this.hide();
 
@@ -145,7 +145,8 @@ export class MainPanel {
     const adjusted = this.positionManager.adjustPosition(
       cursor,
       panelDimensions,
-      this.debugIntegration.isEnabled()
+      this.debugIntegration.isEnabled(),
+      centerVertically
     );
 
     // Store adjusted panel position

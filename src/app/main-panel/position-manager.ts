@@ -86,7 +86,12 @@ export class MainPanelPositionManager {
   /**
    * Adjust panel position for screen boundaries with center alignment
    */
-  adjustPosition(cursor: Position, panelDimensions: Size, hasDebugPanel: boolean): Position {
+  adjustPosition(
+    cursor: Position,
+    panelDimensions: Size,
+    hasDebugPanel: boolean,
+    centerVertically = false
+  ): Position {
     const screenWidth = global.screen_width;
     const screenHeight = global.screen_height;
 
@@ -100,6 +105,7 @@ export class MainPanelPositionManager {
       },
       {
         centerHorizontally: true,
+        centerVertically,
         reserveDebugPanelSpace: hasDebugPanel,
         debugPanelGap: 20,
         debugPanelWidth: 300,
