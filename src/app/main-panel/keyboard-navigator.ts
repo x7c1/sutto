@@ -50,8 +50,28 @@ export class MainPanelKeyboardNavigator {
     this.keyEventId = container.connect('key-press-event', (_actor: St.BoxLayout, event: any) => {
       return this.handleKeyPress(event);
     });
+    this.focusedButton = this.initializeFocus();
+  }
 
-    // Initialize focus: selected layout if exists, otherwise top-left layout
+  disable(): void {
+    if (this.keyEventId !== null && this.container) {
+      this.container.disconnect(this.keyEventId);
+      this.keyEventId = null;
+    }
+
+    if (this.focusedButton) {
+      this.removeFocusStyle(this.focusedButton);
+      this.focusedButton = null;
+    }
+
+    this.container = null;
+    // Do not clear layoutButtons, as it's a reference from MainPanel
+  }
+
+  /**
+   * Initialize focus to selected layout if exists, otherwise top-left layout
+   */
+  private initializeFocus(): St.Button | null {
     let initialButton: St.Button | null = null;
 
     // Find selected button if exists
@@ -70,10 +90,10 @@ export class MainPanelKeyboardNavigator {
       let minY = Infinity;
       let minX = Infinity;
       for (const button of this.layoutButtons.keys()) {
-        if (!initialButton) {
-            initialButton = button;
-        }
-        const [x, y] = (button as any).get_transformed_position();
+        const allocation = (button as any).get_allocation_box();
+        const x = allocation.x1;
+        const y = allocation.y1;
+
         if (y < minY || (y === minY && x < minX)) {
           minY = y;
           minX = x;
@@ -83,24 +103,9 @@ export class MainPanelKeyboardNavigator {
     }
 
     if (initialButton) {
-      this.focusedButton = initialButton;
       this.applyFocusStyle(initialButton);
     }
-  }
-
-  disable(): void {
-    if (this.keyEventId !== null && this.container) {
-      this.container.disconnect(this.keyEventId);
-      this.keyEventId = null;
-    }
-
-    if (this.focusedButton) {
-      this.removeFocusStyle(this.focusedButton);
-      this.focusedButton = null;
-    }
-
-    this.container = null;
-    // Do not clear layoutButtons, as it's a reference from MainPanel
+    return initialButton;
   }
 
   /**
