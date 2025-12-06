@@ -3,6 +3,18 @@
 
 import { Controller } from './app/controller';
 import { DBusReloader } from './reloader/dbus-reloader';
+import { ExtensionSettings } from './settings/extension-settings';
+
+declare function log(message: string): void;
+
+/**
+ * Initialize the extension
+ * This function is called when the extension is loaded by GNOME Shell
+ */
+// @ts-expect-error - Called by GNOME Shell runtime
+function init(metadata: ExtensionMetadata): Extension {
+  return new Extension(metadata);
+}
 
 // Extension class
 class Extension {
@@ -10,9 +22,9 @@ class Extension {
   private controller: Controller;
 
   constructor(metadata: ExtensionMetadata) {
-    // Initialize DBusReloader only in development mode
     this.dbusReloader = __DEV__ ? new DBusReloader('snappa@x7c1.github.io', metadata.uuid) : null;
-    this.controller = new Controller();
+    const settings = loadSettings(metadata);
+    this.controller = new Controller(settings, metadata);
   }
 
   enable(): void {
@@ -27,10 +39,21 @@ class Extension {
 }
 
 /**
- * Initialize the extension
- * This function is called when the extension is loaded by GNOME Shell
+ * Try to load extension settings with error handling
  */
-// @ts-expect-error - Called by GNOME Shell runtime
-function init(metadata: ExtensionMetadata): Extension {
-  return new Extension(metadata);
+function loadSettings(metadata: ExtensionMetadata): ExtensionSettings | null {
+  try {
+    log('[Snappa] Loading settings...');
+    log(`[Snappa] Extension metadata: uuid=${metadata.uuid}, dir=${metadata.dir?.get_path()}`);
+    const settings = new ExtensionSettings(metadata);
+    log('[Snappa] Settings loaded successfully');
+    return settings;
+  } catch (e) {
+    log(`[Snappa] ERROR: Failed to load settings: ${e}`);
+    if (e instanceof Error && e.stack) {
+      log(`[Snappa] Error stack: ${e.stack}`);
+    }
+    log('[Snappa] Extension will run without keyboard shortcut support');
+    return null;
+  }
 }

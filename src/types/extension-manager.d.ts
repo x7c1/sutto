@@ -16,18 +16,6 @@ interface Extension {
 }
 
 /**
- * Extension metadata from metadata.json
- */
-interface ExtensionMetadata {
-  uuid: string;
-  name: string;
-  description: string;
-  'shell-version': string[];
-  url?: string;
-  version?: number;
-}
-
-/**
  * Extension state enum
  */
 declare enum ExtensionState {

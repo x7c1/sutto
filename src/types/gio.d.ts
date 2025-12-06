@@ -21,6 +21,11 @@ declare namespace Gio {
     get_child(name: string): File;
 
     /**
+     * Gets the file path as a string
+     */
+    get_path(): string;
+
+    /**
      * Checks if the file exists
      * @param cancellable Optional cancellable object, or null
      */
@@ -44,6 +49,12 @@ declare namespace Gio {
       flags: FileCreateFlags,
       cancellable: Cancellable | null
     ): void;
+
+    /**
+     * Creates a directory with parent directories
+     * @param cancellable Optional cancellable object, or null
+     */
+    make_directory_with_parents(cancellable: Cancellable | null): void;
 
     /**
      * Copies a file
@@ -261,6 +272,80 @@ declare namespace Gio {
    * Gets a D-Bus connection synchronously
    */
   function bus_get_sync(bus_type: BusType, cancellable: Cancellable | null): DBusConnection;
+
+  /**
+   * GSettings schema source for loading schemas
+   */
+  interface SettingsSchemaSource {
+    lookup(schema_id: string, recursive: boolean): SettingsSchema | null;
+  }
+
+  /**
+   * GSettings schema
+   */
+  interface SettingsSchema {
+    get_id(): string;
+  }
+
+  /**
+   * GSettings interface for application settings
+   */
+  interface Settings {
+    get_strv(key: string): string[];
+    set_strv(key: string, value: string[]): boolean;
+    get_string(key: string): string;
+    set_string(key: string, value: string): boolean;
+    get_boolean(key: string): boolean;
+    set_boolean(key: string, value: boolean): boolean;
+    get_int(key: string): number;
+    set_int(key: string, value: number): boolean;
+  }
+
+  interface SettingsConstructor {
+    new (properties: { settings_schema: SettingsSchema }): Settings;
+  }
+
+  const Settings: SettingsConstructor;
+
+  interface SettingsSchemaSourceConstructor {
+    new_from_directory(
+      directory: string,
+      parent: SettingsSchemaSource | null,
+      trusted: boolean
+    ): SettingsSchemaSource;
+    get_default(): SettingsSchemaSource;
+  }
+
+  const SettingsSchemaSource: SettingsSchemaSourceConstructor;
+
+  /**
+   * Subprocess flags
+   */
+  enum SubprocessFlags {
+    NONE = 0,
+    STDIN_PIPE = 1,
+    STDIN_INHERIT = 2,
+    STDOUT_PIPE = 4,
+    STDOUT_SILENCE = 8,
+    STDERR_PIPE = 16,
+    STDERR_SILENCE = 32,
+    STDERR_MERGE = 64,
+    INHERIT_FDS = 128,
+  }
+
+  /**
+   * Subprocess interface for running external commands
+   */
+  interface Subprocess {
+    wait_async(cancellable: Cancellable | null, callback: (result: any) => void): void;
+    get_successful(): boolean;
+  }
+
+  interface SubprocessConstructor {
+    new (argv: string[], flags: SubprocessFlags): Subprocess;
+  }
+
+  const Subprocess: SubprocessConstructor;
 }
 
 declare const Gio: typeof Gio;

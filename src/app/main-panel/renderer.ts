@@ -67,19 +67,74 @@ export function createBackground(onClickOutside: () => void): BackgroundView {
 }
 
 /**
- * Create footer with app name
+ * Create footer with app name and settings button
  */
-export function createFooter(): St.Label {
-  return new St.Label({
-    text: 'Powered by Snappa',
+export function createFooter(onSettingsClick: () => void): St.BoxLayout {
+  const footerBox = new St.BoxLayout({
     style: `
-            font-size: 12px;
-            color: ${FOOTER_TEXT_COLOR};
-            text-align: center;
-            margin-top: ${FOOTER_MARGIN_TOP}px;
-        `,
+      margin-top: ${FOOTER_MARGIN_TOP}px;
+    `,
+    vertical: false,
     x_align: 2, // CENTER
   });
+
+  // Text label
+  const label = new St.Label({
+    text: 'Powered by Snappa',
+    style: `
+      font-size: 12px;
+      color: ${FOOTER_TEXT_COLOR};
+    `,
+  });
+
+  // Settings icon button
+  const settingsButton = new St.Button({
+    style_class: 'snappa-settings-icon',
+    style: `
+      margin-left: 8px;
+      padding: 2px 4px;
+      border-radius: 4px;
+    `,
+    track_hover: true,
+  });
+
+  const icon = new St.Icon({
+    icon_name: 'preferences-system-symbolic', // GNOME standard settings icon
+    icon_size: 14,
+    style: `color: ${FOOTER_TEXT_COLOR};`,
+  });
+
+  settingsButton.set_child(icon);
+
+  settingsButton.connect('clicked', () => {
+    log('[Renderer] Settings button clicked event fired');
+    onSettingsClick();
+    return true; // Clutter.EVENT_STOP
+  });
+
+  // Hover effect
+  settingsButton.connect('enter-event', () => {
+    log('[Renderer] Settings button hover enter');
+    settingsButton.style = `
+      margin-left: 8px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background-color: rgba(255, 255, 255, 0.1);
+    `;
+  });
+
+  settingsButton.connect('leave-event', () => {
+    settingsButton.style = `
+      margin-left: 8px;
+      padding: 2px 4px;
+      border-radius: 4px;
+    `;
+  });
+
+  footerBox.add_child(label);
+  footerBox.add_child(settingsButton);
+
+  return footerBox;
 }
 
 /**

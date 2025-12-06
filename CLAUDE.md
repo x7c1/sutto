@@ -24,3 +24,12 @@ npm run build && npm run check && npm run test:run
 ```
 
 Fix any issues before considering the task complete.
+
+## Code Structure
+
+**Declaration Order**: Place important and public declarations first, private ones below.
+
+1. **Public API first** (exported functions, classes)
+2. **Internal helpers below** (private functions, utilities)
+
+This makes the code easier to understand - readers see the public interface immediately.

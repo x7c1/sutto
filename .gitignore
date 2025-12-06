@@ -11,9 +11,11 @@ lerna-debug.log*
 node_modules
 dist-ssr
 
-# TypeScript compiled files in dist/ (but keep metadata.json)
-dist/*.js
-dist/*.js.map
+# Ignore everything in dist/ except metadata.json and schemas/
+dist/*
+!dist/metadata.json
+!dist/schemas/
+dist/schemas/gschemas.compiled
 
 # TypeScript build info
 *.tsbuildinfo

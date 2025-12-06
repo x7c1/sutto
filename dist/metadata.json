@@ -1,7 +1,7 @@
 {
   "uuid": "snappa@x7c1.github.io",
   "name": "Snappa",
-  "description": "A simple Hello World GNOME Shell extension",
+  "description": "Window snapping extension for GNOME Shell",
   "shell-version": [
     "42"
   ],

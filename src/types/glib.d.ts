@@ -29,6 +29,22 @@ declare namespace GLib {
   function get_home_dir(): string;
 
   /**
+   * Test file attributes
+   */
+  enum FileTest {
+    IS_REGULAR = 1 << 0,
+    IS_SYMLINK = 1 << 1,
+    IS_DIR = 1 << 2,
+    IS_EXECUTABLE = 1 << 3,
+    EXISTS = 1 << 4,
+  }
+
+  /**
+   * Tests whether a file exists and returns TRUE if the test succeeds
+   */
+  function file_test(filename: string, test: FileTest): boolean;
+
+  /**
    * Creates a directory with parents
    */
   function mkdir_with_parents(pathname: string, mode: number): number;
@@ -53,5 +69,3 @@ declare namespace GLib {
    */
   const SOURCE_REMOVE: boolean;
 }
-
-declare const GLib: typeof GLib;
