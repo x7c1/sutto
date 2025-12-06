@@ -36,6 +36,14 @@ export class ExtensionSettings {
   }
 
   /**
+   * Get the keyboard shortcut for hiding the main panel
+   * @returns Array of shortcut strings (typically ['Escape'])
+   */
+  getHidePanelShortcut(): string[] {
+    return this.settings.get_strv('hide-panel-shortcut');
+  }
+
+  /**
    * Get the raw GSettings object (needed for keybinding registration)
    * @returns Gio.Settings object
    */

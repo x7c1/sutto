@@ -6,5 +6,10 @@
       <summary>Show main panel shortcut</summary>
       <description>Keyboard shortcut to show the main panel for the focused window. Empty array means disabled (default).</description>
     </key>
+    <key name="hide-panel-shortcut" type="as">
+      <default>['Escape']</default>
+      <summary>Hide main panel shortcut</summary>
+      <description>Keyboard shortcut to hide the main panel. Default is Escape key.</description>
+    </key>
   </schema>
 </schemalist>

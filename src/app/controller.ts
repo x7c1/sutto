@@ -36,6 +36,7 @@ export class Controller {
   private isAtEdge: boolean = false;
   private mainPanel: MainPanel;
   private settings: ExtensionSettings | null;
+  private hideShortcutRegistered: boolean = false;
 
   constructor(settings: ExtensionSettings | null, metadata: ExtensionMetadata) {
     this.settings = settings;
@@ -54,6 +55,14 @@ export class Controller {
    * Enable the controller
    */
   enable(): void {
+    this.connectWindowDragSignals();
+    this.registerKeyboardShortcuts();
+  }
+
+  /**
+   * Connect window drag signals
+   */
+  private connectWindowDragSignals(): void {
     // Connect to grab-op-begin signal to detect window dragging
     this.grabOpBeginId = global.display.connect(
       'grab-op-begin',
@@ -69,38 +78,80 @@ export class Controller {
         this.onGrabOpEnd(window, op);
       }
     );
+  }
 
-    // Register keyboard shortcut (only if settings are available)
-    if (this.settings) {
-      try {
-        log('[Controller] Registering keyboard shortcut...');
-        const shortcuts = this.settings.getShowPanelShortcut();
-        log(`[Controller] Current shortcut setting: ${JSON.stringify(shortcuts)}`);
-
-        Main.wm.addKeybinding(
-          'show-panel-shortcut',
-          this.settings.getGSettings(),
-          Meta.KeyBindingFlags.NONE,
-          Shell.ActionMode.NORMAL,
-          () => this.onShowPanelShortcut()
-        );
-        log('[Controller] Keyboard shortcut registered successfully');
-      } catch (e) {
-        log(`[Controller] Failed to register keyboard shortcut: ${e}`);
-      }
-    } else {
-      log('[Controller] Settings not available, keyboard shortcut not registered');
+  /**
+   * Register keyboard shortcuts
+   */
+  private registerKeyboardShortcuts(): void {
+    if (!this.settings) {
+      log('[Controller] Settings not available, keyboard shortcuts not registered');
+      return;
     }
+
+    try {
+      log('[Controller] Registering keyboard shortcuts...');
+      this.registerShowPanelShortcut();
+      this.registerHidePanelShortcut();
+    } catch (e) {
+      log(`[Controller] Failed to register keyboard shortcuts: ${e}`);
+    }
+  }
+
+  /**
+   * Register show panel keyboard shortcut
+   */
+  private registerShowPanelShortcut(): void {
+    if (!this.settings) return;
+
+    const shortcuts = this.settings.getShowPanelShortcut();
+    log(`[Controller] Current show shortcut setting: ${JSON.stringify(shortcuts)}`);
+
+    Main.wm.addKeybinding(
+      'show-panel-shortcut',
+      this.settings.getGSettings(),
+      Meta.KeyBindingFlags.NONE,
+      Shell.ActionMode.NORMAL,
+      () => this.onShowPanelShortcut()
+    );
+    log('[Controller] Show panel keyboard shortcut registered successfully');
+  }
+
+  /**
+   * Register hide panel keyboard shortcut
+   */
+  private registerHidePanelShortcut(): void {
+    if (!this.settings) return;
+
+    const hideShortcuts = this.settings.getHidePanelShortcut();
+    log(`[Controller] Current hide shortcut setting: ${JSON.stringify(hideShortcuts)}`);
+
+    Main.wm.addKeybinding(
+      'hide-panel-shortcut',
+      this.settings.getGSettings(),
+      Meta.KeyBindingFlags.NONE,
+      Shell.ActionMode.NORMAL,
+      () => this.onHidePanelShortcut()
+    );
+    this.hideShortcutRegistered = true;
+    log('[Controller] Hide panel keyboard shortcut registered successfully');
   }
 
   /**
    * Disable the controller
    */
   disable(): void {
-    // Stop motion monitoring
     this.stopMotionMonitoring();
+    this.disconnectWindowDragSignals();
+    this.unregisterKeyboardShortcuts();
+    this.clearEdgeTimer();
+    this.resetState();
+  }
 
-    // Disconnect signals
+  /**
+   * Disconnect window drag signals
+   */
+  private disconnectWindowDragSignals(): void {
     if (this.grabOpBeginId !== null) {
       global.display.disconnect(this.grabOpBeginId);
       this.grabOpBeginId = null;
@@ -110,20 +161,29 @@ export class Controller {
       global.display.disconnect(this.grabOpEndId);
       this.grabOpEndId = null;
     }
+  }
 
-    // Unregister keyboard shortcut (only if settings are available)
-    if (this.settings) {
-      try {
-        Main.wm.removeKeybinding('show-panel-shortcut');
-      } catch (e) {
-        log(`[Controller] Failed to unregister keyboard shortcut: ${e}`);
+  /**
+   * Unregister keyboard shortcuts
+   */
+  private unregisterKeyboardShortcuts(): void {
+    if (!this.settings) return;
+
+    try {
+      Main.wm.removeKeybinding('show-panel-shortcut');
+      if (this.hideShortcutRegistered) {
+        Main.wm.removeKeybinding('hide-panel-shortcut');
+        this.hideShortcutRegistered = false;
       }
+    } catch (e) {
+      log(`[Controller] Failed to unregister keyboard shortcuts: ${e}`);
     }
+  }
 
-    // Clean up edge timer
-    this.clearEdgeTimer();
-
-    // Reset state
+  /**
+   * Reset controller state
+   */
+  private resetState(): void {
     this.currentWindow = null;
     this.isDragging = false;
     this.isAtEdge = false;
@@ -353,6 +413,13 @@ export class Controller {
   private onShowPanelShortcut(): void {
     log('[Controller] ===== KEYBOARD SHORTCUT TRIGGERED =====');
 
+    // If panel is already visible, hide it (toggle behavior)
+    if (this.mainPanel.isVisible()) {
+      log('[Controller] Panel is already visible, hiding it');
+      this.mainPanel.hide();
+      return;
+    }
+
     // Get currently focused window
     const focusWindow = global.display.get_focus_window();
 
@@ -375,5 +442,20 @@ export class Controller {
     log('[Controller] Showing main panel...');
     this.mainPanel.show(cursor, focusWindow);
     log('[Controller] Main panel shown');
+  }
+
+  /**
+   * Handle keyboard shortcut to hide main panel
+   */
+  private onHidePanelShortcut(): void {
+    log('[Controller] ===== HIDE PANEL SHORTCUT TRIGGERED =====');
+
+    // Only hide if panel is visible
+    if (this.mainPanel.isVisible()) {
+      log('[Controller] Hiding panel');
+      this.mainPanel.hide();
+    } else {
+      log('[Controller] Panel not visible, ignoring shortcut');
+    }
   }
 }
