@@ -49,6 +49,13 @@ export class Controller {
     this.mainPanel.setOnLayoutSelected((layout) => {
       this.applyLayoutToCurrentWindow(layout);
     });
+    // Register/unregister hide shortcut when panel is shown/hidden
+    this.mainPanel.setOnPanelShown(() => {
+      this.registerHidePanelShortcut();
+    });
+    this.mainPanel.setOnPanelHidden(() => {
+      this.unregisterHidePanelShortcut();
+    });
   }
 
   /**
@@ -56,7 +63,7 @@ export class Controller {
    */
   enable(): void {
     this.connectWindowDragSignals();
-    this.registerKeyboardShortcuts();
+    this.registerShowPanelKeyboardShortcut();
   }
 
   /**
@@ -81,20 +88,20 @@ export class Controller {
   }
 
   /**
-   * Register keyboard shortcuts
+   * Register show panel keyboard shortcut only
+   * Hide panel shortcut is registered dynamically when panel is shown
    */
-  private registerKeyboardShortcuts(): void {
+  private registerShowPanelKeyboardShortcut(): void {
     if (!this.settings) {
       log('[Controller] Settings not available, keyboard shortcuts not registered');
       return;
     }
 
     try {
-      log('[Controller] Registering keyboard shortcuts...');
+      log('[Controller] Registering show panel keyboard shortcut...');
       this.registerShowPanelShortcut();
-      this.registerHidePanelShortcut();
     } catch (e) {
-      log(`[Controller] Failed to register keyboard shortcuts: ${e}`);
+      log(`[Controller] Failed to register show panel keyboard shortcut: ${e}`);
     }
   }
 
@@ -118,10 +125,11 @@ export class Controller {
   }
 
   /**
-   * Register hide panel keyboard shortcut
+   * Register hide panel keyboard shortcut (called when panel is shown)
    */
   private registerHidePanelShortcut(): void {
     if (!this.settings) return;
+    if (this.hideShortcutRegistered) return; // Already registered
 
     const hideShortcuts = this.settings.getHidePanelShortcut();
     log(`[Controller] Current hide shortcut setting: ${JSON.stringify(hideShortcuts)}`);
@@ -135,6 +143,22 @@ export class Controller {
     );
     this.hideShortcutRegistered = true;
     log('[Controller] Hide panel keyboard shortcut registered successfully');
+  }
+
+  /**
+   * Unregister hide panel keyboard shortcut (called when panel is hidden)
+   */
+  private unregisterHidePanelShortcut(): void {
+    if (!this.settings) return;
+    if (!this.hideShortcutRegistered) return; // Not registered
+
+    try {
+      Main.wm.removeKeybinding('hide-panel-shortcut');
+      this.hideShortcutRegistered = false;
+      log('[Controller] Hide panel keyboard shortcut unregistered');
+    } catch (e) {
+      log(`[Controller] Failed to unregister hide panel keyboard shortcut: ${e}`);
+    }
   }
 
   /**
@@ -171,10 +195,7 @@ export class Controller {
 
     try {
       Main.wm.removeKeybinding('show-panel-shortcut');
-      if (this.hideShortcutRegistered) {
-        Main.wm.removeKeybinding('hide-panel-shortcut');
-        this.hideShortcutRegistered = false;
-      }
+      this.unregisterHidePanelShortcut();
     } catch (e) {
       log(`[Controller] Failed to unregister keyboard shortcuts: ${e}`);
     }
@@ -430,17 +451,21 @@ export class Controller {
 
     log(`[Controller] Focused window: ${focusWindow.get_title()}`);
 
-    // Get current cursor position
-    const cursor = this.getCursorPosition();
-    log(`[Controller] Cursor position: x=${cursor.x}, y=${cursor.y}`);
+    // Get window frame rectangle to position panel at window center
+    const frameRect = focusWindow.get_frame_rect();
+    const windowCenter = {
+      x: frameRect.x + frameRect.width / 2,
+      y: frameRect.y + frameRect.height / 2,
+    };
+    log(`[Controller] Window center position: x=${windowCenter.x}, y=${windowCenter.y}`);
 
     // Store window reference (similar to drag behavior)
     this.currentWindow = focusWindow;
     this.lastDraggedWindow = focusWindow;
 
-    // Show main panel at cursor position
+    // Show main panel at window center position with vertical centering
     log('[Controller] Showing main panel...');
-    this.mainPanel.show(cursor, focusWindow);
+    this.mainPanel.show(windowCenter, focusWindow, true);
     log('[Controller] Main panel shown');
   }
 

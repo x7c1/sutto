@@ -29,6 +29,8 @@ export interface ScreenBoundaries {
 export interface MainPanelPositionOptions {
   /** Whether to center the panel horizontally on the cursor */
   centerHorizontally?: boolean;
+  /** Whether to center the panel vertically on the cursor */
+  centerVertically?: boolean;
   /** Whether to reserve space for debug panel on the right */
   reserveDebugPanelSpace?: boolean;
   /** Debug panel gap (if reserving space) */

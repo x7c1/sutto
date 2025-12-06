@@ -139,22 +139,29 @@ export function createLayoutButton(
   // We use 'as any' to add custom properties to the button
   const buttonWithMeta = button as any;
   buttonWithMeta._isSelected = isSelected;
+  buttonWithMeta._isFocused = false;
   buttonWithMeta._buttonWidth = buttonWidth;
   buttonWithMeta._buttonHeight = buttonHeight;
   buttonWithMeta._debugConfig = debugConfig;
 
   // Add hover effect
   const enterEventId = button.connect('enter-event', () => {
-    button.set_style(
-      getButtonStyle(true, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
-    );
+    // Only apply hover style if not keyboard-focused
+    if (!buttonWithMeta._isFocused) {
+      button.set_style(
+        getButtonStyle(true, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
+      );
+    }
     return false; // Clutter.EVENT_PROPAGATE
   });
 
   const leaveEventId = button.connect('leave-event', () => {
-    button.set_style(
-      getButtonStyle(false, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
-    );
+    // Only remove hover style if not keyboard-focused
+    if (!buttonWithMeta._isFocused) {
+      button.set_style(
+        getButtonStyle(false, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
+      );
+    }
     return false; // Clutter.EVENT_PROPAGATE
   });
 

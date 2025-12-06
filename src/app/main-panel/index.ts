@@ -17,6 +17,7 @@ import { importSettings, loadLayouts } from '../repository/layouts';
 import type { Layout, Position } from '../types';
 import { MainPanelAutoHide } from './auto-hide';
 import { MainPanelDebugIntegration } from './debug-integration';
+import { MainPanelKeyboardNavigator } from './keyboard-navigator';
 import { MainPanelLayoutSelector } from './layout-selector';
 import { MainPanelPositionManager } from './position-manager';
 import type { PanelEventIds } from './renderer';
@@ -36,6 +37,8 @@ export class MainPanel {
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private rendererEventIds: PanelEventIds | null = null;
   private metadata: ExtensionMetadata;
+  private onPanelShownCallback: (() => void) | null = null;
+  private onPanelHiddenCallback: (() => void) | null = null;
 
   // Component instances
   private state: MainPanelState = new MainPanelState();
@@ -43,6 +46,7 @@ export class MainPanel {
   private layoutSelector: MainPanelLayoutSelector = new MainPanelLayoutSelector();
   private debugIntegration: MainPanelDebugIntegration = new MainPanelDebugIntegration();
   private autoHide: MainPanelAutoHide = new MainPanelAutoHide();
+  private keyboardNavigator: MainPanelKeyboardNavigator = new MainPanelKeyboardNavigator();
 
   constructor(metadata: ExtensionMetadata) {
     this.metadata = metadata;
@@ -85,9 +89,23 @@ export class MainPanel {
   }
 
   /**
+   * Set callback for when panel is shown
+   */
+  setOnPanelShown(callback: () => void): void {
+    this.onPanelShownCallback = callback;
+  }
+
+  /**
+   * Set callback for when panel is hidden
+   */
+  setOnPanelHidden(callback: () => void): void {
+    this.onPanelHiddenCallback = callback;
+  }
+
+  /**
    * Show the main panel at the specified position
    */
-  show(cursor: Position, window: Meta.Window | null = null): void {
+  show(cursor: Position, window: Meta.Window | null = null, centerVertically = false): void {
     // Hide existing panel if any
     this.hide();
 
@@ -129,7 +147,8 @@ export class MainPanel {
     const adjusted = this.positionManager.adjustPosition(
       cursor,
       panelDimensions,
-      this.debugIntegration.isEnabled()
+      this.debugIntegration.isEnabled(),
+      centerVertically
     );
 
     // Store adjusted panel position
@@ -216,6 +235,17 @@ export class MainPanel {
 
     // Show debug panel if enabled - it will position itself relative to panel
     this.debugIntegration.showRelativeTo(position, panelDimensions);
+
+    // Enable keyboard navigation
+    const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
+    if (this.container && onLayoutSelected) {
+      this.keyboardNavigator.enable(this.container, this.layoutButtons, onLayoutSelected);
+    }
+
+    // Notify that panel is shown
+    if (this.onPanelShownCallback) {
+      this.onPanelShownCallback();
+    }
   }
 
   /**
@@ -225,6 +255,9 @@ export class MainPanel {
     if (this.container) {
       // Cleanup auto-hide
       this.autoHide.cleanup();
+
+      // Disable keyboard navigation
+      this.keyboardNavigator.disable();
 
       // Disconnect event handlers
       if (this.rendererEventIds) {
@@ -263,6 +296,11 @@ export class MainPanel {
 
       // Reset state (but keep currentWmClass and categories)
       this.state.reset();
+
+      // Notify that panel is hidden
+      if (this.onPanelHiddenCallback) {
+        this.onPanelHiddenCallback();
+      }
     }
   }
 

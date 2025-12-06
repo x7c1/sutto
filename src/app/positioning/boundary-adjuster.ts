@@ -24,6 +24,7 @@ export function adjustMainPanelPosition(
 ): Position {
   const {
     centerHorizontally = true,
+    centerVertically = false,
     reserveDebugPanelSpace = false,
     debugPanelGap = 20,
     debugPanelWidth = 300,
@@ -35,6 +36,11 @@ export function adjustMainPanelPosition(
   // Apply horizontal centering if requested
   if (centerHorizontally) {
     adjustedX = cursorPosition.x - panelDimensions.width / 2;
+  }
+
+  // Apply vertical centering if requested
+  if (centerVertically) {
+    adjustedY = cursorPosition.y - panelDimensions.height / 2;
   }
 
   // Calculate maximum X position

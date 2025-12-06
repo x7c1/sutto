@@ -152,6 +152,19 @@ declare namespace Clutter {
     CENTER = 2,
     END = 3,
   }
+
+  // Key symbols for keyboard navigation
+  // These values are accessed at runtime via imports.gi.Clutter
+  const KEY_Up: number;
+  const KEY_Down: number;
+  const KEY_Left: number;
+  const KEY_Right: number;
+  const KEY_h: number;
+  const KEY_j: number;
+  const KEY_k: number;
+  const KEY_l: number;
+  const KEY_Return: number;
+  const KEY_KP_Enter: number;
 }
 
 // ============================================================================
