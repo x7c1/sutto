@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.snappa" path="/org/gnome/shell/extensions/snappa/">
+    <key name="show-panel-shortcut" type="as">
+      <default>[]</default>
+      <summary>Show main panel shortcut</summary>
+      <description>Keyboard shortcut to show the main panel for the focused window. Empty array means disabled (default).</description>
+    </key>
+  </schema>
+</schemalist>

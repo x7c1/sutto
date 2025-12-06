@@ -4,6 +4,14 @@
 
 A GNOME Shell extension for window snapping.
 
+## Features
+
+- **Edge-triggered snapping**: Drag windows to screen edges to show the layout panel
+- **Keyboard shortcut support**: Optional keyboard shortcut for quick access (disabled by default)
+- **Visual layout preview**: See layout positions before applying them
+- **Layout history**: Recently used layouts are highlighted for faster access
+- **Customizable preferences**: Configure keyboard shortcuts through a native GNOME preferences UI
+
 ## Quick Start
 
 ### Prerequisites
@@ -19,6 +27,23 @@ npm run dev
 ```
 
 Then restart GNOME Shell (first time only) and enable the extension.
+
+## Usage
+
+### Drag-to-Snap
+1. Drag any window to a screen edge
+2. The layout panel appears at your cursor
+3. Click a layout button to snap the window
+
+### Keyboard Shortcut (Optional)
+1. Open preferences:
+   - Click the ⚙️ icon in the main panel footer, **OR**
+   - Right-click the extension in GNOME Extensions app → Preferences
+2. Click "Disabled" to set a keyboard shortcut
+3. Press your desired key combination (e.g., `Super+Space`)
+4. Press the shortcut to open the main panel for the focused window
+
+**Note**: Keyboard shortcut is disabled by default to avoid conflicts with existing keybindings.
 
 ## Documentation
 

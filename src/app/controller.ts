@@ -11,7 +11,9 @@
 const Meta = imports.gi.Meta;
 const GLib = imports.gi.GLib;
 const Main = imports.ui.main;
+const Shell = imports.gi.Shell;
 
+import type { ExtensionSettings } from '../settings/extension-settings';
 import { evaluate, parse } from './layout-expression';
 import { MainPanel } from './main-panel/index';
 import { loadLayoutHistory, setSelectedLayout } from './repository/layout-history';
@@ -33,13 +35,16 @@ export class Controller {
   private edgeTimer: number | null = null;
   private isAtEdge: boolean = false;
   private mainPanel: MainPanel;
+  private settings: ExtensionSettings | null;
 
-  constructor() {
+  constructor(settings: ExtensionSettings | null, metadata: ExtensionMetadata) {
+    this.settings = settings;
+
     // Load layout history
     loadLayoutHistory();
 
-    // Initialize main panel
-    this.mainPanel = new MainPanel();
+    // Initialize main panel with metadata
+    this.mainPanel = new MainPanel(metadata);
     this.mainPanel.setOnLayoutSelected((layout) => {
       this.applyLayoutToCurrentWindow(layout);
     });
@@ -64,6 +69,21 @@ export class Controller {
         this.onGrabOpEnd(window, op);
       }
     );
+
+    // Register keyboard shortcut (only if settings are available)
+    if (this.settings) {
+      try {
+        Main.wm.addKeybinding(
+          'show-panel-shortcut',
+          this.settings.getGSettings(),
+          Meta.KeyBindingFlags.NONE,
+          Shell.ActionMode.NORMAL,
+          () => this.onShowPanelShortcut()
+        );
+      } catch (e) {
+        log(`[Controller] Failed to register keyboard shortcut: ${e}`);
+      }
+    }
   }
 
   /**
@@ -82,6 +102,15 @@ export class Controller {
     if (this.grabOpEndId !== null) {
       global.display.disconnect(this.grabOpEndId);
       this.grabOpEndId = null;
+    }
+
+    // Unregister keyboard shortcut (only if settings are available)
+    if (this.settings) {
+      try {
+        Main.wm.removeKeybinding('show-panel-shortcut');
+      } catch (e) {
+        log(`[Controller] Failed to unregister keyboard shortcut: ${e}`);
+      }
     }
 
     // Clean up edge timer
@@ -309,5 +338,28 @@ export class Controller {
     // Move and resize window
     targetWindow.move_resize_frame(false, x, y, width, height);
     log('[Controller] Window moved');
+  }
+
+  /**
+   * Handle keyboard shortcut to show main panel
+   */
+  private onShowPanelShortcut(): void {
+    // Get currently focused window
+    const focusWindow = global.display.get_focus_window();
+
+    if (!focusWindow) {
+      log('[Controller] No focused window, ignoring shortcut');
+      return;
+    }
+
+    // Get current cursor position
+    const cursor = this.getCursorPosition();
+
+    // Store window reference (similar to drag behavior)
+    this.currentWindow = focusWindow;
+    this.lastDraggedWindow = focusWindow;
+
+    // Show main panel at cursor position
+    this.mainPanel.show(cursor, focusWindow);
   }
 }

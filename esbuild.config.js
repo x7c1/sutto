@@ -1,30 +1,12 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
+const { execSync } = require('child_process');
 
 // Determine build mode from environment variable
 const isDev = process.env.BUILD_MODE !== 'release';
 const buildMode = isDev ? 'development' : 'release';
 
 console.log(`Building in ${buildMode} mode...`);
-
-// Build configuration
-const buildConfig = {
-    entryPoints: ['src/extension.ts'],
-    bundle: true,
-    outfile: 'dist/extension.js',
-    platform: 'neutral', // Don't assume Node.js or browser
-    target: 'es2020',
-    format: 'cjs', // CommonJS for GNOME Shell
-    treeShaking: false, // Disable tree-shaking to keep all code
-    banner: {
-        js: '// GNOME Shell Extension - Bundled with esbuild',
-    },
-    logLevel: 'info',
-    // Replace __DEV__ constant at build time
-    define: {
-        '__DEV__': JSON.stringify(isDev),
-    },
-};
 
 async function build() {
     try {
@@ -33,10 +15,62 @@ async function build() {
             fs.mkdirSync('dist', { recursive: true });
         }
 
-        // Build with esbuild
-        await esbuild.build(buildConfig);
+        // Build extension.js (GNOME Shell runtime)
+        await esbuild.build({
+            entryPoints: ['src/extension.ts'],
+            bundle: true,
+            outfile: 'dist/extension.js',
+            platform: 'neutral',
+            target: 'es2020',
+            format: 'cjs',
+            treeShaking: false,
+            banner: {
+                js: '// GNOME Shell Extension - Bundled with esbuild',
+            },
+            logLevel: 'info',
+            define: {
+                '__DEV__': JSON.stringify(isDev),
+            },
+        });
 
-        // Copy metadata.json to dist if it doesn't exist
+        // Build prefs.js (GTK4 preferences window)
+        // IMPORTANT: Use IIFE format to avoid 'module is not defined' error in GNOME Shell 42
+        await esbuild.build({
+            entryPoints: ['src/prefs.ts'],
+            bundle: true,
+            outfile: 'dist/prefs.js',
+            platform: 'neutral',
+            target: 'es2020',
+            format: 'iife',
+            globalName: 'prefs',
+            treeShaking: false,
+            banner: {
+                js: '// GNOME Shell Extension Preferences - Bundled with esbuild',
+            },
+            logLevel: 'info',
+            // Note: No __DEV__ needed for prefs
+            footer: {
+                js: `
+// Export init and fillPreferencesWindow for GNOME Shell
+var init = prefs.default.init;
+var fillPreferencesWindow = prefs.default.fillPreferencesWindow;
+`,
+            },
+        });
+
+        // Compile GSettings schema if it exists (added in Phase 3)
+        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml';
+        if (fs.existsSync(schemaPath)) {
+            console.log('Compiling GSettings schema...');
+            try {
+                execSync('glib-compile-schemas dist/schemas/', { stdio: 'inherit' });
+                console.log('✓ Schema compiled successfully!');
+            } catch (error) {
+                console.error('✗ Schema compilation failed:', error.message);
+            }
+        }
+
+        // Check metadata.json exists
         const metadataSource = 'dist/metadata.json';
         if (!fs.existsSync(metadataSource)) {
             console.log('Note: metadata.json should be in dist/ directory');

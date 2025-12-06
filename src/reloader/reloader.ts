@@ -141,15 +141,53 @@ export class Reloader {
       const name = fileInfo.get_name();
       const fileType = fileInfo.get_file_type();
 
-      // Only copy regular files, skip directories
+      const sourceFile = sourceDir.get_child(name);
+      const destFile = tmpDirFile.get_child(name);
+
       if (fileType === Gio.FileType.REGULAR) {
-        const sourceFile = sourceDir.get_child(name);
-        const destFile = tmpDirFile.get_child(name);
+        // Copy regular files
         sourceFile.copy(destFile, Gio.FileCopyFlags.OVERWRITE, null, null);
+      } else if (fileType === Gio.FileType.DIRECTORY) {
+        // Recursively copy directories (needed for schemas/)
+        this.copyDirectoryRecursive(sourceFile, destFile);
       }
     }
 
     return tmpDirFile;
+  }
+
+  /**
+   * Recursively copy a directory and its contents
+   */
+  private copyDirectoryRecursive(sourceDir: Gio.File, destDir: Gio.File): void {
+    // Create destination directory
+    if (!destDir.query_exists(null)) {
+      destDir.make_directory_with_parents(null);
+    }
+
+    const enumerator = sourceDir.enumerate_children(
+      'standard::name,standard::type',
+      Gio.FileQueryInfoFlags.NONE,
+      null
+    );
+
+    while (true) {
+      const fileInfo = enumerator.next_file(null);
+      if (fileInfo === null) {
+        break;
+      }
+      const name = fileInfo.get_name();
+      const fileType = fileInfo.get_file_type();
+
+      const sourceFile = sourceDir.get_child(name);
+      const destFile = destDir.get_child(name);
+
+      if (fileType === Gio.FileType.REGULAR) {
+        sourceFile.copy(destFile, Gio.FileCopyFlags.OVERWRITE, null, null);
+      } else if (fileType === Gio.FileType.DIRECTORY) {
+        this.copyDirectoryRecursive(sourceFile, destFile);
+      }
+    }
   }
 
   /**

@@ -58,6 +58,15 @@ declare namespace Meta {
     RESIZING_W = 4097,
   }
 
+  enum KeyBindingFlags {
+    NONE = 0,
+    PER_WINDOW = 1,
+    BUILTIN = 2,
+    IS_REVERSED = 4,
+    NON_MASKABLE = 8,
+    IGNORE_AUTOREPEAT = 16,
+  }
+
   interface Rectangle {
     x: number;
     y: number;
@@ -90,6 +99,7 @@ declare namespace Meta {
     get_n_monitors(): number;
     get_current_monitor(): number;
     get_monitor_index_for_rect(rect: Rectangle): number;
+    get_focus_window(): Window | null;
   }
 }
 
@@ -191,15 +201,37 @@ declare namespace St {
   }
 
   interface Button extends Clutter.Actor {
+    style: string;
     set_child(child: Clutter.Actor): void;
     set_position(x: number, y: number): void;
     set_style(style: string): void;
-    connect(signal: string, callback: () => boolean): number;
+    connect(signal: string, callback: () => boolean | undefined | void): number;
     destroy(): void;
   }
 
   interface ButtonConstructor {
     new (props?: ButtonConstructorProperties): Button;
+  }
+
+  interface IconConstructorProperties {
+    style_class?: string;
+    style?: string;
+    icon_name?: string;
+    icon_size?: number;
+    x_align?: Clutter.ActorAlign;
+    y_align?: Clutter.ActorAlign;
+  }
+
+  interface Icon extends Clutter.Actor {
+    icon_name: string;
+    icon_size: number;
+    set_icon_name(icon_name: string): void;
+    set_icon_size(icon_size: number): void;
+    destroy(): void;
+  }
+
+  interface IconConstructor {
+    new (props?: IconConstructorProperties): Icon;
   }
 
   interface BoxLayoutConstructorProperties {
@@ -264,8 +296,39 @@ declare namespace St {
 }
 
 // ============================================================================
+// Shell Types (for keybindings)
+// ============================================================================
+
+declare namespace Shell {
+  enum ActionMode {
+    NONE = 0,
+    NORMAL = 1,
+    OVERVIEW = 2,
+    LOCK_SCREEN = 4,
+    UNLOCK_SCREEN = 8,
+    LOGIN_SCREEN = 16,
+    SYSTEM_MODAL = 32,
+    LOOKING_GLASS = 64,
+    POPUP = 128,
+    ALL = 0xffffffff,
+  }
+}
+
+// ============================================================================
 // GNOME Shell UI Types
 // ============================================================================
+
+interface WM {
+  addKeybinding(
+    name: string,
+    settings: Gio.Settings,
+    flags: Meta.KeyBindingFlags,
+    modes: Shell.ActionMode,
+    handler: () => void
+  ): number;
+
+  removeKeybinding(name: string): void;
+}
 
 declare namespace UI {
   interface Panel {
@@ -292,6 +355,7 @@ declare namespace UI {
   interface Main {
     panel: Panel;
     layoutManager: LayoutManager;
+    wm: WM;
   }
 }
 
@@ -304,6 +368,7 @@ declare const imports: {
     St: {
       Label: St.LabelConstructor;
       Button: St.ButtonConstructor;
+      Icon: St.IconConstructor;
       BoxLayout: St.BoxLayoutConstructor;
       Widget: St.WidgetConstructor;
       [key: string]: any;
@@ -327,3 +392,17 @@ declare const imports: {
 };
 
 declare const global: Shell.Global;
+
+// ============================================================================
+// Extension API Types
+// ============================================================================
+
+interface ExtensionMetadata {
+  uuid: string;
+  name: string;
+  description: string;
+  version: string;
+  dir: Gio.File;
+  path: string;
+  url: string;
+}

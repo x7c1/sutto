@@ -3,6 +3,7 @@
 
 import { Controller } from './app/controller';
 import { DBusReloader } from './reloader/dbus-reloader';
+import { ExtensionSettings } from './settings/extension-settings';
 
 // Extension class
 class Extension {
@@ -10,9 +11,22 @@ class Extension {
   private controller: Controller;
 
   constructor(metadata: ExtensionMetadata) {
-    // Initialize DBusReloader only in development mode
+    // Initialize DBusReloader only in development mode (before settings to ensure it always works)
     this.dbusReloader = __DEV__ ? new DBusReloader('snappa@x7c1.github.io', metadata.uuid) : null;
-    this.controller = new Controller();
+
+    // Initialize settings (with error handling)
+    let settings: ExtensionSettings | null = null;
+    try {
+      settings = new ExtensionSettings(metadata);
+    } catch (e) {
+      // @ts-expect-error - log exists in GJS runtime
+      log(`[Snappa] Failed to load settings: ${e}`);
+      // @ts-expect-error - log exists in GJS runtime
+      log('[Snappa] Extension will run without keyboard shortcut support');
+    }
+
+    // Initialize controller with settings and metadata
+    this.controller = new Controller(settings, metadata);
   }
 
   enable(): void {

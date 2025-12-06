@@ -9,6 +9,7 @@
 
 const St = imports.gi.St;
 const Main = imports.ui.main;
+const Gio = imports.gi.Gio;
 
 import { AUTO_HIDE_DELAY_MS, DEFAULT_LAYOUT_SETTINGS, MINIATURE_DISPLAY_WIDTH } from '../constants';
 import { getDebugConfig } from '../debug-panel/config';
@@ -34,6 +35,7 @@ export class MainPanel {
   private background: St.BoxLayout | null = null;
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private rendererEventIds: PanelEventIds | null = null;
+  private metadata: ExtensionMetadata;
 
   // Component instances
   private state: MainPanelState = new MainPanelState();
@@ -42,7 +44,8 @@ export class MainPanel {
   private debugIntegration: MainPanelDebugIntegration = new MainPanelDebugIntegration();
   private autoHide: MainPanelAutoHide = new MainPanelAutoHide();
 
-  constructor() {
+  constructor(metadata: ExtensionMetadata) {
+    this.metadata = metadata;
     // Setup auto-hide callback
     this.autoHide.setOnHide(() => {
       this.hide();
@@ -175,8 +178,12 @@ export class MainPanel {
       this.layoutButtons = categoriesView.layoutButtons;
     }
 
-    // Create footer
-    const footer = createFooter();
+    // Create footer with settings button
+    const footer = createFooter(() => {
+      log('[MainPanel] Settings button clicked');
+      this.openPreferences();
+      this.hide(); // Close panel after opening preferences
+    });
 
     // Create main container
     const container = createPanelContainer();
@@ -304,5 +311,39 @@ export class MainPanel {
     }
 
     this.layoutSelector.updateSelectedLayoutHighlight(newSelectedLayoutId, this.layoutButtons);
+  }
+
+  /**
+   * Open preferences window
+   */
+  private openPreferences(): void {
+    // Use actual UUID from metadata (supports reloader suffix in development mode)
+    const uuid = this.metadata.uuid;
+    log(`[MainPanel] Opening preferences for UUID: ${uuid}`);
+
+    // Try multiple methods to open preferences
+    const commands = [
+      // GNOME 42+ command
+      ['gnome-extensions', 'prefs', uuid],
+      // Legacy command for older GNOME versions
+      ['gnome-shell-extension-prefs', uuid],
+    ];
+
+    let success = false;
+    for (const cmd of commands) {
+      try {
+        Gio.Subprocess.new(cmd, Gio.SubprocessFlags.NONE);
+        log(`[MainPanel] Opening preferences with: ${cmd.join(' ')}`);
+        success = true;
+        break;
+      } catch (e) {
+        log(`[MainPanel] Failed with ${cmd[0]}: ${e}`);
+      }
+    }
+
+    if (!success) {
+      log('[MainPanel] ERROR: Could not open preferences with any method');
+      log('[MainPanel] Please open preferences manually from Extensions app');
+    }
   }
 }

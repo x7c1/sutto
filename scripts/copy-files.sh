@@ -17,6 +17,6 @@ mkdir -p "$EXTENSION_DIR"
 
 # Copy files from dist/ to extension directory
 echo "Copying files from dist/ to $EXTENSION_DIR..."
-cp dist/* "$EXTENSION_DIR/"
+cp -r dist/* "$EXTENSION_DIR/"
 
 echo "Files copied successfully!"
