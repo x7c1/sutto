@@ -4,7 +4,7 @@ import type { LayoutCategorySetting } from './types/layout-setting';
 export const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding panel when cursor leaves
 
 // Dimensions
-export const MINIATURE_DISPLAY_WIDTH = 210; // Fixed width for miniature displays
+export const MINIATURE_DISPLAY_WIDTH = 204; // Fixed width for miniature displays
 export const PANEL_PADDING = 12; // Padding around panel content
 export const PANEL_EDGE_PADDING = 10; // Minimum distance from screen edges
 export const DISPLAY_SPACING = 12; // Spacing between miniature displays (vertical within categories, or old vertical spacing)

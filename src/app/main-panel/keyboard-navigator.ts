@@ -70,6 +70,9 @@ export class MainPanelKeyboardNavigator {
       let minY = Infinity;
       let minX = Infinity;
       for (const button of this.layoutButtons.keys()) {
+        if (!initialButton) {
+            initialButton = button;
+        }
         const [x, y] = (button as any).get_transformed_position();
         if (y < minY || (y === minY && x < minX)) {
           minY = y;
@@ -190,28 +193,29 @@ export class MainPanelKeyboardNavigator {
     let sourceMidpoint: Point;
     let getTargetMidpoint: (pos: ButtonPosition) => Point;
     let isInDirection: (targetMidpoint: Point) => boolean;
+    const buffer = 5;
 
     // Determine source edge, target edge, and directional constraint based on direction
     switch (direction) {
       case 'right':
         sourceMidpoint = currentMidpoints.right;
         getTargetMidpoint = (pos) => this.calculateEdgeMidpoints(pos).left;
-        isInDirection = (targetMidpoint) => targetMidpoint.x >= sourceMidpoint.x;
+        isInDirection = (targetMidpoint) => targetMidpoint.x + buffer >= sourceMidpoint.x;
         break;
       case 'left':
         sourceMidpoint = currentMidpoints.left;
         getTargetMidpoint = (pos) => this.calculateEdgeMidpoints(pos).right;
-        isInDirection = (targetMidpoint) => targetMidpoint.x <= sourceMidpoint.x;
+        isInDirection = (targetMidpoint) => targetMidpoint.x - buffer <= sourceMidpoint.x;
         break;
       case 'down':
         sourceMidpoint = currentMidpoints.bottom;
         getTargetMidpoint = (pos) => this.calculateEdgeMidpoints(pos).top;
-        isInDirection = (targetMidpoint) => targetMidpoint.y >= sourceMidpoint.y;
+        isInDirection = (targetMidpoint) => targetMidpoint.y + buffer >= sourceMidpoint.y;
         break;
       case 'up':
         sourceMidpoint = currentMidpoints.top;
         getTargetMidpoint = (pos) => this.calculateEdgeMidpoints(pos).bottom;
-        isInDirection = (targetMidpoint) => targetMidpoint.y <= sourceMidpoint.y;
+        isInDirection = (targetMidpoint) => targetMidpoint.y - buffer <= sourceMidpoint.y;
         break;
       default:
         return null;
@@ -220,7 +224,6 @@ export class MainPanelKeyboardNavigator {
     // Find closest layout in the specified direction
     let closestButton: St.Button | null = null;
     let minDistance = Infinity;
-
     for (const [button, layout] of this.layoutButtons.entries()) {
       layout; // Prevent unused variable warning
       // Skip current button
