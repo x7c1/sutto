@@ -17,6 +17,7 @@ import { importSettings, loadLayouts } from '../repository/layouts';
 import type { Layout, Position } from '../types';
 import { MainPanelAutoHide } from './auto-hide';
 import { MainPanelDebugIntegration } from './debug-integration';
+import { MainPanelKeyboardNavigator } from './keyboard-navigator';
 import { MainPanelLayoutSelector } from './layout-selector';
 import { MainPanelPositionManager } from './position-manager';
 import type { PanelEventIds } from './renderer';
@@ -45,6 +46,7 @@ export class MainPanel {
   private layoutSelector: MainPanelLayoutSelector = new MainPanelLayoutSelector();
   private debugIntegration: MainPanelDebugIntegration = new MainPanelDebugIntegration();
   private autoHide: MainPanelAutoHide = new MainPanelAutoHide();
+  private keyboardNavigator: MainPanelKeyboardNavigator = new MainPanelKeyboardNavigator();
 
   constructor(metadata: ExtensionMetadata) {
     this.metadata = metadata;
@@ -234,6 +236,12 @@ export class MainPanel {
     // Show debug panel if enabled - it will position itself relative to panel
     this.debugIntegration.showRelativeTo(position, panelDimensions);
 
+    // Enable keyboard navigation
+    const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
+    if (this.container && onLayoutSelected) {
+      this.keyboardNavigator.enable(this.container, this.layoutButtons, onLayoutSelected);
+    }
+
     // Notify that panel is shown
     if (this.onPanelShownCallback) {
       this.onPanelShownCallback();
@@ -247,6 +255,9 @@ export class MainPanel {
     if (this.container) {
       // Cleanup auto-hide
       this.autoHide.cleanup();
+
+      // Disable keyboard navigation
+      this.keyboardNavigator.disable();
 
       // Disconnect event handlers
       if (this.rendererEventIds) {
