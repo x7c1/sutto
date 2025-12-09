@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: version-check
+        run: |
+          # Get version and UUID from current commit
+          CURRENT_VERSION=$(jq -r '.version' dist/metadata.json)
+          UUID=$(jq -r '.uuid' dist/metadata.json)
+
+          # Get version from previous commit
+          git checkout HEAD~1 -- dist/metadata.json
+          PREVIOUS_VERSION=$(jq -r '.version' dist/metadata.json)
+          git checkout HEAD -- dist/metadata.json
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "Previous version: $PREVIOUS_VERSION"
+
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "uuid=$UUID" >> $GITHUB_OUTPUT
+          else
+            echo "Version unchanged, skipping release"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        if: steps.version-check.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.version-check.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Build Extension
+        if: steps.version-check.outputs.changed == 'true'
+        run: npm run build:release
+
+      - name: Package Extension
+        if: steps.version-check.outputs.changed == 'true'
+        id: package
+        run: |
+          UUID="${{ steps.version-check.outputs.uuid }}"
+          VERSION="${{ steps.version-check.outputs.version }}"
+          FILENAME="${UUID}.v${VERSION}.shell-extension.zip"
+
+          cd dist
+          zip -r ../${FILENAME} .
+          cd ..
+
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        if: steps.version-check.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version-check.outputs.version }}
+          name: Release ${{ steps.version-check.outputs.version }}
+          files: ${{ steps.package.outputs.filename }}
+          generate_release_notes: true
