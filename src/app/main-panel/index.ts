@@ -8,6 +8,7 @@
  */
 
 const St = imports.gi.St;
+const Meta = imports.gi.Meta;
 const Main = imports.ui.main;
 const Gio = imports.gi.Gio;
 
@@ -260,6 +261,9 @@ export class MainPanel {
    * Hide the main panel
    */
   hide(): void {
+    // Reset cursor to default when hiding panel
+    global.display.set_cursor(Meta.Cursor.DEFAULT);
+
     if (this.container) {
       // Cleanup auto-hide
       this.autoHide.cleanup();
