@@ -15,7 +15,7 @@ export const BUTTON_BORDER_WIDTH = 1; // Border width for layout buttons
 export const FOOTER_MARGIN_TOP = 8; // Margin above footer
 
 // Colors
-export const PANEL_BG_COLOR = 'rgba(40, 40, 40, 0.85)'; // Main panel background
+export const PANEL_BG_COLOR = 'rgba(40, 40, 40, 0.9)'; // Main panel background
 export const PANEL_BORDER_COLOR = 'rgba(255, 255, 255, 0.2)'; // Main panel border
 export const DISPLAY_BG_COLOR = 'rgba(20, 20, 20, 0.9)';
 export const BUTTON_BG_COLOR = 'rgba(80, 80, 80, 0.6)';
