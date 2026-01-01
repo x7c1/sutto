@@ -19,14 +19,37 @@ A GNOME Shell extension for window snapping.
 - GNOME Shell 42
 - Node.js and npm (for development)
 
-### Building from Source
+### Initial Setup (First Time Only)
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Build and install the extension**:
+   ```bash
+   npm run build
+   npm run copy-files
+   ```
+
+3. **Restart GNOME Shell**:
+   - **Xorg session**: Press `Alt + F2`, type `r`, and press Enter
+   - **Wayland session**: Log out and log back in
+
+4. **Enable the extension**:
+   ```bash
+   gnome-extensions enable snappa@x7c1.github.io
+   ```
+
+### Development Workflow (After Initial Setup)
+
+After the initial setup, you can use the quick reload command:
 
 ```bash
-npm install
 npm run dev
 ```
 
-Then restart GNOME Shell (first time only) and enable the extension.
+This will build, copy, and reload the extension without requiring a logout.
 
 ## Usage
 

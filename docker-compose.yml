@@ -14,8 +14,8 @@ services:
       - ~/.ssh:/home/developer/.ssh:ro
       - ./claude.local/shared/.npm-global:/home/developer/.npm-global
       - ./claude.local/shared/.local:/home/developer/.local
+      - ./vendor:/workspace/vendor
     stdin_open: true
     tty: true
     working_dir: /projects/${ROLE}
     command: bash -c "/projects/${ROLE}/vendor/strata/scripts/start-claude-code.sh; exec bash"
-
