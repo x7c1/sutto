@@ -1,4 +1,4 @@
-const GLib = imports.gi.GLib;
+import GLib from 'gi://GLib';
 
 /**
  * Get the extension's data directory path

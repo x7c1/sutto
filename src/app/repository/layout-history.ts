@@ -1,6 +1,6 @@
-const Gio = imports.gi.Gio;
+import Gio from 'gi://Gio';
 
-import { getExtensionDataPath } from './extension-path';
+import { getExtensionDataPath } from './extension-path.js';
 
 declare function log(message: string): void;
 

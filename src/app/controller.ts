@@ -192,8 +192,10 @@ export class Controller {
   private showPanelAtCursor(x: number, y: number): void {
     if (!this.mainPanel.isVisible()) {
       console.log(`[Controller] Showing panel at cursor position: ${x}, ${y}`);
-      this.mainPanel.show();
-      // TODO: Position panel at cursor (Step 4 improvement)
+      // Set current window in panel
+      this.mainPanel.setCurrentWindow(this.currentWindow);
+      // Show panel at cursor position
+      this.mainPanel.show(x, y);
     }
   }
 

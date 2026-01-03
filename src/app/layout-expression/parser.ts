@@ -15,7 +15,7 @@
  *   zero       := '0'
  */
 
-import type { LayoutExpression, LayoutUnit } from './types';
+import type { LayoutExpression, LayoutUnit } from './types.js';
 
 /**
  * Parse expression string to AST

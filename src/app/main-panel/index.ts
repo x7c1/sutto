@@ -1,19 +1,38 @@
 /**
- * Main Panel - Simplified version for Step 3
- * Displays a basic panel with a test button at a fixed position
+ * Main Panel - With layout buttons for Step 5
+ * Displays layout buttons that snap windows to predefined positions
  */
 
 import St from 'gi://St';
+import Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import type {Layout} from '../types/index.js';
+import {parse, evaluate} from '../layout-expression/index.js';
 
 export class MainPanel {
   private panel: St.BoxLayout | null = null;
-  private button: St.Button | null = null;
+  private buttons: St.Button[] = [];
+  private currentWindow: Meta.Window | null = null;
+  private onLayoutSelected: ((layout: Layout) => void) | null = null;
 
   /**
-   * Show the panel at a fixed position
+   * Set the current window being dragged
    */
-  show(): void {
+  setCurrentWindow(window: Meta.Window | null): void {
+    this.currentWindow = window;
+  }
+
+  /**
+   * Set callback for when a layout is selected
+   */
+  setOnLayoutSelected(callback: (layout: Layout) => void): void {
+    this.onLayoutSelected = callback;
+  }
+
+  /**
+   * Show the panel at a specific position
+   */
+  show(x?: number, y?: number): void {
     if (this.panel) {
       console.log('[MainPanel] Panel already exists');
       return;
@@ -29,36 +48,109 @@ export class MainPanel {
       style: 'background-color: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 8px;',
     });
 
-    // Create test button
-    this.button = new St.Button({
-      label: 'Test Button',
-      style_class: 'button',
-      reactive: true,
-      can_focus: true,
-      track_hover: true,
-      style: 'background-color: rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 4px; color: white;',
-    });
+    // Create layout buttons
+    this.createLayoutButtons();
 
-    // Add click handler
-    this.button.connect('clicked', () => {
-      console.log('[MainPanel] Test button clicked!');
-    });
-
-    this.panel.add_child(this.button);
-
-    // Add panel to UI group (global.stage is deprecated in Shell 46)
+    // Add panel to UI group
     (Main.layoutManager as any).addChrome(this.panel, {
       affectsInputRegion: true,
     });
 
-    // Position panel at center of primary monitor
+    // Position panel
     const monitor = (Main.layoutManager as any).primaryMonitor;
-    const x = monitor.x + Math.floor(monitor.width / 2) - 100;
-    const y = monitor.y + Math.floor(monitor.height / 2);
+    const panelX = x !== undefined ? x - 100 : monitor.x + Math.floor(monitor.width / 2) - 100;
+    const panelY = y !== undefined ? y : monitor.y + Math.floor(monitor.height / 2);
 
-    this.panel.set_position(x, y);
+    this.panel.set_position(panelX, panelY);
 
-    console.log('[MainPanel] Panel created and positioned at', x, y);
+    console.log('[MainPanel] Panel created and positioned at', panelX, panelY);
+  }
+
+  /**
+   * Create layout buttons
+   */
+  private createLayoutButtons(): void {
+    if (!this.panel) return;
+
+    // Define simple layouts
+    const layouts: Layout[] = [
+      {
+        id: 'left-half',
+        hash: 'left-half',
+        label: 'Left Half',
+        x: '0/1',
+        y: '0/1',
+        width: '1/2',
+        height: '1/1',
+      },
+      {
+        id: 'right-half',
+        hash: 'right-half',
+        label: 'Right Half',
+        x: '1/2',
+        y: '0/1',
+        width: '1/2',
+        height: '1/1',
+      },
+    ];
+
+    for (const layout of layouts) {
+      const button = new St.Button({
+        label: layout.label,
+        style_class: 'button',
+        reactive: true,
+        can_focus: true,
+        track_hover: true,
+        style: 'background-color: rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 4px; color: white; margin-right: 8px;',
+      });
+
+      button.connect('clicked', () => {
+        console.log(`[MainPanel] Layout button clicked: ${layout.label}`);
+        this.applyLayout(layout);
+      });
+
+      this.panel!.add_child(button);
+      this.buttons.push(button);
+    }
+  }
+
+  /**
+   * Apply layout to current window
+   */
+  private applyLayout(layout: Layout): void {
+    if (!this.currentWindow) {
+      console.log('[MainPanel] No current window to apply layout to');
+      return;
+    }
+
+    console.log(`[MainPanel] Applying layout: ${layout.label}`);
+
+    const monitor = this.currentWindow.get_monitor();
+    const workArea = this.currentWindow.get_work_area_for_monitor(monitor);
+
+    // Parse and evaluate layout expressions
+    const x = Math.round(evaluate(parse(layout.x), workArea.width)) + workArea.x;
+    const y = Math.round(evaluate(parse(layout.y), workArea.height)) + workArea.y;
+    const width = Math.round(evaluate(parse(layout.width), workArea.width));
+    const height = Math.round(evaluate(parse(layout.height), workArea.height));
+
+    console.log(`[MainPanel] Moving window to: x=${x}, y=${y}, w=${width}, h=${height}`);
+
+    // Unmaximize if needed
+    if (this.currentWindow.get_maximized()) {
+      this.currentWindow.unmaximize(Meta.MaximizeFlags.BOTH);
+    }
+
+    // Move and resize window
+    this.currentWindow.move_resize_frame(true, x, y, width, height);
+
+    // Hide panel after applying layout
+    this.hide();
+
+    // Notify callback
+    if (this.onLayoutSelected) {
+      this.onLayoutSelected(layout);
+    }
   }
 
   /**
@@ -74,12 +166,13 @@ export class MainPanel {
     // Remove from UI
     (Main.layoutManager as any).removeChrome(this.panel);
 
-    // Destroy widgets
-    if (this.button) {
-      this.button.destroy();
-      this.button = null;
+    // Destroy buttons
+    for (const button of this.buttons) {
+      button.destroy();
     }
+    this.buttons = [];
 
+    // Destroy panel
     if (this.panel) {
       this.panel.destroy();
       this.panel = null;

@@ -10,7 +10,7 @@ import type {
   MainPanelPositionOptions,
   Position,
   ScreenBoundaries,
-} from './types';
+} from './types.js';
 
 /**
  * Adjust main panel position to keep it within screen boundaries

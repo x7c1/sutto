@@ -5,7 +5,7 @@
  * Takes container size as context and resolves all units to pixels.
  */
 
-import type { LayoutExpression, LayoutUnit } from './types';
+import type { LayoutExpression, LayoutUnit } from './types.js';
 
 /**
  * Evaluate expression to pixel value

@@ -1,4 +1,4 @@
-import type { LayoutGroup } from './layout-group';
+import type { LayoutGroup } from './layout-group.js';
 
 export interface LayoutGroupCategory {
   name: string; // Category name (e.g., "Vertical Divisions")

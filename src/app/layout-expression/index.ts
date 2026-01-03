@@ -12,6 +12,6 @@
  * ```
  */
 
-export { evaluate } from './evaluator';
-export { parse } from './parser';
-export type { LayoutExpression, LayoutUnit } from './types';
+export { evaluate } from './evaluator.js';
+export { parse } from './parser.js';
+export type { LayoutExpression, LayoutUnit } from './types.js';

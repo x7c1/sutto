@@ -1,8 +1,8 @@
-export { adjustDebugPanelPosition, adjustMainPanelPosition } from './boundary-adjuster';
+export { adjustDebugPanelPosition, adjustMainPanelPosition } from './boundary-adjuster.js';
 export type {
   DebugPanelPositionOptions,
   Dimensions,
   MainPanelPositionOptions,
   Position,
   ScreenBoundaries,
-} from './types';
+} from './types.js';

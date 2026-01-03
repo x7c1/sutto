@@ -1,4 +1,4 @@
-import type { Layout } from './layout';
+import type { Layout } from './layout.js';
 
 export interface LayoutGroup {
   name: string;
