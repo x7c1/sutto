@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    // Target ES2020 for SpiderMonkey 91 (GNOME Shell 42)
-    "target": "ES2020",
-    "lib": ["ES2020"],
+    // Target ES2022 for GNOME Shell 46
+    "target": "ES2022",
+    "lib": ["ES2022"],
 
-    // Module system - CommonJS for GNOME Shell 42
-    "module": "commonjs",
+    // Module system - ES2022 (ESM) for GNOME Shell 46
+    "module": "ES2022",
 
     // Output configuration
     "outDir": "./dist",
@@ -23,8 +23,6 @@
 
     // Module resolution
     "moduleResolution": "node",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
 
     // Test framework types
     "types": ["vitest/globals"],

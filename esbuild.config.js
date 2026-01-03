@@ -1,6 +1,6 @@
-const esbuild = require('esbuild');
-const fs = require('fs');
-const { execSync } = require('child_process');
+import esbuild from 'esbuild';
+import fs from 'fs';
+import { execSync } from 'child_process';
 
 // Determine build mode from environment variable
 const isDev = process.env.BUILD_MODE !== 'release';
@@ -21,9 +21,10 @@ async function build() {
             bundle: true,
             outfile: 'dist/extension.js',
             platform: 'neutral',
-            target: 'es2020',
-            format: 'cjs',
+            target: 'es2022',
+            format: 'esm',
             treeShaking: false,
+            external: ['gi://*', 'resource://*'],
             banner: {
                 js: '// GNOME Shell Extension - Bundled with esbuild',
             },
@@ -39,9 +40,10 @@ async function build() {
             bundle: true,
             outfile: 'dist/prefs.js',
             platform: 'neutral',
-            target: 'es2020',
-            format: 'cjs',
+            target: 'es2022',
+            format: 'esm',
             treeShaking: false,
+            external: ['gi://*', 'resource://*'],
             banner: {
                 js: '// GNOME Shell Extension Preferences - Bundled with esbuild',
             },

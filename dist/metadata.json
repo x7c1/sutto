@@ -3,7 +3,7 @@
   "name": "Snappa",
   "description": "Window snapping extension for GNOME Shell",
   "shell-version": [
-    "42"
+    "46"
   ],
   "url": "https://github.com/x7c1/snappa",
   "version": 2
