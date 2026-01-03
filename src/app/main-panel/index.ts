@@ -1,216 +1,402 @@
 /**
- * Main Panel - With layout buttons for Step 5
- * Displays layout buttons that snap windows to predefined positions
+ * Main Panel
+ *
+ * Displays a panel with layout buttons for snapping windows to different positions.
+ * The panel appears at the cursor position when the user drags a window to a screen edge.
  */
 
-import St from 'gi://St';
+import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
+import St from 'gi://St';
+import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import type {Layout} from '../types/index.js';
-import {parse, evaluate} from '../layout-expression/index.js';
-import {MainPanelAutoHide, type AutoHideEventIds} from './auto-hide.js';
 
-const AUTO_HIDE_DELAY_MS = 500; // milliseconds
+import { ExtensionSettings } from '../../settings/extension-settings.js';
+import {
+  AUTO_HIDE_DELAY_MS,
+  DEFAULT_LAYOUT_SETTINGS,
+  MINIATURE_DISPLAY_WIDTH,
+} from '../constants.js';
+import { getDebugConfig } from '../debug-panel/config.js';
+import { importSettings, loadLayouts } from '../repository/layouts.js';
+import type { Layout, Position } from '../types/index.js';
+import { MainPanelAutoHide } from './auto-hide.js';
+import { MainPanelDebugIntegration } from './debug-integration.js';
+import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
+import { MainPanelLayoutSelector } from './layout-selector.js';
+import { MainPanelPositionManager } from './position-manager.js';
+import type { PanelEventIds } from './renderer.js';
+import {
+  createBackground,
+  createCategoriesView,
+  createFooter,
+  createPanelContainer,
+} from './renderer.js';
+import { MainPanelState } from './state.js';
+
+declare function log(message: string): void;
 
 export class MainPanel {
-  private panel: St.BoxLayout | null = null;
-  private buttons: St.Button[] = [];
-  private currentWindow: Meta.Window | null = null;
-  private onLayoutSelected: ((layout: Layout) => void) | null = null;
-  private autoHide: MainPanelAutoHide;
-  private autoHideEventIds: AutoHideEventIds | null = null;
+  private container: St.BoxLayout | null = null;
+  private background: St.BoxLayout | null = null;
+  private layoutButtons: Map<St.Button, Layout> = new Map();
+  private rendererEventIds: PanelEventIds | null = null;
+  private metadata: ExtensionMetadata;
+  private onPanelShownCallback: (() => void) | null = null;
+  private onPanelHiddenCallback: (() => void) | null = null;
 
-  constructor() {
-    this.autoHide = new MainPanelAutoHide();
+  // Component instances
+  private state: MainPanelState = new MainPanelState();
+  private positionManager: MainPanelPositionManager = new MainPanelPositionManager();
+  private layoutSelector: MainPanelLayoutSelector = new MainPanelLayoutSelector();
+  private debugIntegration: MainPanelDebugIntegration = new MainPanelDebugIntegration();
+  private autoHide: MainPanelAutoHide = new MainPanelAutoHide();
+  private keyboardNavigator: MainPanelKeyboardNavigator = new MainPanelKeyboardNavigator();
+
+  constructor(metadata: ExtensionMetadata) {
+    this.metadata = metadata;
+    // Setup auto-hide callback
     this.autoHide.setOnHide(() => {
-      console.log('[MainPanel] Auto-hide triggered');
       this.hide();
     });
-  }
 
-  /**
-   * Set the current window being dragged
-   */
-  setCurrentWindow(window: Meta.Window | null): void {
-    this.currentWindow = window;
+    // Load extension settings for debug panel
+    const extensionSettings = new ExtensionSettings(metadata);
+
+    // Initialize debug integration
+    this.debugIntegration.initialize(
+      this.autoHide,
+      () => {
+        // Refresh panel when debug config changes
+        // Use original cursor position (not adjusted position) to avoid shifting
+        // Pass current window to preserve selection state
+        if (this.container) {
+          const cursor = this.state.getOriginalCursor();
+          const window = this.state.getCurrentWindow();
+          this.show(cursor, window);
+        }
+      },
+      extensionSettings
+    );
+
+    // Initialize layouts repository
+    // First launch: import default settings if repository is empty
+    let layouts = loadLayouts();
+    if (layouts.length === 0) {
+      log('[MainPanel] Layouts repository is empty, importing default settings');
+      importSettings(DEFAULT_LAYOUT_SETTINGS);
+      layouts = loadLayouts();
+    }
+
+    // Filter out Test Layouts from base categories (they are added dynamically in debug mode)
+    const baseCategories = layouts.filter((c) => c.name !== 'Test Layouts');
+    this.state.setCategories(baseCategories);
   }
 
   /**
    * Set callback for when a layout is selected
    */
   setOnLayoutSelected(callback: (layout: Layout) => void): void {
-    this.onLayoutSelected = callback;
+    this.layoutSelector.setOnLayoutSelected(callback);
   }
 
   /**
-   * Show the panel at a specific position
+   * Set callback for when panel is shown
    */
-  show(x?: number, y?: number): void {
-    if (this.panel) {
-      console.log('[MainPanel] Panel already exists');
-      return;
-    }
-
-    console.log('[MainPanel] Creating panel...');
-
-    // Create panel container
-    this.panel = new St.BoxLayout({
-      style_class: 'snap-main-panel',
-      vertical: false,
-      reactive: true,
-      style: 'background-color: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 8px;',
-    });
-
-    // Create layout buttons
-    this.createLayoutButtons();
-
-    // Add panel to UI group
-    (Main.layoutManager as any).addChrome(this.panel, {
-      affectsInputRegion: true,
-    });
-
-    // Position panel
-    const monitor = (Main.layoutManager as any).primaryMonitor;
-    const panelX = x !== undefined ? x - 100 : monitor.x + Math.floor(monitor.width / 2) - 100;
-    const panelY = y !== undefined ? y : monitor.y + Math.floor(monitor.height / 2);
-
-    this.panel.set_position(panelX, panelY);
-
-    // Setup auto-hide
-    this.autoHideEventIds = this.autoHide.setupAutoHide(this.panel, AUTO_HIDE_DELAY_MS);
-
-    console.log('[MainPanel] Panel created and positioned at', panelX, panelY);
+  setOnPanelShown(callback: () => void): void {
+    this.onPanelShownCallback = callback;
   }
 
   /**
-   * Create layout buttons
+   * Set callback for when panel is hidden
    */
-  private createLayoutButtons(): void {
-    if (!this.panel) return;
-
-    // Define simple layouts
-    const layouts: Layout[] = [
-      {
-        id: 'left-half',
-        hash: 'left-half',
-        label: 'Left Half',
-        x: '0/1',
-        y: '0/1',
-        width: '1/2',
-        height: '1/1',
-      },
-      {
-        id: 'right-half',
-        hash: 'right-half',
-        label: 'Right Half',
-        x: '1/2',
-        y: '0/1',
-        width: '1/2',
-        height: '1/1',
-      },
-    ];
-
-    for (const layout of layouts) {
-      const button = new St.Button({
-        label: layout.label,
-        style_class: 'button',
-        reactive: true,
-        can_focus: true,
-        track_hover: true,
-        style: 'background-color: rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 4px; color: white; margin-right: 8px;',
-      });
-
-      button.connect('clicked', () => {
-        console.log(`[MainPanel] Layout button clicked: ${layout.label}`);
-        this.applyLayout(layout);
-      });
-
-      this.panel!.add_child(button);
-      this.buttons.push(button);
-    }
+  setOnPanelHidden(callback: () => void): void {
+    this.onPanelHiddenCallback = callback;
   }
 
   /**
-   * Apply layout to current window
+   * Show the main panel at the specified position
    */
-  private applyLayout(layout: Layout): void {
-    if (!this.currentWindow) {
-      console.log('[MainPanel] No current window to apply layout to');
-      return;
-    }
-
-    console.log(`[MainPanel] Applying layout: ${layout.label}`);
-
-    const monitor = this.currentWindow.get_monitor();
-    const workArea = this.currentWindow.get_work_area_for_monitor(monitor);
-
-    // Parse and evaluate layout expressions
-    const x = Math.round(evaluate(parse(layout.x), workArea.width)) + workArea.x;
-    const y = Math.round(evaluate(parse(layout.y), workArea.height)) + workArea.y;
-    const width = Math.round(evaluate(parse(layout.width), workArea.width));
-    const height = Math.round(evaluate(parse(layout.height), workArea.height));
-
-    console.log(`[MainPanel] Moving window to: x=${x}, y=${y}, w=${width}, h=${height}`);
-
-    // Unmaximize if needed
-    if (this.currentWindow.get_maximized()) {
-      this.currentWindow.unmaximize(Meta.MaximizeFlags.BOTH);
-    }
-
-    // Move and resize window
-    this.currentWindow.move_resize_frame(true, x, y, width, height);
-
-    // Hide panel after applying layout
+  show(cursor: Position, window: Meta.Window | null = null, centerVertically = false): void {
+    // Hide existing panel if any
     this.hide();
 
-    // Notify callback
-    if (this.onLayoutSelected) {
-      this.onLayoutSelected(layout);
+    // Store original cursor position and window
+    this.state.updateOriginalCursor(cursor);
+    this.state.setCurrentWindow(window);
+
+    // Reset auto-hide states
+    this.autoHide.resetHoverStates();
+
+    // Get debug configuration
+    const debugConfig = this.debugIntegration.isEnabled() ? getDebugConfig() : null;
+
+    // Get screen dimensions and calculate aspect ratio
+    const screenWidth = global.screen_width;
+    const screenHeight = global.screen_height;
+    const aspectRatio = screenHeight / screenWidth;
+
+    // Determine which categories to render (merge test categories if debug enabled)
+    const baseCategories = this.state.getCategories();
+    log(
+      `[MainPanel] Base categories count: ${baseCategories.length}, items: ${baseCategories.map((c) => c.name).join(', ')}`
+    );
+    const categories = this.debugIntegration.mergeTestCategories(baseCategories);
+    log(
+      `[MainPanel] After merge categories count: ${categories.length}, items: ${categories.map((c) => c.name).join(', ')}`
+    );
+
+    // Calculate panel dimensions
+    const showFooter = !debugConfig || debugConfig.showFooter;
+    const panelDimensions = this.positionManager.calculatePanelDimensions(
+      categories,
+      aspectRatio,
+      showFooter
+    );
+    this.state.setPanelDimensions(panelDimensions);
+
+    // Adjust position for boundaries with center alignment
+    const adjusted = this.positionManager.adjustPosition(
+      cursor,
+      panelDimensions,
+      this.debugIntegration.isEnabled(),
+      centerVertically
+    );
+
+    // Store adjusted panel position
+    this.state.updatePanelPosition(adjusted);
+
+    // Create background
+    const { background, clickOutsideId } = createBackground(() => {
+      this.hide();
+    });
+    this.background = background;
+
+    // Create categories view or empty message
+    let categoriesElement: St.BoxLayout | St.Label;
+    let buttonEvents: PanelEventIds['buttonEvents'] = [];
+
+    if (categories.length === 0) {
+      // Show "No categories" message
+      categoriesElement = new St.Label({
+        text: 'No categories available',
+        style: `
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.7);
+          text-align: center;
+          padding: 40px 60px;
+        `,
+        x_align: 2, // CENTER
+      });
+      this.layoutButtons.clear();
+    } else {
+      const miniatureDisplayHeight = MINIATURE_DISPLAY_WIDTH * aspectRatio;
+      const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
+      const categoriesView = createCategoriesView(
+        MINIATURE_DISPLAY_WIDTH,
+        miniatureDisplayHeight,
+        categories,
+        debugConfig,
+        window,
+        (layout) => {
+          if (onLayoutSelected) {
+            onLayoutSelected(layout);
+          }
+        }
+      );
+      categoriesElement = categoriesView.categoriesContainer;
+      buttonEvents = categoriesView.buttonEvents;
+      this.layoutButtons = categoriesView.layoutButtons;
+    }
+
+    // Create footer with settings button
+    const footer = createFooter(() => {
+      log('[MainPanel] Settings button clicked');
+      this.openPreferences();
+      this.hide(); // Close panel after opening preferences
+    });
+
+    // Create main container
+    const container = createPanelContainer();
+    this.container = container;
+
+    // Add children to container
+    container.add_child(categoriesElement);
+    if (!debugConfig || debugConfig.showFooter) {
+      container.add_child(footer);
+    }
+
+    // Position panel at adjusted coordinates
+    const position = this.state.getPanelPosition();
+    container.set_position(position.x, position.y);
+
+    // Add panel container to chrome
+    Main.layoutManager.addChrome(container, {
+      affectsInputRegion: true,
+      trackFullscreen: false,
+    });
+
+    // Setup auto-hide
+    this.autoHide.setupAutoHide(container, AUTO_HIDE_DELAY_MS);
+
+    // Store event IDs for cleanup
+    this.rendererEventIds = {
+      clickOutsideId,
+      buttonEvents: buttonEvents,
+    };
+
+    // Show debug panel if enabled - it will position itself relative to panel
+    this.debugIntegration.showRelativeTo(position, panelDimensions);
+
+    // Enable keyboard navigation
+    const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
+    if (this.container && onLayoutSelected) {
+      this.keyboardNavigator.enable(this.container, this.layoutButtons, onLayoutSelected);
+    }
+
+    // Notify that panel is shown
+    if (this.onPanelShownCallback) {
+      this.onPanelShownCallback();
     }
   }
 
   /**
-   * Hide and destroy the panel
+   * Hide the main panel
    */
   hide(): void {
-    if (!this.panel) {
+    // Reset cursor to default when hiding panel
+    global.display.set_cursor(Meta.Cursor.DEFAULT);
+
+    if (this.container) {
+      // Cleanup auto-hide
+      this.autoHide.cleanup();
+
+      // Disable keyboard navigation
+      this.keyboardNavigator.disable();
+
+      // Disconnect event handlers
+      if (this.rendererEventIds) {
+        // Disconnect background click event
+        if (this.background) {
+          this.background.disconnect(this.rendererEventIds.clickOutsideId);
+        }
+
+        // Disconnect button events
+        for (const { button, enterEventId, leaveEventId, clickEventId } of this.rendererEventIds
+          .buttonEvents) {
+          button.disconnect(enterEventId);
+          button.disconnect(leaveEventId);
+          button.disconnect(clickEventId);
+        }
+
+        this.rendererEventIds = null;
+      }
+
+      // Remove panel container
+      Main.layoutManager.removeChrome(this.container);
+      this.container.destroy();
+
+      // Remove background
+      if (this.background) {
+        Main.layoutManager.removeChrome(this.background);
+        this.background.destroy();
+      }
+
+      // Hide debug panel
+      this.debugIntegration.hide();
+
+      this.container = null;
+      this.background = null;
+      this.layoutButtons.clear();
+
+      // Reset state (but keep currentWmClass and categories)
+      this.state.reset();
+
+      // Notify that panel is hidden
+      if (this.onPanelHiddenCallback) {
+        this.onPanelHiddenCallback();
+      }
+    }
+  }
+
+  /**
+   * Check if panel is currently shown
+   */
+  isVisible(): boolean {
+    return this.container !== null;
+  }
+
+  /**
+   * Update panel position (for following cursor during drag)
+   */
+  updatePosition(cursor: Position): void {
+    const panelDimensions = this.state.getPanelDimensions();
+    if (this.container && panelDimensions) {
+      // Store original cursor position
+      this.state.updateOriginalCursor(cursor);
+
+      // Adjust position for boundaries with center alignment
+      const adjusted = this.positionManager.adjustPosition(
+        cursor,
+        panelDimensions,
+        this.debugIntegration.isEnabled()
+      );
+
+      // Update stored panel position
+      this.state.updatePanelPosition(adjusted);
+
+      // Update container position
+      this.positionManager.updatePanelPosition(this.container, adjusted);
+
+      // Update debug panel position if enabled - it will reposition itself relative to panel
+      this.debugIntegration.showRelativeTo(adjusted, panelDimensions);
+    }
+  }
+
+  /**
+   * Update button styles when a layout is selected
+   * Called after layout selection to immediately reflect the change in the panel
+   */
+  updateSelectedLayoutHighlight(newSelectedLayoutId: string): void {
+    if (!this.container) {
+      log('[MainPanel] Cannot update highlights: panel not visible');
       return;
     }
 
-    console.log('[MainPanel] Hiding panel...');
-
-    // Disconnect auto-hide events
-    if (this.autoHideEventIds && this.panel) {
-      this.panel.disconnect(this.autoHideEventIds.leaveEventId);
-      this.panel.disconnect(this.autoHideEventIds.enterEventId);
-      this.autoHideEventIds = null;
-    }
-
-    // Cleanup auto-hide
-    this.autoHide.cleanup();
-
-    // Remove from UI
-    (Main.layoutManager as any).removeChrome(this.panel);
-
-    // Destroy buttons
-    for (const button of this.buttons) {
-      button.destroy();
-    }
-    this.buttons = [];
-
-    // Destroy panel
-    if (this.panel) {
-      this.panel.destroy();
-      this.panel = null;
-    }
-
-    console.log('[MainPanel] Panel destroyed');
+    this.layoutSelector.updateSelectedLayoutHighlight(newSelectedLayoutId, this.layoutButtons);
   }
 
   /**
-   * Check if panel is currently visible
+   * Open preferences window
    */
-  isVisible(): boolean {
-    return this.panel !== null;
+  private openPreferences(): void {
+    // Use actual UUID from metadata (supports reloader suffix in development mode)
+    const uuid = this.metadata.uuid;
+    log(`[MainPanel] Opening preferences for UUID: ${uuid}`);
+
+    // Try multiple methods to open preferences
+    const commands = [
+      // GNOME 42+ command
+      ['gnome-extensions', 'prefs', uuid],
+      // Legacy command for older GNOME versions
+      ['gnome-shell-extension-prefs', uuid],
+    ];
+
+    let success = false;
+    for (const cmd of commands) {
+      try {
+        Gio.Subprocess.new(cmd, Gio.SubprocessFlags.NONE);
+        log(`[MainPanel] Opening preferences with: ${cmd.join(' ')}`);
+        success = true;
+        break;
+      } catch (e) {
+        log(`[MainPanel] Failed with ${cmd[0]}: ${e}`);
+      }
+    }
+
+    if (!success) {
+      log('[MainPanel] ERROR: Could not open preferences with any method');
+      log('[MainPanel] Please open preferences manually from Extensions app');
+    }
   }
 }

@@ -1,14 +1,12 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
+import Clutter from 'gi://Clutter';
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-const St = imports.gi.St;
-const Clutter = imports.gi.Clutter;
-const Main = imports.ui.main;
-
-import { DEFAULT_LAYOUT_SETTINGS, PANEL_EDGE_PADDING } from '../constants';
-import { adjustDebugPanelPosition } from '../positioning';
-import type { Position, Size } from '../types';
-import { type DebugConfig, getDebugConfig, toggleDebugOption, toggleTestGroup } from './config';
-import { getTestLayoutGroups } from './test-layouts';
+import { DEFAULT_LAYOUT_SETTINGS, PANEL_EDGE_PADDING } from '../constants.js';
+import { adjustDebugPanelPosition } from '../positioning/index.js';
+import type { Position, Size } from '../types/index.js';
+import { type DebugConfig, getDebugConfig, toggleDebugOption, toggleTestGroup } from './config.js';
+import { getTestLayoutGroups } from './test-layouts.js';
 
 declare function log(message: string): void;
 

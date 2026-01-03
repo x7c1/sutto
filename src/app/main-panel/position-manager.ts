@@ -1,5 +1,3 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
-
 /**
  * MainPanelPositionManager
  *
@@ -7,6 +5,7 @@
  * Handles boundary adjustments.
  */
 
+import type St from 'gi://St';
 import {
   CATEGORY_SPACING,
   DISPLAY_SPACING,
@@ -16,12 +15,9 @@ import {
   MINIATURE_DISPLAY_WIDTH,
   PANEL_EDGE_PADDING,
   PANEL_PADDING,
-} from '../constants';
-import { adjustMainPanelPosition } from '../positioning';
-import type { LayoutGroupCategory, Position, Size } from '../types';
-
-// @ts-expect-error - St is used for type annotations
-const St = imports.gi.St;
+} from '../constants.js';
+import { adjustMainPanelPosition } from '../positioning/index.js';
+import type { LayoutGroupCategory, Position, Size } from '../types/index.js';
 
 export class MainPanelPositionManager {
   /**

@@ -1,5 +1,3 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
-
 /**
  * MainPanelDebugIntegration
  *
@@ -7,14 +5,14 @@
  * Handles debug configuration changes and panel lifecycle.
  */
 
-import type { ExtensionSettings } from '../../settings/extension-settings';
-import { AUTO_HIDE_DELAY_MS } from '../constants';
-import { getDebugConfig, isDebugMode, loadDebugConfig } from '../debug-panel/config';
-import { DebugPanel } from '../debug-panel/index';
-import { getTestLayoutGroups } from '../debug-panel/test-layouts';
-import { ensureTestLayoutsImported } from '../repository/layouts';
-import type { LayoutGroupCategory, Position, Size } from '../types';
-import type { MainPanelAutoHide } from './auto-hide';
+import type { ExtensionSettings } from '../../settings/extension-settings.js';
+import { AUTO_HIDE_DELAY_MS } from '../constants.js';
+import { getDebugConfig, isDebugMode, loadDebugConfig } from '../debug-panel/config.js';
+import { DebugPanel } from '../debug-panel/index.js';
+import { getTestLayoutGroups } from '../debug-panel/test-layouts.js';
+import { ensureTestLayoutsImported } from '../repository/layouts.js';
+import type { LayoutGroupCategory, Position, Size } from '../types/index.js';
+import type { MainPanelAutoHide } from './auto-hide.js';
 
 declare function log(message: string): void;
 

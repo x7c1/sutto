@@ -1,5 +1,3 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
-
 /**
  * MainPanelLayoutSelector
  *
@@ -7,11 +5,9 @@
  * Handles layout-at-position detection and visual feedback.
  */
 
-import { BUTTON_BG_COLOR, BUTTON_BG_COLOR_SELECTED } from '../constants';
-import type { Layout } from '../types';
-
-// @ts-expect-error - St is used for type annotations
-const St = imports.gi.St;
+import type St from 'gi://St';
+import { BUTTON_BG_COLOR, BUTTON_BG_COLOR_SELECTED } from '../constants.js';
+import type { Layout } from '../types/index.js';
 
 declare function log(message: string): void;
 

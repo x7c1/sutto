@@ -9,8 +9,8 @@
  *   reloader.reload(); // Call this to reload the extension
  */
 
-import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 // Declare TextEncoder/TextDecoder for TypeScript

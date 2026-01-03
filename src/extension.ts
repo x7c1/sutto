@@ -1,9 +1,13 @@
 /// <reference path="./types/build-mode.d.ts" />
 
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-import {DBusReloader} from './reloader/dbus-reloader.js';
-import {ExtensionSettings} from './settings/extension-settings.js';
-import {Controller} from './app/controller.js';
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { DEFAULT_LAYOUT_SETTINGS } from './app/constants.js';
+import { Controller } from './app/controller.js';
+import { loadDebugConfig } from './app/debug-panel/config.js';
+import { loadLayoutHistory } from './app/repository/layout-history.js';
+import { importSettings, loadLayouts } from './app/repository/layouts.js';
+import { DBusReloader } from './reloader/dbus-reloader.js';
+import { ExtensionSettings } from './settings/extension-settings.js';
 
 export default class SnappaExtension extends Extension {
   private dbusReloader: DBusReloader | null = null;
@@ -17,6 +21,24 @@ export default class SnappaExtension extends Extension {
     if (__DEV__) {
       this.dbusReloader = new DBusReloader('snappa@x7c1.github.io', this.metadata.uuid);
       this.dbusReloader.enable();
+    }
+
+    // Import default layouts if repository is empty
+    const existingLayouts = loadLayouts();
+    if (existingLayouts.length === 0) {
+      console.log('[Snappa] Importing default layouts...');
+      importSettings(DEFAULT_LAYOUT_SETTINGS);
+      console.log('[Snappa] Default layouts imported');
+    }
+
+    // Load layout history
+    loadLayoutHistory();
+    console.log('[Snappa] Layout history loaded');
+
+    // Load debug config if in debug mode
+    if (__DEV__) {
+      loadDebugConfig();
+      console.log('[Snappa] Debug config loaded');
     }
 
     // Load settings
@@ -37,7 +59,7 @@ export default class SnappaExtension extends Extension {
 
     // Initialize controller (handles drag detection and panel display)
     try {
-      this.controller = new Controller(this.settings);
+      this.controller = new Controller(this.settings, this.metadata);
       this.controller.enable();
       console.log('[Snappa] Controller initialized');
     } catch (e) {

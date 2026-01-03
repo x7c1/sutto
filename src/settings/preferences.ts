@@ -3,9 +3,9 @@
 import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
-import Gtk from 'gi://Gtk';
 import GLib from 'gi://GLib';
-import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import Gtk from 'gi://Gtk';
+import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 const SCHEMA_ID = 'org.gnome.shell.extensions.snappa';
 const SETTINGS_KEY_SHORTCUT = 'show-panel-shortcut';
@@ -14,7 +14,9 @@ export default class SnappaPreferences extends ExtensionPreferences {
   fillPreferencesWindow(window: Adw.PreferencesWindow): void {
     const settings = this.loadSettings();
     if (!settings) {
-      console.log('[Snappa Prefs] ERROR: Failed to load settings, preferences UI will not be created');
+      console.log(
+        '[Snappa Prefs] ERROR: Failed to load settings, preferences UI will not be created'
+      );
       return;
     }
 
@@ -156,7 +158,11 @@ function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.Setting
 /**
  * Create and show shortcut capture dialog
  */
-function showShortcutDialog(window: Adw.PreferencesWindow, settings: Gio.Settings, updateCallback: () => void): void {
+function showShortcutDialog(
+  window: Adw.PreferencesWindow,
+  settings: Gio.Settings,
+  updateCallback: () => void
+): void {
   const dialog = new Gtk.Window({
     transient_for: window,
     modal: true,

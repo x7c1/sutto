@@ -1,8 +1,6 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
-
-const St = imports.gi.St;
-const Meta = imports.gi.Meta;
-const Main = imports.ui.main;
+import Meta from 'gi://Meta';
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {
   FOOTER_MARGIN_TOP,
@@ -10,10 +8,10 @@ import {
   PANEL_BG_COLOR,
   PANEL_BORDER_COLOR,
   PANEL_PADDING,
-} from '../constants';
-import type { DebugConfig } from '../debug-panel/config';
-import type { Layout, LayoutGroupCategory } from '../types';
-import { createCategoryView } from '../ui';
+} from '../constants.js';
+import type { DebugConfig } from '../debug-panel/config.js';
+import type { Layout, LayoutGroupCategory } from '../types/index.js';
+import { createCategoryView } from '../ui/index.js';
 
 declare function log(message: string): void;
 

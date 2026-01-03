@@ -5,9 +5,8 @@
  * panel position, dimensions, and current window information.
  */
 
-import type { LayoutGroupCategory, Position, Size } from '../types';
-
-/// <reference path="../types/gnome-shell-42.d.ts" />
+import type Meta from 'gi://Meta';
+import type { LayoutGroupCategory, Position, Size } from '../types/index.js';
 
 export class MainPanelState {
   private categories: LayoutGroupCategory[] = [];

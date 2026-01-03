@@ -1,12 +1,11 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
-
-const St = imports.gi.St;
-
-import { DISPLAY_BG_COLOR, DISPLAY_SPACING, DISPLAY_SPACING_HORIZONTAL } from '../constants';
-import type { DebugConfig } from '../debug-panel/config';
-import { getSelectedLayoutId } from '../repository/layout-history';
-import type { Layout, LayoutGroup } from '../types';
-import { createLayoutButton } from './layout-button';
+import Clutter from 'gi://Clutter';
+import type Meta from 'gi://Meta';
+import St from 'gi://St';
+import { DISPLAY_BG_COLOR, DISPLAY_SPACING, DISPLAY_SPACING_HORIZONTAL } from '../constants.js';
+import type { DebugConfig } from '../debug-panel/config.js';
+import { getSelectedLayoutId } from '../repository/layout-history.js';
+import type { Layout, LayoutGroup } from '../types/index.js';
+import { createLayoutButton } from './layout-button.js';
 
 export interface MiniatureDisplayView {
   miniatureDisplay: St.Widget;
@@ -54,7 +53,7 @@ export function createMiniatureDisplayView(
   const miniatureDisplay = new St.Widget({
     style_class: 'snap-miniature-display',
     style: style,
-    layout_manager: new imports.gi.Clutter.FixedLayout(),
+    layout_manager: new Clutter.FixedLayout(),
     reactive: true,
   });
 

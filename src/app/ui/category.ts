@@ -1,11 +1,10 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
+import type Meta from 'gi://Meta';
+import St from 'gi://St';
 
-const St = imports.gi.St;
-
-import { CATEGORY_SPACING, MAX_DISPLAYS_PER_ROW } from '../constants';
-import type { DebugConfig } from '../debug-panel/config';
-import type { Layout, LayoutGroupCategory } from '../types';
-import { createMiniatureDisplayView } from './miniature-display';
+import { CATEGORY_SPACING, MAX_DISPLAYS_PER_ROW } from '../constants.js';
+import type { DebugConfig } from '../debug-panel/config.js';
+import type { Layout, LayoutGroupCategory } from '../types/index.js';
+import { createMiniatureDisplayView } from './miniature-display.js';
 
 export interface CategoryView {
   categoryContainer: St.BoxLayout;

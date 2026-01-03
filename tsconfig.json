@@ -24,9 +24,6 @@
     // Module resolution
     "moduleResolution": "node",
 
-    // Test framework types
-    "types": ["vitest/globals"],
-
     // Additional checks
     "noUnusedLocals": true,
     "noUnusedParameters": true,

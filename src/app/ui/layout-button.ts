@@ -1,9 +1,6 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
-
-const St = imports.gi.St;
-const Meta = imports.gi.Meta;
-const Main = imports.ui.main;
-
+import Meta from 'gi://Meta';
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {
   BUTTON_BG_COLOR,
   BUTTON_BG_COLOR_HOVER,
@@ -11,10 +8,10 @@ import {
   BUTTON_BORDER_COLOR,
   BUTTON_BORDER_COLOR_HOVER,
   BUTTON_BORDER_WIDTH,
-} from '../constants';
-import type { DebugConfig } from '../debug-panel/config';
-import { evaluate, parse } from '../layout-expression';
-import type { Layout } from '../types';
+} from '../constants.js';
+import type { DebugConfig } from '../debug-panel/config.js';
+import { evaluate, parse } from '../layout-expression/index.js';
+import type { Layout } from '../types/index.js';
 
 declare function log(message: string): void;
 

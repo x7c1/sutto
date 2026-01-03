@@ -4,7 +4,7 @@
  */
 
 import Gio from 'gi://Gio';
-import type {ExtensionMetadata} from 'resource:///org/gnome/shell/extensions/extension.js';
+import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 export class ExtensionSettings {
   private settings: Gio.Settings;

@@ -1,10 +1,8 @@
-/// <reference path="../../types/gnome-shell-42.d.ts" />
+import Clutter from 'gi://Clutter';
+import St from 'gi://St';
 
-const Clutter = imports.gi.Clutter;
-const St = imports.gi.St;
-
-import type { Layout } from '../types/layout';
-import { getButtonStyle } from '../ui/layout-button';
+import type { Layout } from '../types/layout.js';
+import { getButtonStyle } from '../ui/layout-button.js';
 
 declare function log(message: string): void;
 
