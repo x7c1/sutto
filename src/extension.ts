@@ -3,12 +3,12 @@
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {DBusReloader} from './reloader/dbus-reloader.js';
 import {ExtensionSettings} from './settings/extension-settings.js';
-import {MainPanel} from './app/main-panel/index.js';
+import {Controller} from './app/controller.js';
 
 export default class SnappaExtension extends Extension {
   private dbusReloader: DBusReloader | null = null;
   private settings: ExtensionSettings | null = null;
-  private mainPanel: MainPanel | null = null;
+  private controller: Controller | null = null;
 
   enable() {
     console.log('[Snappa] Extension enabled');
@@ -35,24 +35,24 @@ export default class SnappaExtension extends Extension {
       this.settings = null;
     }
 
-    // Initialize and show main panel
+    // Initialize controller (handles drag detection and panel display)
     try {
-      this.mainPanel = new MainPanel();
-      this.mainPanel.show();
-      console.log('[Snappa] Main panel initialized');
+      this.controller = new Controller(this.settings);
+      this.controller.enable();
+      console.log('[Snappa] Controller initialized');
     } catch (e) {
-      console.log(`[Snappa] ERROR: Failed to initialize main panel: ${e}`);
-      this.mainPanel = null;
+      console.log(`[Snappa] ERROR: Failed to initialize controller: ${e}`);
+      this.controller = null;
     }
   }
 
   disable() {
     console.log('[Snappa] Extension disabled');
 
-    // Clean up main panel
-    if (this.mainPanel) {
-      this.mainPanel.hide();
-      this.mainPanel = null;
+    // Clean up controller
+    if (this.controller) {
+      this.controller.disable();
+      this.controller = null;
     }
 
     // Clean up settings
