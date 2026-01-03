@@ -80,24 +80,28 @@ GNOME Shell 45 introduced a fundamental breaking change: the mandatory migration
 - Target: `'ES2020'` → `'ES2022'`
 - Module: `'commonjs'` → `'ES2022'`
 - Lib: `['ES2020']` → `['ES2022']`
-- Remove CommonJS-specific options
+- Remove CommonJS-specific options:
+  - Remove `esModuleInterop: true`
+  - Remove `allowSyntheticDefaultImports: true`
+  - Keep `moduleResolution: "node"` (still needed for ESM)
+  - Keep `types: ["vitest/globals"]` (test framework)
 
-#### Package Dependencies
-- `@girs/gnome-shell`: `^45.0.0-beta1` → `^48.0.4` (supports Shell 46)
-- Other `@girs/*` packages: Update to latest stable versions
-- Maintain existing development tools (TypeScript, esbuild, Biome, Vitest)
+#### Package Configuration
+- Update `package.json`:
+  - Change `"type": "commonjs"` → `"type": "module"`
+  - Update `@girs/gnome-shell`: `^45.0.0-beta1` → `^48.0.4` (supports Shell 46)
+  - Update other `@girs/*` packages to latest stable versions
+  - Maintain existing development tools (TypeScript, esbuild, Biome, Vitest)
 
 ### Metadata Changes
 
 ```json
 {
-  "shell-version": ["46"],
-  "gettext-domain": "snappa"
+  "shell-version": ["46"]
 }
 ```
 
-- Remove `"42"` from shell-version (ESM incompatible with older versions)
-- Add `gettext-domain` for translations (replaces manual initialization)
+- Change `"shell-version"` from `["42"]` to `["46"]` (ESM incompatible with older versions)
 
 ### Import Syntax Migration Patterns
 
@@ -209,22 +213,24 @@ import {Controller} from './app/controller.js';
 **Goal:** Create the simplest possible working extension on GNOME Shell 46
 
 **Changes:**
-- Update `package.json` dependencies
-  - `@girs/gnome-shell@^48.0.4`
-  - Other `@girs/*` packages to latest
-- Run `npm install`
-- Update `metadata.json`
-  - Set `shell-version` to `["46"]`
-  - Add `gettext-domain: "snappa"`
-- Update `tsconfig.json` for ESM
-  - `target: "ES2022"`
-  - `module: "ES2022"`
-  - `lib: ["ES2022"]`
-- Update `esbuild.config.js` for ESM
+- Update `package.json`:
+  - Change `"type": "commonjs"` → `"type": "module"`
+  - Update `@girs/gnome-shell` to `^48.0.4`
+  - Update other `@girs/*` packages to latest stable versions
+  - Run `npm install`
+- Update `dist/metadata.json` (directly edit this file):
+  - Change `"shell-version"` from `["42"]` to `["46"]`
+- Update `tsconfig.json` for ESM:
+  - `"target": "ES2022"`
+  - `"module": "ES2022"`
+  - `"lib": ["ES2022"]`
+  - Remove `"esModuleInterop": true`
+  - Remove `"allowSyntheticDefaultImports": true`
+- Update `esbuild.config.js` for ESM:
   - `format: 'esm'`
   - `target: 'es2022'`
 - Delete `src/types/gnome-shell-42.d.ts`
-- Create minimal `extension.ts`:
+- Replace `src/extension.ts` with minimal implementation:
   ```typescript
   import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -238,19 +244,70 @@ import {Controller} from './app/controller.js';
     }
   }
   ```
-- Comment out all other code temporarily
+  **Note:** Only modify `src/extension.ts`. Leave other files unchanged (build errors in other files can be ignored at this step).
 
 **Verification:**
-- ✓ Build succeeds (`npm run build`)
-- ✓ Extension installs on Ubuntu 24.04
+```bash
+# Build
+npm run build
+
+# Install to local extensions directory
+npm run copy-files
+
+# Enable extension (on Ubuntu 24.04)
+gnome-extensions enable snappa@x7c1.github.io
+
+# Check logs
+journalctl -f /usr/bin/gnome-shell | grep Snappa
+```
+- ✓ Build succeeds
 - ✓ Extension enables without errors
-- ✓ Console logs appear in `journalctl -f /usr/bin/gnome-shell`
+- ✓ Console logs appear showing "Extension enabled"
+- ✓ Disable/enable works correctly
 
 **Outcome:** Working extension that does nothing but proves the build system works.
 
 ---
 
-### Step 2: Basic Panel Display
+### Step 2: Development Tools (D-Bus Reload)
+**Goal:** Enable fast development workflow with automatic reload
+
+**Rationale:** Migrating the D-Bus reloader early dramatically improves development efficiency for all subsequent steps. Without this, each change requires manual logout/login or `Alt+F2 > r`.
+
+**Changes:**
+- Migrate `src/reloader/dbus-reloader.ts`:
+  - Convert to ESM: `import Gio from 'gi://Gio'`, `import GLib from 'gi://GLib'`
+  - Add `.js` to all relative imports
+  - Update D-Bus interface definitions
+- Migrate `src/reloader/reloader.ts`:
+  - Convert to ESM: `import GLib from 'gi://GLib'`, `import Gio from 'gi://Gio'`
+  - Convert `import * as Main from 'resource:///org/gnome/shell/ui/main.js'`
+  - Add `.js` to all relative imports
+  - Update extension manager references (may need API updates for Shell 46)
+- Update `src/extension.ts`:
+  - Import reloader modules
+  - Initialize D-Bus reloader in `enable()` (conditional on `__DEV__`)
+  - Clean up reloader in `disable()`
+
+**Verification:**
+```bash
+# Build and reload in one command
+npm run dev
+
+# Verify D-Bus method works
+npm run reload
+```
+- ✓ Build succeeds
+- ✓ Extension reloads without manual restart
+- ✓ `npm run dev` works end-to-end
+- ✓ D-Bus method calls succeed
+- ✓ Console shows reload messages
+
+**Outcome:** Development workflow restored - fast iteration for remaining steps.
+
+---
+
+### Step 3: Basic Panel Display
 **Goal:** Display a simple panel on screen (no drag detection yet)
 
 **Changes:**
@@ -267,16 +324,19 @@ import {Controller} from './app/controller.js';
   - Show panel in `enable()`
 
 **Verification:**
+```bash
+npm run dev  # Build and reload
+```
 - ✓ Build succeeds
-- ✓ Extension enables
 - ✓ Panel appears on screen at fixed position
 - ✓ Panel disappears when extension disabled
+- ✓ Fast iteration with `npm run dev`
 
 **Outcome:** Visual confirmation that UI rendering works.
 
 ---
 
-### Step 3: Drag Detection & Panel Positioning
+### Step 4: Drag Detection & Panel Positioning
 **Goal:** Show panel when dragging window to edge
 
 **Changes:**
@@ -293,8 +353,10 @@ import {Controller} from './app/controller.js';
   - Use controller instead of showing panel directly
 
 **Verification:**
+```bash
+npm run dev
+```
 - ✓ Build succeeds
-- ✓ Extension enables
 - ✓ Drag window to screen edge → panel appears at cursor
 - ✓ Panel positioned correctly relative to cursor
 
@@ -302,7 +364,7 @@ import {Controller} from './app/controller.js';
 
 ---
 
-### Step 4: Layout Buttons & Window Snapping
+### Step 5: Layout Buttons & Window Snapping
 **Goal:** Add functional layout buttons that snap windows
 
 **Changes:**
@@ -324,6 +386,9 @@ import {Controller} from './app/controller.js';
   - Add `.js` to relative imports
 
 **Verification:**
+```bash
+npm run dev
+```
 - ✓ Build succeeds
 - ✓ Drag window to edge → panel shows with layout buttons
 - ✓ Click layout button → window snaps to position
@@ -333,7 +398,7 @@ import {Controller} from './app/controller.js';
 
 ---
 
-### Step 5: Panel Auto-Hide & Cleanup
+### Step 6: Panel Auto-Hide & Cleanup
 **Goal:** Add auto-hide behavior and proper cleanup
 
 **Changes:**
@@ -350,6 +415,9 @@ import {Controller} from './app/controller.js';
 - Ensure proper cleanup in `disable()`
 
 **Verification:**
+```bash
+npm run dev
+```
 - ✓ Build succeeds
 - ✓ Panel auto-hides after delay
 - ✓ Panel hides when clicking outside
@@ -359,7 +427,7 @@ import {Controller} from './app/controller.js';
 
 ---
 
-### Step 6: Keyboard Navigation
+### Step 7: Keyboard Navigation
 **Goal:** Add keyboard controls for panel navigation
 
 **Changes:**
@@ -370,6 +438,9 @@ import {Controller} from './app/controller.js';
 - Connect keyboard event handlers
 
 **Verification:**
+```bash
+npm run dev
+```
 - ✓ Build succeeds
 - ✓ Arrow keys navigate between buttons
 - ✓ Vim keys (hjkl) work
@@ -380,7 +451,7 @@ import {Controller} from './app/controller.js';
 
 ---
 
-### Step 7: Settings & Preferences
+### Step 8: Settings & Preferences
 **Goal:** Add settings management and preferences UI
 
 **Changes:**
@@ -410,6 +481,9 @@ import {Controller} from './app/controller.js';
   - Add `.js` to relative imports
 
 **Verification:**
+```bash
+npm run dev
+```
 - ✓ Build succeeds
 - ✓ Preferences window opens
 - ✓ Can configure keyboard shortcut
@@ -420,7 +494,7 @@ import {Controller} from './app/controller.js';
 
 ---
 
-### Step 8: Layout History
+### Step 9: Layout History
 **Goal:** Add recently-used layout tracking
 
 **Changes:**
@@ -431,6 +505,9 @@ import {Controller} from './app/controller.js';
 - Update UI to highlight recent layouts
 
 **Verification:**
+```bash
+npm run dev
+```
 - ✓ Build succeeds
 - ✓ Recently used layouts are highlighted
 - ✓ History persists across sessions
@@ -440,7 +517,7 @@ import {Controller} from './app/controller.js';
 
 ---
 
-### Step 9: Debug Panel (Development Feature)
+### Step 10: Debug Panel (Development Feature)
 **Goal:** Add debug panel for development builds
 
 **Changes:**
@@ -454,35 +531,15 @@ import {Controller} from './app/controller.js';
 - Integrate into controller (conditional on `__DEV__`)
 
 **Verification:**
+```bash
+npm run dev
+```
 - ✓ Build succeeds (dev mode)
 - ✓ Debug panel appears in development builds
-- ✓ Debug panel hidden in release builds
+- ✓ Debug panel hidden in release builds (`npm run build:release`)
 - ✓ Debug toggle works
 
 **Outcome:** Debug features work.
-
----
-
-### Step 10: Development Tools (D-Bus Reload)
-**Goal:** Restore development reload functionality
-
-**Changes:**
-- Migrate `src/reloader/dbus-reloader.ts`:
-  - Convert Gio, GLib imports
-  - Add `.js` to relative imports
-- Migrate `src/reloader/reloader.ts`:
-  - Convert GLib, Gio, Main imports
-  - Add `.js` to relative imports
-  - Update extension manager references
-- Integrate into extension.ts (conditional on `__DEV__`)
-
-**Verification:**
-- ✓ Build succeeds
-- ✓ `npm run dev` reloads extension
-- ✓ D-Bus method calls work
-- ✓ Reload preserves state correctly
-
-**Outcome:** Development workflow restored.
 
 ---
 
@@ -502,6 +559,16 @@ import {Controller} from './app/controller.js';
 - Run full test suite
 - Performance profiling
 
+**Verification:**
+```bash
+# Run all quality checks
+npm run build
+npm run check
+npm run test:run
+
+# Manual testing on Ubuntu 24.04 + GNOME Shell 46
+```
+
 **Comprehensive Testing:**
 - ✓ All drag-to-edge scenarios
 - ✓ All layout buttons work
@@ -509,10 +576,11 @@ import {Controller} from './app/controller.js';
 - ✓ All keyboard navigation works
 - ✓ Settings UI complete
 - ✓ Layout history accurate
-- ✓ No console errors
-- ✓ No memory leaks
+- ✓ No console errors (`journalctl -f /usr/bin/gnome-shell`)
+- ✓ No memory leaks (enable/disable 10+ times)
 - ✓ Performance acceptable
-- ✓ Development reload works
+- ✓ Development reload works (`npm run dev`)
+- ✓ All tests pass
 
 **Outcome:** Fully functional extension.
 
@@ -522,22 +590,27 @@ import {Controller} from './app/controller.js';
 **Goal:** Update documentation and prepare for release
 
 **Changes:**
-- Update README.md
+- Update README.md:
   - Prerequisites: "GNOME Shell 42" → "GNOME Shell 46"
   - Ubuntu version: 22.04 → 24.04
-  - Add migration notes for users
+  - Add migration notes for users upgrading from v1.x
   - Update installation instructions
-- Update development guides
-- Document breaking changes
-- Create `gnome-42` branch (archive Shell 42 version)
-- Tag current main as start of v3.x.x series
-- Prepare release notes
+- Update development guides:
+  - ESM-specific development notes
+  - Updated build configuration
+- Document breaking changes:
+  - No backward compatibility with GNOME Shell 44 and earlier
+  - Migration guide for developers
+- Prepare release notes:
+  - Highlight GNOME Shell 46 support
+  - List breaking changes
+  - Migration path from v1.x
 
 **Verification:**
-- ✓ Documentation accurate
+- ✓ Documentation accurate and complete
 - ✓ All links work
-- ✓ Installation instructions tested
-- ✓ Branch strategy clear
+- ✓ Installation instructions tested on Ubuntu 24.04
+- ✓ Version numbers consistent across all files
 
 **Outcome:** Ready for release.
 
@@ -545,11 +618,11 @@ import {Controller} from './app/controller.js';
 
 ### No Backward Compatibility
 
-ESM modules are **incompatible with GNOME Shell 44 and earlier**. Users on Ubuntu 22.04 must continue using the Shell 42 version.
+ESM modules are **incompatible with GNOME Shell 44 and earlier**. Users on Ubuntu 22.04 must continue using v1.x.
 
 **Strategy:**
-- Maintain separate branches: `gnome-42` and `main`
-- Separate releases on extensions.gnome.org
+- v2.x supports GNOME Shell 46+ only
+- v1.x remains available for GNOME Shell 42 users
 - Clear documentation about version compatibility
 
 ### Resource Path Differences
@@ -589,22 +662,22 @@ This is an ESM requirement and may feel counterintuitive.
 
 ## Timeline Estimates
 
-**Total Estimated Effort:** 30-40 points
+**Total Estimated Effort:** 31-41 points
 
 The incremental approach allows for faster feedback cycles and reduces risk, potentially completing faster than a big-bang migration.
 
 | Step | Description | Points |
 |------|-------------|--------|
 | Step 1 | Minimal Viable Extension | 4 |
-| Step 2 | Basic Panel Display | 3 |
-| Step 3 | Drag Detection & Panel Positioning | 4 |
-| Step 4 | Layout Buttons & Window Snapping | 6 |
-| Step 5 | Panel Auto-Hide & Cleanup | 3 |
-| Step 6 | Keyboard Navigation | 3 |
-| Step 7 | Settings & Preferences | 5 |
-| Step 8 | Layout History | 2 |
-| Step 9 | Debug Panel | 2 |
-| Step 10 | Development Tools | 2 |
+| Step 2 | Development Tools (D-Bus Reload) | 2 |
+| Step 3 | Basic Panel Display | 3 |
+| Step 4 | Drag Detection & Panel Positioning | 4 |
+| Step 5 | Layout Buttons & Window Snapping | 6 |
+| Step 6 | Panel Auto-Hide & Cleanup | 3 |
+| Step 7 | Keyboard Navigation | 3 |
+| Step 8 | Settings & Preferences | 5 |
+| Step 9 | Layout History | 2 |
+| Step 10 | Debug Panel | 2 |
 | Step 11 | Final Polish & Testing | 4 |
 | Step 12 | Documentation & Release | 2 |
 
@@ -614,11 +687,12 @@ The incremental approach allows for faster feedback cycles and reduces risk, pot
 - **Continuous testing:** Extension works at every checkpoint
 - **Easier debugging:** Problems isolated to recent changes
 - **Motivation:** Visible progress at each step
+- **Fast iteration:** D-Bus reload available from Step 2 onward
 
 **Risk Factors:**
 - Unforeseen API incompatibilities may add 3-5 points per issue
-- Testing on Ubuntu 24.04 environment availability affects timeline
 - Learning curve for new Extension API patterns (reduced by incremental discovery)
+- D-Bus reloader may need API updates for Shell 46 (accounted for in Step 2 estimate)
 
 ## Success Criteria
 
@@ -652,7 +726,7 @@ The incremental approach allows for faster feedback cycles and reduces risk, pot
 **High Risks:**
 - Breaking API changes not covered in official documentation
 - Resource path issues between extension.js and prefs.js contexts
-- Testing environment availability (Ubuntu 24.04 system required)
+- D-Bus reloader API changes in GNOME Shell 46
 
 **Medium Risks:**
 - Build system configuration issues with ESM
@@ -662,19 +736,18 @@ The incremental approach allows for faster feedback cycles and reduces risk, pot
 **Low Risks:**
 - Import syntax conversion (well-documented pattern)
 - Type definition updates (provided by @girs packages)
+- Testing environment (Ubuntu 24.04 already available)
 
 ## Rollback Plan
 
 If critical issues are discovered during testing:
 
-- Revert to `gnome-42` branch
+- Revert commits on `main` branch
 - Document issues encountered
 - Research solutions before retry
 - Consider phased rollout (beta testing with subset of users)
 
 ## Next Steps
 
-- Review and approve this plan
-- Set up Ubuntu 24.04 testing environment
-- Create `gnome-42` archive branch
-- Begin Phase 1 implementation
+1. Review and approve this plan
+2. Begin Step 1 implementation
