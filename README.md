@@ -16,7 +16,7 @@ A GNOME Shell extension for window snapping.
 
 ### Prerequisites
 
-- GNOME Shell 42
+- GNOME Shell 46
 - Node.js and npm (for development)
 
 ### Initial Setup (First Time Only)
@@ -80,8 +80,6 @@ This will build, copy, and reload the extension without requiring a logout.
 - `npm run build:release` - Release build (for distribution)
 - `npm run dev` - Build, copy, and reload extension
 - `npm run reload` - Reload extension via D-Bus
-- `npm run watch` - Watch mode (auto-recompile)
-- `npm run clean` - Remove compiled files
 - `npm run lint` - Run Biome linter
 - `npm run format` - Run Biome formatter
 - `npm run check` - Run both linter and formatter
