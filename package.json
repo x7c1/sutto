@@ -34,7 +34,7 @@
   },
   "homepage": "https://github.com/x7c1/snappa#readme",
   "devDependencies": {
-    "@biomejs/biome": "^2.3.7",
+    "@biomejs/biome": "^2.3.11",
     "@girs/adw-1": "1.6.0-4.0.0-beta.12",
     "@girs/clutter-14": "14.0.0-4.0.0-beta.12",
     "@girs/gdk-4.0": "4.0.0-4.0.0-beta.12",
