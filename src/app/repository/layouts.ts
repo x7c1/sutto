@@ -185,7 +185,7 @@ export function loadLayouts(): LayoutGroupCategory[] {
       return [];
     }
 
-    const contentsString = String.fromCharCode.apply(null, contents);
+    const contentsString = new TextDecoder('utf-8').decode(contents);
     const categories: LayoutGroupCategory[] = JSON.parse(contentsString);
 
     log('[LayoutsRepository] Layouts loaded successfully');

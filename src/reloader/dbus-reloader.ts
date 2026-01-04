@@ -57,6 +57,10 @@ export class DBusReloader {
       const interfaceInfo = nodeInfo.lookup_interface('io.github.x7c1.Snappa');
       console.log('[DBusReloader] Looked up interface info');
 
+      if (!interfaceInfo) {
+        throw new Error('Failed to lookup D-Bus interface info');
+      }
+
       // Register the D-Bus object
       this.dbusId = connection.register_object(
         '/io/github/x7c1/Snappa',

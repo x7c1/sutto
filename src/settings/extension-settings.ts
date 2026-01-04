@@ -12,8 +12,13 @@ export class ExtensionSettings {
   constructor(metadata: ExtensionMetadata) {
     // Get schema from extension directory
     const schemaDir = metadata.dir.get_child('schemas');
+    const schemaPath = schemaDir.get_path();
+    if (!schemaPath) {
+      throw new Error('Failed to get schema directory path');
+    }
+
     const schemaSource = Gio.SettingsSchemaSource.new_from_directory(
-      schemaDir.get_path(),
+      schemaPath,
       Gio.SettingsSchemaSource.get_default(),
       false
     );

@@ -35,12 +35,22 @@
   "homepage": "https://github.com/x7c1/snappa#readme",
   "devDependencies": {
     "@biomejs/biome": "^2.3.7",
-    "@girs/clutter-10": "10.0.0-4.0.0-beta.38",
-    "@girs/gjs": "4.0.0-beta.38",
-    "@girs/gnome-shell": "48.0.4",
-    "@girs/st-1.0": "1.0.0-4.0.0-beta.38",
+    "@girs/adw-1": "1.6.0-4.0.0-beta.12",
+    "@girs/clutter-14": "14.0.0-4.0.0-beta.12",
+    "@girs/gdk-4.0": "4.0.0-4.0.0-beta.12",
+    "@girs/gjs": "4.0.0-beta.12",
+    "@girs/gnome-shell": "46.0.2",
+    "@girs/gtk-4.0": "4.14.4-4.0.0-beta.12",
+    "@girs/meta-14": "14.0.0-4.0.0-beta.12",
+    "@girs/st-14": "14.0.0-4.0.0-beta.12",
     "esbuild": "^0.27.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.14"
+  },
+  "overrides": {
+    "@girs/cally-14": "14.0.0-4.0.0-beta.12",
+    "@girs/clutter-14": "14.0.0-4.0.0-beta.12",
+    "@girs/meta-14": "14.0.0-4.0.0-beta.12",
+    "@girs/shell-14": "14.0.0-4.0.0-beta.12"
   }
 }

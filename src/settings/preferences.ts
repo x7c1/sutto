@@ -11,7 +11,7 @@ const SCHEMA_ID = 'org.gnome.shell.extensions.snappa';
 const SETTINGS_KEY_SHORTCUT = 'show-panel-shortcut';
 
 export default class SnappaPreferences extends ExtensionPreferences {
-  fillPreferencesWindow(window: Adw.PreferencesWindow): void {
+  async fillPreferencesWindow(window: Adw.PreferencesWindow): Promise<void> {
     const settings = this.loadSettings();
     if (!settings) {
       console.log(
@@ -144,7 +144,12 @@ function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.Setting
     });
 
     // Bind switch to settings
-    settings.bind('debug-panel-enabled', debugSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
+    settings.bind(
+      'debug-panel-enabled',
+      debugSwitch as any,
+      'active',
+      Gio.SettingsBindFlags.DEFAULT
+    );
 
     debugRow.add_suffix(debugSwitch);
     debugRow.activatable_widget = debugSwitch;

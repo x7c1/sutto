@@ -76,7 +76,7 @@ export function loadLayoutHistory(): void {
       return;
     }
 
-    const contentsString = String.fromCharCode.apply(null, contents);
+    const contentsString = new TextDecoder('utf-8').decode(contents);
     const loaded = JSON.parse(contentsString);
 
     // Check if this is the new format or old format
