@@ -1,6 +1,7 @@
 import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 
+import type { LayoutButtonWithMetadata } from '../types/button.js';
 import type { Layout } from '../types/layout.js';
 import { getButtonStyle } from '../ui/layout-button.js';
 
@@ -42,12 +43,15 @@ export class MainPanelKeyboardNavigator {
     this.onLayoutSelected = onLayoutSelected;
 
     // Set keyboard focus
-    (container as any).grab_key_focus();
+    container.grab_key_focus();
 
     // Register key event handler
-    this.keyEventId = container.connect('key-press-event', (_actor: St.BoxLayout, event: any) => {
-      return this.handleKeyPress(event);
-    });
+    this.keyEventId = container.connect(
+      'key-press-event',
+      (_actor: St.BoxLayout, event: Clutter.Event) => {
+        return this.handleKeyPress(event);
+      }
+    );
     this.focusedButton = this.initializeFocus();
   }
 
@@ -76,7 +80,7 @@ export class MainPanelKeyboardNavigator {
     for (const [button, layout] of this.layoutButtons.entries()) {
       St; // Prevent unused variable warning
       layout; // Prevent unused variable warning
-      const buttonWithMeta = button as any;
+      const buttonWithMeta = button as LayoutButtonWithMetadata;
       if (buttonWithMeta._isSelected) {
         initialButton = button;
         break;
@@ -88,7 +92,7 @@ export class MainPanelKeyboardNavigator {
       let minY = Infinity;
       let minX = Infinity;
       for (const button of this.layoutButtons.keys()) {
-        const allocation = (button as any).get_allocation_box();
+        const allocation = button.get_allocation_box();
         const x = allocation.x1;
         const y = allocation.y1;
 
@@ -110,8 +114,8 @@ export class MainPanelKeyboardNavigator {
    * Get button position and size
    */
   private getButtonPosition(button: St.Button): ButtonPosition {
-    const [x, y] = (button as any).get_transformed_position();
-    const [width, height] = (button as any).get_size();
+    const [x, y] = button.get_transformed_position();
+    const [width, height] = button.get_size();
     return { x, y, width, height };
   }
 
@@ -134,7 +138,7 @@ export class MainPanelKeyboardNavigator {
     return Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
   }
 
-  private handleKeyPress(event: any): boolean {
+  private handleKeyPress(event: Clutter.Event): boolean {
     const symbol = event.get_key_symbol();
 
     const keyMap: { [key: number]: string } = {
@@ -254,7 +258,7 @@ export class MainPanelKeyboardNavigator {
   }
 
   private applyFocusStyle(button: St.Button): void {
-    const buttonWithMeta = button as any;
+    const buttonWithMeta = button as LayoutButtonWithMetadata;
 
     // Mark button as keyboard-focused
     buttonWithMeta._isFocused = true;
@@ -262,16 +266,16 @@ export class MainPanelKeyboardNavigator {
     // Apply focused style (same as hover style)
     const style = getButtonStyle(
       true, // isHovered = true to apply hover style
-      buttonWithMeta._isSelected,
-      buttonWithMeta._buttonWidth,
-      buttonWithMeta._buttonHeight,
-      buttonWithMeta._debugConfig
+      buttonWithMeta._isSelected ?? false,
+      buttonWithMeta._buttonWidth ?? 0,
+      buttonWithMeta._buttonHeight ?? 0,
+      buttonWithMeta._debugConfig ?? null
     );
     button.set_style(style);
   }
 
   private removeFocusStyle(button: St.Button): void {
-    const buttonWithMeta = button as any;
+    const buttonWithMeta = button as LayoutButtonWithMetadata;
 
     // Remove keyboard focus flag
     buttonWithMeta._isFocused = false;
@@ -279,10 +283,10 @@ export class MainPanelKeyboardNavigator {
     // Restore normal style
     const style = getButtonStyle(
       false, // isHovered = false
-      buttonWithMeta._isSelected,
-      buttonWithMeta._buttonWidth,
-      buttonWithMeta._buttonHeight,
-      buttonWithMeta._debugConfig
+      buttonWithMeta._isSelected ?? false,
+      buttonWithMeta._buttonWidth ?? 0,
+      buttonWithMeta._buttonHeight ?? 0,
+      buttonWithMeta._debugConfig ?? null
     );
     button.set_style(style);
   }

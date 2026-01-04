@@ -4,6 +4,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { DEFAULT_LAYOUT_SETTINGS, PANEL_EDGE_PADDING } from '../constants.js';
 import { adjustDebugPanelPosition } from '../positioning/index.js';
+import type { CheckboxButtonWithMetadata } from '../types/button.js';
 import type { Position, Size } from '../types/index.js';
 import { type DebugConfig, getDebugConfig, toggleDebugOption, toggleTestGroup } from './config.js';
 import { getTestLayoutGroups } from './test-layouts.js';
@@ -125,7 +126,7 @@ export class DebugPanel {
 
     // Get preferred height to calculate actual panel size
     // Use PANEL_WIDTH as the for_width parameter since panel has fixed width
-    const [, naturalHeight] = (this.container as any).get_preferred_height(PANEL_WIDTH);
+    const [, naturalHeight] = this.container.get_preferred_height(PANEL_WIDTH);
     this.panelHeight = naturalHeight > 0 ? naturalHeight : mainPanelSize.height;
     log(
       `[DebugPanel] Main panel position: (${mainPanelPosition.x}, ${mainPanelPosition.y}), Main panel width: ${mainPanelSize.width}, Debug panel X: ${debugPanelX}, Natural height: ${naturalHeight}, Using height: ${this.panelHeight}, Min height: ${mainPanelSize.height}`
@@ -410,17 +411,17 @@ export class DebugPanel {
     box.add_child(labelWidget);
     button.set_child(box);
 
-    // Store initial checked state
-    (button as any)._checked = checked;
-
-    // Store reference to checkbox indicator
-    (button as any)._checkboxIndicator = checkboxIndicator;
+    // Store initial checked state and checkbox indicator
+    const checkboxButton = button as CheckboxButtonWithMetadata;
+    checkboxButton._checked = checked;
+    checkboxButton._checkboxIndicator = checkboxIndicator;
 
     // Connect click event
     button.connect('clicked', () => {
-      const currentChecked = (button as any)._checked as boolean;
+      const checkboxButton = button as CheckboxButtonWithMetadata;
+      const currentChecked = checkboxButton._checked;
       const newChecked = !currentChecked;
-      (button as any)._checked = newChecked;
+      checkboxButton._checked = newChecked;
 
       // Update visual state
       checkboxIndicator.set_style(`
@@ -460,10 +461,11 @@ export class DebugPanel {
     const button = this.checkboxes.get(key);
     if (!button) return;
 
-    (button as any)._checked = checked;
+    const checkboxButton = button as CheckboxButtonWithMetadata;
+    checkboxButton._checked = checked;
 
     // Update checkbox indicator using stored reference
-    const indicator = (button as any)._checkboxIndicator as St.Widget;
+    const indicator = checkboxButton._checkboxIndicator;
     if (!indicator) return;
 
     indicator.set_style(`

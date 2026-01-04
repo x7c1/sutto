@@ -79,12 +79,7 @@ export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.
     });
 
     // Bind switch to settings
-    settings.bind(
-      'debug-panel-enabled',
-      debugSwitch as any,
-      'active',
-      Gio.SettingsBindFlags.DEFAULT
-    );
+    settings.bind('debug-panel-enabled', debugSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
 
     debugRow.add_suffix(debugSwitch);
     debugRow.activatable_widget = debugSwitch;

@@ -11,6 +11,7 @@ import {
 } from '../constants.js';
 import type { DebugConfig } from '../debug-panel/config.js';
 import { evaluate, parse } from '../layout-expression/index.js';
+import type { LayoutButtonWithMetadata } from '../types/button.js';
 import type { Layout } from '../types/index.js';
 
 declare function log(message: string): void;
@@ -134,8 +135,7 @@ export function createLayoutButton(
   }
 
   // Store button metadata for dynamic style updates
-  // We use 'as any' to add custom properties to the button
-  const buttonWithMeta = button as any;
+  const buttonWithMeta = button as LayoutButtonWithMetadata;
   buttonWithMeta._isSelected = isSelected;
   buttonWithMeta._isFocused = false;
   buttonWithMeta._buttonWidth = buttonWidth;
@@ -147,7 +147,13 @@ export function createLayoutButton(
     // Only apply hover style if not keyboard-focused
     if (!buttonWithMeta._isFocused) {
       button.set_style(
-        getButtonStyle(true, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
+        getButtonStyle(
+          true,
+          buttonWithMeta._isSelected ?? false,
+          buttonWidth,
+          buttonHeight,
+          debugConfig
+        )
       );
     }
     global.display.set_cursor(Meta.Cursor.POINTING_HAND);
@@ -158,7 +164,13 @@ export function createLayoutButton(
     // Only remove hover style if not keyboard-focused
     if (!buttonWithMeta._isFocused) {
       button.set_style(
-        getButtonStyle(false, buttonWithMeta._isSelected, buttonWidth, buttonHeight, debugConfig)
+        getButtonStyle(
+          false,
+          buttonWithMeta._isSelected ?? false,
+          buttonWidth,
+          buttonHeight,
+          debugConfig
+        )
       );
     }
     global.display.set_cursor(Meta.Cursor.DEFAULT);

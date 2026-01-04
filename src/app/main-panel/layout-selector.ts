@@ -7,6 +7,7 @@
 
 import type St from 'gi://St';
 import { BUTTON_BG_COLOR, BUTTON_BG_COLOR_SELECTED } from '../constants.js';
+import type { LayoutButtonWithMetadata } from '../types/button.js';
 import type { Layout } from '../types/index.js';
 
 declare function log(message: string): void;
@@ -65,7 +66,7 @@ export class MainPanelLayoutSelector {
       const bgColor = isSelected ? BUTTON_BG_COLOR_SELECTED : BUTTON_BG_COLOR;
 
       // Update button's stored selection state
-      const buttonWithMeta = button as any;
+      const buttonWithMeta = button as LayoutButtonWithMetadata;
       buttonWithMeta._isSelected = isSelected;
 
       // Access style property through type assertion
