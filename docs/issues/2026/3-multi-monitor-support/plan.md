@@ -125,7 +125,7 @@ Users define global Layout Groups once, then reference them by name in Display G
 Create `src/app/types/monitor-config.ts`:
 
 ```typescript
-export interface MonitorInfo {
+export interface Monitor {
   index: number;  // 0-based monitor index ("0", "1", "2"...)
   geometry: { x: number; y: number; width: number; height: number };
   workArea: { x: number; y: number; width: number; height: number };
@@ -239,7 +239,7 @@ Create `src/app/monitor/manager.ts`:
 
 Key responsibilities:
 - Detect all connected monitors using `global.display.get_n_monitors()`
-- Create MonitorInfo for each monitor (index, geometry, work area, isPrimary)
+- Create Monitor for each monitor (index, geometry, work area, isPrimary)
 - Track monitor configuration changes via `monitors-changed` signal
 - Provide monitor lookup by position (for cursor-based detection)
 - Provide monitor lookup by window (which monitor a window is on)
@@ -247,12 +247,12 @@ Key responsibilities:
 Critical methods:
 ```typescript
 class MonitorManager {
-  detectMonitors(): Map<string, MonitorInfo>
-  getMonitorByKey(monitorKey: string): MonitorInfo | null  // Lookup by "0", "1", etc.
-  getMonitorAtPosition(x, y): MonitorInfo | null
-  getMonitorForWindow(window): MonitorInfo | null
+  detectMonitors(): Map<string, Monitor>
+  getMonitorByKey(monitorKey: string): Monitor | null  // Lookup by "0", "1", etc.
+  getMonitorAtPosition(x, y): Monitor | null
+  getMonitorForWindow(window): Monitor | null
   connectToMonitorChanges(display): void
-  calculateBoundingBox(monitors: MonitorInfo[]): BoundingBox
+  calculateBoundingBox(monitors: Monitor[]): BoundingBox
 }
 ```
 
@@ -396,69 +396,85 @@ The `calculateBoundingBox` method computes the bounding box that contains all mo
 
 ### UI Rendering Changes
 
-**New file: `src/app/ui/monitor-section.ts`**
+**Modify: `src/app/ui/miniature-display.ts`** (extend existing)
 
-Creates a monitor section that displays the assigned Layout Group for one monitor.
-A "Monitor Section" is a miniature display with a header showing monitor information (e.g., "Monitor 1 (Primary) - 1920x1080"):
+Extends the existing miniature display to support monitor headers and error states.
+
+A **Miniature Display** represents one monitor, with a header and layout buttons:
 ```typescript
-function createMonitorSectionView(
-  monitorInfo: MonitorInfo,
+function createMiniatureDisplayView(
+  monitor: Monitor,  // Added: monitor information for header
   layoutGroup: LayoutGroup,  // The Layout Group assigned to this monitor
   displayWidth: number,
   displayHeight: number,
   debugConfig: DebugConfig | null,
   window: Meta.Window | null,
   onLayoutSelected: (layout: Layout, monitorKey: string) => void
-): MonitorSectionView
+): MiniatureDisplayView
+
+// Error state for missing monitors
+function createMiniatureDisplayErrorView(
+  monitorKey: string,
+  displayWidth: number,
+  displayHeight: number
+): St.Widget
 ```
+
+**Key changes:**
+- Add `monitor` parameter to signature
+- Add header rendering at top: "Monitor 1", "Monitor 2 (Primary)", etc.
+  - Format: "Monitor {index+1}" for user-friendly labeling
+  - Add "(Primary)" suffix if `monitor.isPrimary === true`
+- Add error view helper for missing monitors (⚠️ "Not Connected")
+- Pass `monitorKey` to layout selection callback
 
 Visual structure:
 ```
-Monitor Section Container (vertical, for each monitor)
-├── Monitor Header Label ("Monitor 1 (Primary) - 1920x1080")
-│   Note: Display as "Monitor {index+1}" for user-friendly labeling
-└── Miniature Display (showing layout buttons from assigned Layout Group)
+Miniature Display (vertical container for each monitor)
+├── Monitor Header Label ("Monitor 1 (Primary)")
+└── Layout Buttons Container (existing functionality)
     ├── Layout Button 1
     ├── Layout Button 2
     └── Layout Button 3
 
-Overall Panel Container (vertical layout for Display Groups)
-├── Display Group Section (with Clutter.FixedLayout for 2D monitor positioning)
-│   ├── Monitor Section 0 (positioned at scaled x, y via set_position())
-│   └── Monitor Section 1 (positioned at scaled x, y via set_position())
-└── (Next Display Group Section...)
+Overall Panel Container (vertical layout for categories)
+├── Miniature Space (with Clutter.FixedLayout for 2D monitor positioning)
+│   ├── Miniature Display 0 (positioned at scaled x, y via set_position())
+│   └── Miniature Display 1 (positioned at scaled x, y via set_position())
+└── (Next Miniature Space...)
 ```
 
-Each Display Group section uses `Clutter.FixedLayout()` as the layout manager (similar to existing miniature display implementation) and `set_position()` to replicate the physical 2D layout of monitors.
+**New file: `src/app/ui/miniature-space.ts`**
 
-**New file: `src/app/ui/display-group-section.ts`**
+Creates a **Miniature Space** that displays all monitors in their physical 2D arrangement.
+A Miniature Space is the UI representation of a Display Group:
 
-Creates a Display Group section that displays all monitors in their physical 2D arrangement:
 ```typescript
-function createDisplayGroupSectionView(
+function createMiniatureSpaceView(
   displayGroup: DisplayGroup,
-  monitors: Map<string, MonitorInfo>,
+  monitors: Map<string, Monitor>,
   debugConfig: DebugConfig | null,
   window: Meta.Window | null,
   onLayoutSelected: (layout: Layout, monitorKey: string) => void
-): DisplayGroupSectionView
+): MiniatureSpaceView
 ```
 
 **Implementation details:**
 - Creates `St.Widget` with `Clutter.FixedLayout()` for absolute positioning
 - Iterates through `displayGroup.displays` entries
-- For each monitor key, creates a monitor section view using `createMonitorSectionView()`
+- For each monitor key:
+  - If monitor exists: creates miniature display using `createMiniatureDisplayView()`
+  - If monitor missing: creates error view using `createMiniatureDisplayErrorView()`
 - Calculates bounding box from all monitors in the Display Group
 - Calculates scale factor to fit in panel constraints
-- Positions each monitor section at scaled coordinates using `set_position()`
-- Handles missing monitors by displaying error message (see Error Handling section)
+- Positions each miniature display at scaled coordinates using `set_position()`
 
 **Modify: `src/app/main-panel/renderer.ts`**
 
 Replace `createCategoriesView` with a multi-monitor version:
 ```typescript
 function createCategoriesView(
-  monitors: Map<string, MonitorInfo>,
+  monitors: Map<string, Monitor>,
   categories: LayoutCategory[],  // Categories with Display Groups
   debugConfig: DebugConfig | null,
   window: Meta.Window | null,
@@ -469,10 +485,10 @@ function createCategoriesView(
 **Key implementation notes:**
 - Replace existing `createCategoriesView` completely (single-monitor is NOT a special case - all code uses Display Groups)
 - For each Category, iterate through its Display Groups
-- Call `createDisplayGroupSectionView()` from `display-group-section.ts` for each Display Group
-- Stack Display Group sections vertically within the category
+- Call `createMiniatureSpaceView()` from `miniature-space.ts` for each Display Group
+- Stack Miniature Spaces vertically within the category
 
-Implementation steps (for `display-group-section.ts`):
+Implementation steps (for `miniature-space.ts`):
 
 **For each Display Group:**
 1. **Calculate bounding box**: Get the overall dimensions of all monitors referenced in this Display Group
@@ -482,23 +498,23 @@ Implementation steps (for `display-group-section.ts`):
    - Use the smaller scale to fit both dimensions
 3. **Create absolute positioning container**: Use `St.Widget` with `Clutter.FixedLayout()` that supports child positioning
 4. **For each [monitorKey, layoutGroup] in displayGroup.displays**:
-   - Get MonitorInfo for this monitor key from monitors Map
-   - If monitor not found, create error indicator (see Error Handling section)
-   - Calculate monitor section dimensions (scaled monitor width/height)
+   - Get Monitor for this monitor key from monitors Map
+   - If monitor not found, create error indicator using `createMiniatureDisplayErrorView()`
+   - Calculate miniature display dimensions (scaled monitor width/height)
    - Calculate position: `scaledX = (monitor.x - bbox.minX) * scale`, `scaledY = (monitor.y - bbox.minY) * scale`
-   - Create monitor section view with the Layout Group using `createMonitorSectionView()`
-   - Set position using `section.set_position(scaledX, scaledY)`
+   - Create miniature display with the Layout Group using `createMiniatureDisplayView()`
+   - Set position using `miniatureDisplay.set_position(scaledX, scaledY)`
    - Add to absolute positioning container
-5. Return the Display Group container
+5. Return the Miniature Space container
 
 This creates a structure where:
-- Each **Category** contains multiple **Display Group** sections (assembled in `renderer.ts`)
-- Each **Display Group** section shows a 2D spatial layout of monitors (created in `display-group-section.ts`)
-- Each **Monitor section** displays the assigned Layout Group's miniature display (created in `monitor-section.ts`)
+- Each **Category** contains multiple **Miniature Spaces** (assembled in `renderer.ts`)
+- Each **Miniature Space** shows a 2D spatial layout of monitors (created in `miniature-space.ts`)
+- Each **Miniature Display** displays the assigned Layout Group's layout buttons (created in `miniature-display.ts`)
 
 **Miniature Display Sizing:**
 
-Each monitor section is scaled proportionally based on the bounding box scale factor:
+Each miniature display is scaled proportionally based on the bounding box scale factor:
 - `scaledWidth = monitor.workArea.width * scale`
 - `scaledHeight = monitor.workArea.height * scale`
 
@@ -525,14 +541,14 @@ private applyLayoutToCurrentWindow(layout: Layout, monitorKey: string): void
 
 Key changes:
 - Receive monitorKey parameter from layout selection callback
-- Look up MonitorInfo for that monitorKey
+- Look up Monitor for that monitorKey
 - Use monitor-specific work area for expression evaluation
 - Record selection in per-monitor history: `setSelectedLayoutForMonitor(monitorKey, ...)`
 
 Layout expression evaluation:
 ```typescript
-const monitorInfo = this.monitorManager.getMonitorByKey(monitorKey);
-const workArea = monitorInfo.workArea;
+const monitor = this.monitorManager.getMonitorByKey(monitorKey);
+const workArea = monitor.workArea;
 const x = workArea.x + resolve(layout.x, workArea.width);
 const y = workArea.y + resolve(layout.y, workArea.height);
 // ... apply to window
@@ -707,28 +723,36 @@ This structure:
 ### Phase 3: UI Migration (Complete Replacement)
 **Goal: Implement all new UI components and switch to new data structure**
 
+**UI Concept:**
+- **Miniature Display**: Represents one monitor (with header and layout buttons)
+- **Miniature Space**: Contains multiple Miniature Displays in 2D arrangement
+
 **Implementation order (all in one phase, but in this sequence):**
 
-1. **Create monitor-section.ts**
-   - Implement `createMonitorSectionView()` function
-   - Takes MonitorInfo and assigned LayoutGroup
-   - Returns monitor section with header and miniature display
+1. **Update miniature-display.ts** (extend existing)
+   - Add monitor header support
+   - Update `createMiniatureDisplayView()` signature to accept `Monitor`
+   - Add header rendering ("Monitor 1", "Monitor 2", etc.)
+   - Add error state support for missing monitors
+   - Implement `createMiniatureDisplayErrorView()` helper (shows "⚠️ Not Connected")
 
-2. **Create display-group-section.ts**
-   - Implement `createDisplayGroupSectionView()` function
-   - Takes DisplayGroup with expanded LayoutGroups
+2. **Create miniature-space.ts** (new file)
+   - Implement `createMiniatureSpaceView()` function
+   - Takes DisplayGroup with expanded LayoutGroups and MonitorManager
    - Creates 2D spatial layout using Clutter.FixedLayout()
-   - **Include error handling**: Missing monitors show error indicator
-   - Implement `createMonitorErrorSection()` helper
+   - For each monitor in DisplayGroup:
+     - If monitor exists: call `createMiniatureDisplayView()` with Monitor
+     - If monitor missing: call `createMiniatureDisplayErrorView()`
+   - Position each miniature display to preserve physical monitor arrangement
 
 3. **Update renderer.ts**
    - Replace `createCategoriesView()` signature:
-     - Add `monitors: Map<string, MonitorInfo>` parameter
+     - Add `monitors: Map<string, Monitor>` parameter
      - Change `categories: LayoutGroupCategory[]` to `categories: LayoutCategory[]`
    - Update implementation:
      - Iterate through categories with Display Groups
-     - Call `createDisplayGroupSectionView()` for each Display Group
-     - Stack Display Groups vertically
+     - Call `createMiniatureSpaceView()` for each Display Group
+     - Stack Miniature Spaces vertically
 
 4. **Update main-panel/index.ts**
    - Pass MonitorManager to renderer
@@ -750,7 +774,7 @@ This structure:
   - Update `applyLayoutToCurrentWindow()` signature to accept `monitorKey` parameter
   - Use monitor-specific work area for layout calculations
   - Record layout selection with `setSelectedLayoutForMonitor()` (per-monitor history)
-- Modify `src/app/ui/monitor-section.ts`:
+- Modify `src/app/ui/miniature-display.ts`:
   - Pass monitorKey to layout selection callback: `onLayoutSelected(layout, monitorKey)`
 - Modify MainPanel layout selection callback flow:
   - Update `setOnLayoutSelected` callback signature to include monitorKey
@@ -765,11 +789,9 @@ This structure:
   - Implement migration from old format: existing history → monitor "0"
   - Activate `setSelectedLayoutForMonitor()` and `getSelectedLayoutIdForMonitor()` functions
   - Update `loadLayoutHistory()` to handle version 1 → version 2 migration
-- Modify `src/app/ui/monitor-section.ts`:
+- Modify `src/app/ui/miniature-display.ts`:
   - Use `getSelectedLayoutIdForMonitor(monitorKey, ...)` for button highlighting
   - Pass monitorKey when creating layout buttons
-- Modify `src/app/ui/miniature-display.ts` (if still used):
-  - Update to use per-monitor history lookup
 - **Test: Verify history is tracked separately per monitor**
   - Select layout on monitor 0 → recorded in monitor "0" history ✓
   - Select layout on monitor 1 → recorded in monitor "1" history ✓
@@ -781,7 +803,8 @@ This structure:
   - Delete or deprecate old `loadLayouts()` if no longer needed
   - Delete or deprecate old `importSettings()` if no longer needed
   - Remove `DEFAULT_LAYOUT_SETTINGS` (replaced by `DEFAULT_LAYOUT_CONFIGURATION`)
-  - Consider removing `src/app/ui/category.ts` and `src/app/ui/miniature-display.ts` if fully replaced
+  - Remove `src/app/ui/category.ts` (replaced by miniature-space.ts)
+  - Note: `miniature-display.ts` is **retained and extended**, not removed
 - **Edge case handling**:
   - Handle monitor disconnect/reconnect gracefully (re-render panel via `monitors-changed` signal)
   - Handle primary monitor changes
@@ -807,8 +830,7 @@ This structure:
 - `src/app/types/display-group.ts` - DisplayGroup runtime type definition
 - `src/app/types/layout-category.ts` - LayoutCategory runtime type definition
 - `src/app/monitor/manager.ts` - Monitor detection and management
-- `src/app/ui/monitor-section.ts` - Monitor section UI component
-- `src/app/ui/display-group-section.ts` - Display Group section UI component (2D monitor layout)
+- `src/app/ui/miniature-space.ts` - Miniature Space UI component (2D monitor layout)
 
 ### Modified Files
 - `src/app/types/layout-setting.ts` - Add DisplayGroupSetting, LayoutConfiguration
@@ -817,9 +839,13 @@ This structure:
 - `src/app/repository/layout-history.ts` - Per-monitor history support (version 2)
 - `src/app/controller.ts` - Integrate MonitorManager, update layout application with monitorKey
 - `src/app/main-panel/index.ts` - Pass MonitorManager to renderer
-- `src/app/main-panel/renderer.ts` - Multi-monitor rendering with Display Groups (expanded LayoutGroups)
+- `src/app/main-panel/renderer.ts` - Multi-monitor rendering with Miniature Spaces (expanded LayoutGroups)
+- `src/app/ui/miniature-display.ts` - Extend to support monitor headers and error states
 - `src/app/ui/layout-button.ts` - Per-monitor history highlighting
-- `src/app/types/index.ts` - Export new types (DisplayGroup, LayoutCategory, MonitorInfo, etc.)
+- `src/app/types/index.ts` - Export new types (DisplayGroup, LayoutCategory, Monitor, etc.)
+
+### Removed Files
+- `src/app/ui/category.ts` - Replaced by miniature-space.ts
 
 ## Pre-Implementation: Data Migration Strategy
 
@@ -995,9 +1021,9 @@ This preserves the spatial relationship: Monitor 2 is below and aligned with Mon
   - New type definitions and runtime types: 2 points
   - Repository layer dual-format support: 2 points
 - Phase 3 (UI Migration - Complete Replacement): 5 points
-  - monitor-section.ts and display-group-section.ts: 2 points
+  - miniature-display.ts extension (headers and error states): 1.5 points
+  - miniature-space.ts implementation: 1.5 points
   - renderer.ts and main-panel/index.ts updates: 2 points
-  - Error handling integration: 1 point
 - Phase 4 (Layout Application - Multi-Monitor Support): 3 points
 - Phase 5 (Per-Monitor History - Complete Implementation): 3 points
 - Phase 6 (Cleanup and Edge Cases): 2 points
@@ -1007,10 +1033,14 @@ This preserves the spatial relationship: Monitor 2 is below and aligned with Mon
 
 - **Monitor identification**: INDEX only (0-based numbering: "0", "1", "2"...)
 - **Panel positioning**: Cursor-based (appears on monitor where cursor is)
-- **Panel layout**: Mirrors physical monitor arrangement using absolute positioning within each Display Group
-- **Display Groups**: Represent different monitor-to-Layout Group assignment patterns
+- **UI Concepts**:
+  - **Miniature Display**: Represents one monitor with header and layout buttons (extended from existing concept)
+  - **Miniature Space**: Contains multiple Miniature Displays in 2D arrangement (new concept, UI representation of Display Group)
+- **Panel layout**: Mirrors physical monitor arrangement using absolute positioning within each Miniature Space
+- **Display Groups**: Represent different monitor-to-Layout Group assignment patterns (data concept)
   - A Category can have multiple Display Groups (e.g., "both monitors same", "different per monitor")
   - User creates Display Groups by editing input configuration (LayoutConfiguration format)
+  - Each Display Group is rendered as one Miniature Space in the UI
 - **Input vs Runtime formats**:
   - **Input format** (user writes): LayoutConfiguration with global layoutGroups array, displayGroups reference by name
   - **Runtime format** (stored in imported-layouts.json): LayoutCategory[] with Display Groups containing expanded LayoutGroups with unique IDs
