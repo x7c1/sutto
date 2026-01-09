@@ -10,7 +10,9 @@ declare function log(message: string): void;
 // 3. byWmClassAndLabel: Persistent, used when multiple layouts per app
 //
 // Window Label: Currently uses window.get_title(), future: user-assignable labels
-interface LayoutHistory {
+
+// Version 2 format (Phase 5: per-monitor history)
+interface PerMonitorHistory {
   byWindowId: {
     [windowId: number]: string; // windowId -> layoutId (volatile)
   };
@@ -22,10 +24,16 @@ interface LayoutHistory {
   };
 }
 
-let currentHistory: LayoutHistory = {
-  byWindowId: {},
-  byWmClass: {},
-  byWmClassAndLabel: {},
+interface LayoutHistoryV2 {
+  version: 2;
+  byMonitor: {
+    [monitorKey: string]: PerMonitorHistory;
+  };
+}
+
+let currentHistory: LayoutHistoryV2 = {
+  version: 2,
+  byMonitor: {},
 };
 
 // Storage file path
@@ -57,9 +65,8 @@ export function loadLayoutHistory(): void {
   if (!file.query_exists(null)) {
     log('[LayoutHistory] History file does not exist, using empty history');
     currentHistory = {
-      byWindowId: {},
-      byWmClass: {},
-      byWmClassAndLabel: {},
+      version: 2,
+      byMonitor: {},
     };
     return;
   }
@@ -69,9 +76,8 @@ export function loadLayoutHistory(): void {
     if (!success) {
       log('[LayoutHistory] Failed to load history file');
       currentHistory = {
-        byWindowId: {},
-        byWmClass: {},
-        byWmClassAndLabel: {},
+        version: 2,
+        byMonitor: {},
       };
       return;
     }
@@ -79,39 +85,78 @@ export function loadLayoutHistory(): void {
     const contentsString = new TextDecoder('utf-8').decode(contents);
     const loaded = JSON.parse(contentsString);
 
-    // Check if this is the new format or old format
-    if (loaded.byWmClass !== undefined) {
-      // New format
+    // Check version and migrate if necessary
+    if (loaded.version === 2) {
+      // Version 2 format (per-monitor history)
       currentHistory = {
-        byWindowId: {}, // Always start fresh (volatile)
-        byWmClass: loaded.byWmClass || {},
-        byWmClassAndLabel: loaded.byWmClassAndLabel || {},
+        version: 2,
+        byMonitor: loaded.byMonitor || {},
       };
-      log('[LayoutHistory] History loaded successfully (new format)');
-    } else {
-      // Old format: { [wmClass: string]: string[] }
-      // Migrate to new format
+      // Reset volatile session-only history for all monitors
+      for (const monitorKey in currentHistory.byMonitor) {
+        currentHistory.byMonitor[monitorKey].byWindowId = {};
+      }
+      log('[LayoutHistory] History loaded successfully (version 2)');
+    } else if (loaded.byWmClass !== undefined) {
+      // Version 1 format - migrate to monitor "0"
+      log('[LayoutHistory] Migrating from version 1 to version 2');
       currentHistory = {
-        byWindowId: {},
-        byWmClass: loaded,
-        byWmClassAndLabel: {},
+        version: 2,
+        byMonitor: {
+          '0': {
+            byWindowId: {}, // Volatile, start fresh
+            byWmClass: loaded.byWmClass || {},
+            byWmClassAndLabel: loaded.byWmClassAndLabel || {},
+          },
+        },
       };
-      log('[LayoutHistory] History migrated from old format');
+      log('[LayoutHistory] Migration complete: all history moved to monitor "0"');
       // Save in new format
+      saveLayoutHistory();
+    } else {
+      // Very old format: { [wmClass: string]: string[] }
+      // Migrate to version 2 monitor "0"
+      log('[LayoutHistory] Migrating from very old format to version 2');
+      currentHistory = {
+        version: 2,
+        byMonitor: {
+          '0': {
+            byWindowId: {},
+            byWmClass: loaded,
+            byWmClassAndLabel: {},
+          },
+        },
+      };
+      log('[LayoutHistory] Migration complete');
       saveLayoutHistory();
     }
   } catch (e) {
     log(`[LayoutHistory] Error loading history: ${e}`);
     currentHistory = {
-      byWindowId: {},
-      byWmClass: {},
-      byWmClassAndLabel: {},
+      version: 2,
+      byMonitor: {},
     };
   }
 }
 
 /**
+ * Get or create monitor history entry
+ * Phase 5: Helper for version 2 per-monitor history
+ */
+function getMonitorHistory(monitorKey: string): PerMonitorHistory {
+  if (!currentHistory.byMonitor[monitorKey]) {
+    currentHistory.byMonitor[monitorKey] = {
+      byWindowId: {},
+      byWmClass: {},
+      byWmClassAndLabel: {},
+    };
+  }
+  return currentHistory.byMonitor[monitorKey];
+}
+
+/**
  * Save layout history to disk (auto-save on change)
+ * Phase 5: Saves version 2 format with per-monitor history
  * Only persists byWmClass and byWmClassAndLabel (byWindowId is volatile)
  */
 export function saveLayoutHistory(): void {
@@ -125,15 +170,23 @@ export function saveLayoutHistory(): void {
       parent.make_directory_with_parents(null);
     }
 
-    // Write to file (omit byWindowId, which is session-only)
+    // Build persistent history (omit byWindowId for all monitors)
+    const persistentByMonitor: { [key: string]: Partial<PerMonitorHistory> } = {};
+    for (const monitorKey in currentHistory.byMonitor) {
+      persistentByMonitor[monitorKey] = {
+        byWmClass: currentHistory.byMonitor[monitorKey].byWmClass,
+        byWmClassAndLabel: currentHistory.byMonitor[monitorKey].byWmClassAndLabel,
+      };
+    }
+
     const persistentHistory = {
-      byWmClass: currentHistory.byWmClass,
-      byWmClassAndLabel: currentHistory.byWmClassAndLabel,
+      version: 2,
+      byMonitor: persistentByMonitor,
     };
     const json = JSON.stringify(persistentHistory, null, 2);
     file.replace_contents(json, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
-    log('[LayoutHistory] History saved successfully');
+    log('[LayoutHistory] History saved successfully (version 2)');
   } catch (e) {
     log(`[LayoutHistory] Error saving history: ${e}`);
   }
@@ -141,6 +194,7 @@ export function saveLayoutHistory(): void {
 
 /**
  * Record layout selection for a window
+ * Phase 5: Delegates to monitor "0" for backward compatibility
  * Records in all three tiers: byWindowId, byWmClass, byWmClassAndLabel
  *
  * @param windowId - Window ID (for session-only history)
@@ -154,42 +208,13 @@ export function setSelectedLayout(
   title: string,
   layoutId: string
 ): void {
-  if (!wmClass) {
-    log('[LayoutHistory] wmClass is empty, skipping history update');
-    return;
-  }
-
-  // 1. Record in byWindowId (session-only, always updated)
-  currentHistory.byWindowId[windowId] = layoutId;
-
-  // 2. Record in byWmClass (persistent)
-  const existingWmClassHistory = currentHistory.byWmClass[wmClass] || [];
-
-  // If layout already at top (array[0] === layoutId): skip update
-  if (existingWmClassHistory.length > 0 && existingWmClassHistory[0] === layoutId) {
-    log(`[LayoutHistory] Layout ${layoutId} already at top for ${wmClass}`);
-  } else {
-    // Remove layoutId if it exists elsewhere in the array
-    const filtered = existingWmClassHistory.filter((id) => id !== layoutId);
-    // Add layoutId to the front
-    currentHistory.byWmClass[wmClass] = [layoutId, ...filtered];
-  }
-
-  // 3. Record in byWmClassAndLabel (persistent)
-  const label = getWindowLabel(windowId, title);
-  const key = `${wmClass}::${label}`;
-  currentHistory.byWmClassAndLabel[key] = layoutId;
-
-  // Auto-save on change
-  saveLayoutHistory();
-
-  log(
-    `[LayoutHistory] Recorded selection: windowId=${windowId}, wmClass=${wmClass}, label=${label} -> ${layoutId}`
-  );
+  // Phase 5: Delegate to monitor "0" for backward compatibility
+  setSelectedLayoutForMonitor('0', windowId, wmClass, title, layoutId);
 }
 
 /**
  * Retrieve most recent layout selection ID using three-tier lookup
+ * Phase 5: Delegates to monitor "0" for backward compatibility
  * Lookup order:
  * 1. byWindowId (most specific, session-only)
  * 2. byWmClass (if only one layout for this app)
@@ -205,41 +230,8 @@ export function getSelectedLayoutId(
   wmClass: string,
   title: string
 ): string | null {
-  if (!wmClass) {
-    return null;
-  }
-
-  // 1. Try byWindowId (most specific)
-  const byWindowId = currentHistory.byWindowId[windowId];
-  if (byWindowId) {
-    log(`[LayoutHistory] Found by windowId: ${windowId} -> ${byWindowId}`);
-    return byWindowId;
-  }
-
-  // 2. Try byWmClass
-  const byWmClass = currentHistory.byWmClass[wmClass];
-  if (!byWmClass || byWmClass.length === 0) {
-    log(`[LayoutHistory] No history for wmClass: ${wmClass}`);
-    return null;
-  }
-
-  // If only one layout for this wmClass, use it
-  if (byWmClass.length === 1) {
-    log(`[LayoutHistory] Found single layout by wmClass: ${wmClass} -> ${byWmClass[0]}`);
-    return byWmClass[0];
-  }
-
-  // 3. Multiple layouts exist for this wmClass, try byWmClassAndLabel
-  const label = getWindowLabel(windowId, title);
-  const key = `${wmClass}::${label}`;
-  const byLabel = currentHistory.byWmClassAndLabel[key];
-  if (byLabel) {
-    log(`[LayoutHistory] Found by wmClass+label: ${key} -> ${byLabel}`);
-    return byLabel;
-  }
-
-  log(`[LayoutHistory] Multiple layouts for ${wmClass}, but no match for label: ${label}`);
-  return null;
+  // Phase 5: Delegate to monitor "0" for backward compatibility
+  return getSelectedLayoutIdForMonitor('0', windowId, wmClass, title);
 }
 
 // ============================================================================
@@ -264,12 +256,42 @@ export function setSelectedLayoutForMonitor(
   title: string,
   layoutId: string
 ): void {
-  // This function will be implemented in Phase 5
-  // For now, it delegates to the global setSelectedLayout function
+  if (!wmClass) {
+    log('[LayoutHistory] wmClass is empty, skipping history update');
+    return;
+  }
+
+  const monitorHistory = getMonitorHistory(monitorKey);
+
+  // 1. Record in byWindowId (session-only, always updated)
+  monitorHistory.byWindowId[windowId] = layoutId;
+
+  // 2. Record in byWmClass (persistent)
+  const existingWmClassHistory = monitorHistory.byWmClass[wmClass] || [];
+
+  // If layout already at top (array[0] === layoutId): skip update
+  if (existingWmClassHistory.length > 0 && existingWmClassHistory[0] === layoutId) {
+    log(
+      `[LayoutHistory] Layout ${layoutId} already at top for ${wmClass} on monitor ${monitorKey}`
+    );
+  } else {
+    // Remove layoutId if it exists elsewhere in the array
+    const filtered = existingWmClassHistory.filter((id) => id !== layoutId);
+    // Add layoutId to the front
+    monitorHistory.byWmClass[wmClass] = [layoutId, ...filtered];
+  }
+
+  // 3. Record in byWmClassAndLabel (persistent)
+  const label = getWindowLabel(windowId, title);
+  const key = `${wmClass}::${label}`;
+  monitorHistory.byWmClassAndLabel[key] = layoutId;
+
+  // Auto-save on change
+  saveLayoutHistory();
+
   log(
-    `[LayoutHistory] Per-monitor history not yet active, recording to global history (monitor: ${monitorKey})`
+    `[LayoutHistory] Recorded selection for monitor ${monitorKey}: windowId=${windowId}, wmClass=${wmClass}, label=${label} -> ${layoutId}`
   );
-  setSelectedLayout(windowId, wmClass, title, layoutId);
 }
 
 /**
@@ -287,10 +309,45 @@ export function getSelectedLayoutIdForMonitor(
   wmClass: string,
   title: string
 ): string | null {
-  // This function will be implemented in Phase 5
-  // For now, it delegates to the global getSelectedLayoutId function
+  if (!wmClass) {
+    return null;
+  }
+
+  const monitorHistory = getMonitorHistory(monitorKey);
+
+  // 1. Try byWindowId (most specific)
+  const byWindowId = monitorHistory.byWindowId[windowId];
+  if (byWindowId) {
+    log(`[LayoutHistory] Found by windowId on monitor ${monitorKey}: ${windowId} -> ${byWindowId}`);
+    return byWindowId;
+  }
+
+  // 2. Try byWmClass
+  const byWmClass = monitorHistory.byWmClass[wmClass];
+  if (!byWmClass || byWmClass.length === 0) {
+    log(`[LayoutHistory] No history for wmClass: ${wmClass} on monitor ${monitorKey}`);
+    return null;
+  }
+
+  // If only one layout for this wmClass, use it
+  if (byWmClass.length === 1) {
+    log(
+      `[LayoutHistory] Found single layout by wmClass on monitor ${monitorKey}: ${wmClass} -> ${byWmClass[0]}`
+    );
+    return byWmClass[0];
+  }
+
+  // 3. Multiple layouts exist for this wmClass, try byWmClassAndLabel
+  const label = getWindowLabel(windowId, title);
+  const key = `${wmClass}::${label}`;
+  const byLabel = monitorHistory.byWmClassAndLabel[key];
+  if (byLabel) {
+    log(`[LayoutHistory] Found by wmClass+label on monitor ${monitorKey}: ${key} -> ${byLabel}`);
+    return byLabel;
+  }
+
   log(
-    `[LayoutHistory] Per-monitor history not yet active, reading from global history (monitor: ${monitorKey})`
+    `[LayoutHistory] Multiple layouts for ${wmClass} on monitor ${monitorKey}, but no match for label: ${label}`
   );
-  return getSelectedLayoutId(windowId, wmClass, title);
+  return null;
 }
