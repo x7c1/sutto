@@ -31,12 +31,13 @@ export class MainPanelKeyboardNavigator {
   private focusedButton: St.Button | null = null;
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private keyEventId: number | null = null;
-  private onLayoutSelected: ((layout: Layout) => void) | null = null;
+  // Phase 4: Updated to support optional monitorKey parameter
+  private onLayoutSelected: ((layout: Layout, monitorKey?: string) => void) | null = null;
 
   enable(
     container: St.BoxLayout,
     layoutButtons: Map<St.Button, Layout>,
-    onLayoutSelected: (layout: Layout) => void
+    onLayoutSelected: (layout: Layout, monitorKey?: string) => void
   ): void {
     this.container = container;
     this.layoutButtons = layoutButtons;
@@ -297,6 +298,7 @@ export class MainPanelKeyboardNavigator {
     const layout = this.layoutButtons.get(this.focusedButton);
     if (!layout || !this.onLayoutSelected) return;
 
-    this.onLayoutSelected(layout);
+    // Phase 4: Call without monitorKey - controller will auto-detect from window
+    this.onLayoutSelected(layout, undefined);
   }
 }

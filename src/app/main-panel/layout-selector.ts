@@ -13,19 +13,21 @@ import type { Layout } from '../types/index.js';
 declare function log(message: string): void;
 
 export class MainPanelLayoutSelector {
-  private onLayoutSelected: ((layout: Layout) => void) | null = null;
+  // Phase 4: Updated callback signature to include monitorKey
+  private onLayoutSelected: ((layout: Layout, monitorKey: string) => void) | null = null;
 
   /**
    * Set callback for when a layout is selected
+   * Phase 4: Now includes monitorKey parameter
    */
-  setOnLayoutSelected(callback: (layout: Layout) => void): void {
+  setOnLayoutSelected(callback: (layout: Layout, monitorKey: string) => void): void {
     this.onLayoutSelected = callback;
   }
 
   /**
    * Get the callback for layout selection
    */
-  getOnLayoutSelected(): ((layout: Layout) => void) | null {
+  getOnLayoutSelected(): ((layout: Layout, monitorKey: string) => void) | null {
     return this.onLayoutSelected;
   }
 

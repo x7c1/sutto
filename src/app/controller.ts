@@ -16,7 +16,7 @@ import type { ExtensionSettings } from '../settings/extension-settings.js';
 import { evaluate, parse } from './layout-expression/index.js';
 import { MainPanel } from './main-panel/index.js';
 import { MonitorManager } from './monitor/manager.js';
-import { loadLayoutHistory, setSelectedLayout } from './repository/layout-history.js';
+import { loadLayoutHistory, setSelectedLayoutForMonitor } from './repository/layout-history.js';
 import type { Layout, Position } from './types/index.js';
 
 declare function log(message: string): void;
@@ -50,8 +50,9 @@ export class Controller {
 
     // Initialize main panel with metadata and monitor manager (Phase 3)
     this.mainPanel = new MainPanel(metadata, this.monitorManager);
-    this.mainPanel.setOnLayoutSelected((layout) => {
-      this.applyLayoutToCurrentWindow(layout);
+    // Phase 4: Receive monitorKey from layout selection
+    this.mainPanel.setOnLayoutSelected((layout, monitorKey) => {
+      this.applyLayoutToCurrentWindow(layout, monitorKey);
     });
     // Register/unregister hide shortcut when panel is shown/hidden
     this.mainPanel.setOnPanelShown(() => {
@@ -397,8 +398,9 @@ export class Controller {
 
   /**
    * Apply layout to currently dragged window (called when panel button is clicked)
+   * Phase 4: Added monitorKey parameter for multi-monitor support
    */
-  private applyLayoutToCurrentWindow(layout: Layout): void {
+  private applyLayoutToCurrentWindow(layout: Layout, monitorKey?: string): void {
     log(`[Controller] Apply layout: ${layout.label} (ID: ${layout.id})`);
 
     // Use lastDraggedWindow since currentWindow might be null if drag just ended
@@ -409,25 +411,40 @@ export class Controller {
       return;
     }
 
+    // Determine which monitor to use
+    let targetMonitor: import('./types/index.js').Monitor | null;
+    if (monitorKey !== undefined) {
+      // Phase 4: Use explicitly specified monitor from user selection
+      log(`[Controller] Using user-selected monitor: ${monitorKey}`);
+      targetMonitor = this.monitorManager.getMonitorByKey(monitorKey);
+      if (!targetMonitor) {
+        log(`[Controller] Could not find monitor with key: ${monitorKey}`);
+        return;
+      }
+    } else {
+      // Fallback: Auto-detect monitor from window (for keyboard shortcuts)
+      log('[Controller] Auto-detecting monitor from window');
+      targetMonitor = this.monitorManager.getMonitorForWindow(targetWindow);
+      if (!targetMonitor) {
+        log('[Controller] Could not determine monitor for window');
+        return;
+      }
+      monitorKey = String(targetMonitor.index);
+    }
+    const workArea = targetMonitor.workArea;
+
     // Record layout selection in history
     const windowId = targetWindow.get_id();
     const wmClass = targetWindow.get_wm_class();
     const title = targetWindow.get_title();
     if (wmClass) {
-      setSelectedLayout(windowId, wmClass, title, layout.id);
+      // Phase 4: Use per-monitor history
+      setSelectedLayoutForMonitor(monitorKey, windowId, wmClass, title, layout.id);
       // Update panel button styles immediately
       this.mainPanel.updateSelectedLayoutHighlight(layout.id);
     } else {
       log('[Controller] Window has no WM_CLASS, skipping history update');
     }
-
-    // Get monitor for current window
-    const targetMonitor = this.monitorManager.getMonitorForWindow(targetWindow);
-    if (!targetMonitor) {
-      log('[Controller] Could not determine monitor for window');
-      return;
-    }
-    const workArea = targetMonitor.workArea;
 
     // Helper to resolve layout values
     const resolve = (value: string, containerSize: number): number => {

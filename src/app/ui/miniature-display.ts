@@ -3,7 +3,10 @@ import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import { DISPLAY_BG_COLOR, DISPLAY_SPACING, DISPLAY_SPACING_HORIZONTAL } from '../constants.js';
 import type { DebugConfig } from '../debug-panel/config.js';
-import { getSelectedLayoutId } from '../repository/layout-history.js';
+import {
+  getSelectedLayoutId,
+  getSelectedLayoutIdForMonitor,
+} from '../repository/layout-history.js';
 import type { Layout, LayoutGroup, Monitor } from '../types/index.js';
 import { createLayoutButton } from './layout-button.js';
 
@@ -84,13 +87,20 @@ export function createMiniatureDisplayView(
   const buttonEvents: MiniatureDisplayView['buttonEvents'] = [];
 
   // Get selected layout ID for this window using three-tier lookup
+  // Phase 4: Use per-monitor history when monitorKey is provided
   let selectedLayoutId: string | null = null;
   if (window) {
     const windowId = window.get_id();
     const wmClass = window.get_wm_class();
     const title = window.get_title();
     if (wmClass !== null) {
-      selectedLayoutId = getSelectedLayoutId(windowId, wmClass, title);
+      if (monitorKey !== null) {
+        // Phase 4: Use per-monitor history
+        selectedLayoutId = getSelectedLayoutIdForMonitor(monitorKey, windowId, wmClass, title);
+      } else {
+        // Fallback: Use global history (for old code paths)
+        selectedLayoutId = getSelectedLayoutId(windowId, wmClass, title);
+      }
     }
   }
 
