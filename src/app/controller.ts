@@ -46,14 +46,15 @@ export class Controller {
   private layoutApplicator: LayoutApplicator;
   private keyboardShortcutManager: KeyboardShortcutManager;
   private dragSignalHandler: DragSignalHandler;
+  private layoutHistoryRepository: LayoutHistoryRepository;
+  private historyLoaded: boolean = false;
 
   constructor(settings: ExtensionSettings, metadata: ExtensionMetadata) {
     // Initialize monitor manager
     this.monitorManager = new MonitorManager();
 
-    // Initialize layout history repository
-    const layoutHistoryRepository = new LayoutHistoryRepository();
-    layoutHistoryRepository.load();
+    // Initialize layout history repository (will be loaded on first panel display)
+    this.layoutHistoryRepository = new LayoutHistoryRepository();
 
     // Initialize drag-related managers
     this.edgeDetector = new EdgeDetector(EDGE_THRESHOLD);
@@ -62,17 +63,21 @@ export class Controller {
     this.dragSignalHandler = new DragSignalHandler();
 
     // Initialize layout applicator
-    this.layoutApplicator = new LayoutApplicator(this.monitorManager, layoutHistoryRepository, {
-      onLayoutApplied: (layoutId, monitorKey) => {
-        this.mainPanel.updateSelectedLayoutHighlight(layoutId, monitorKey);
-      },
-    });
+    this.layoutApplicator = new LayoutApplicator(
+      this.monitorManager,
+      this.layoutHistoryRepository,
+      {
+        onLayoutApplied: (layoutId, monitorKey) => {
+          this.mainPanel.updateSelectedLayoutHighlight(layoutId, monitorKey);
+        },
+      }
+    );
 
     // Initialize keyboard shortcut manager
     this.keyboardShortcutManager = new KeyboardShortcutManager(settings);
 
     // Initialize main panel with metadata, monitor manager, and layout history repository
-    this.mainPanel = new MainPanel(metadata, this.monitorManager, layoutHistoryRepository);
+    this.mainPanel = new MainPanel(metadata, this.monitorManager, this.layoutHistoryRepository);
     // Receive monitorKey from layout selection for per-monitor application
     this.mainPanel.setOnLayoutSelected((layout, monitorKey) => {
       this.applyLayoutToCurrentWindow(layout, monitorKey);
@@ -134,6 +139,16 @@ export class Controller {
     this.currentWindow = null;
     this.isDragging = false;
     this.isAtEdge = false;
+  }
+
+  /**
+   * Ensure layout history is loaded (lazy loading on first panel display)
+   */
+  private ensureHistoryLoaded(): void {
+    if (!this.historyLoaded) {
+      this.layoutHistoryRepository.load();
+      this.historyLoaded = true;
+    }
   }
 
   /**
@@ -235,6 +250,9 @@ export class Controller {
       return; // Already visible
     }
 
+    // Load layout history on first panel display
+    this.ensureHistoryLoaded();
+
     const cursor = this.getCursorPosition();
     const window = this.getCurrentWindow();
     this.mainPanel.show(cursor, window);
@@ -272,21 +290,16 @@ export class Controller {
 
     log(`[Controller] Focused window: ${focusWindow.get_title()}`);
 
-    // Get window frame rectangle to position panel at window center
-    const frameRect = focusWindow.get_frame_rect();
-    const windowCenter = {
-      x: frameRect.x + frameRect.width / 2,
-      y: frameRect.y + frameRect.height / 2,
-    };
-    log(`[Controller] Window center position: x=${windowCenter.x}, y=${windowCenter.y}`);
+    // Load layout history on first panel display
+    this.ensureHistoryLoaded();
 
     // Store window reference (similar to drag behavior)
     this.currentWindow = focusWindow;
     this.lastDraggedWindow = focusWindow;
 
-    // Show main panel at window center position with vertical centering
+    // Show main panel at window center position
     log('[Controller] Showing main panel...');
-    this.mainPanel.show(windowCenter, focusWindow, true);
+    this.mainPanel.showAtWindowCenter(focusWindow);
     log('[Controller] Main panel shown');
   }
 

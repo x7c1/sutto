@@ -108,6 +108,22 @@ export class MainPanel {
   }
 
   /**
+   * Show panel at window center position
+   * Calculates the center position of the given window and shows the panel there
+   */
+  showAtWindowCenter(window: Meta.Window): void {
+    // Get window frame rectangle to position panel at window center
+    const frameRect = window.get_frame_rect();
+    const windowCenter: Position = {
+      x: frameRect.x + frameRect.width / 2,
+      y: frameRect.y + frameRect.height / 2,
+    };
+
+    // Show main panel at window center position with vertical centering
+    this.show(windowCenter, window, true);
+  }
+
+  /**
    * Set callback for when panel is shown
    */
   setOnPanelShown(callback: () => void): void {
