@@ -3,7 +3,7 @@ import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import { DISPLAY_BG_COLOR, DISPLAY_SPACING, DISPLAY_SPACING_HORIZONTAL } from '../constants.js';
 import type { DebugConfig } from '../debug-panel/config.js';
-import { getSelectedLayoutIdForMonitor } from '../repository/layout-history.js';
+import type { LayoutHistoryRepository } from '../repository/layout-history.js';
 import type { Layout, LayoutGroup, Monitor } from '../types/index.js';
 import { createLayoutButton } from './layout-button.js';
 
@@ -31,7 +31,8 @@ export function createMiniatureDisplayView(
   onLayoutSelected: (layout: Layout, monitorKey: string) => void,
   isLastInRow: boolean = false,
   monitor: Monitor | null = null,
-  monitorKey: string
+  monitorKey: string,
+  layoutHistoryRepository: LayoutHistoryRepository
 ): MiniatureDisplayView {
   const HEADER_HEIGHT = monitor ? 20 : 0; // Reserve space for header if monitor is provided
   // Apply debug configuration
@@ -90,7 +91,12 @@ export function createMiniatureDisplayView(
     const wmClass = window.get_wm_class();
     const title = window.get_title();
     if (wmClass !== null) {
-      selectedLayoutId = getSelectedLayoutIdForMonitor(monitorKey, windowId, wmClass, title);
+      selectedLayoutId = layoutHistoryRepository.getSelectedLayoutIdForMonitor(
+        monitorKey,
+        windowId,
+        wmClass,
+        title
+      );
     }
   }
 
@@ -110,7 +116,8 @@ export function createMiniatureDisplayView(
       displayHeight,
       debugConfig,
       isSelected,
-      wrappedCallback
+      wrappedCallback,
+      monitorKey
     );
     layoutButtons.set(result.button, layout);
 

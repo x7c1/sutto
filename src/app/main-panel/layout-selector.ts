@@ -53,21 +53,31 @@ export class MainPanelLayoutSelector {
   /**
    * Update button styles when a layout is selected
    * Called after layout selection to immediately reflect the change in the panel
+   * Only updates buttons for the specified monitor
    */
   updateSelectedLayoutHighlight(
     newSelectedLayoutId: string,
+    monitorKey: string,
     layoutButtons: Map<St.Button, Layout>
   ): void {
-    log(`[MainPanelLayoutSelector] Updating button highlights for layout: ${newSelectedLayoutId}`);
+    log(
+      `[MainPanelLayoutSelector] Updating button highlights for layout: ${newSelectedLayoutId} on monitor: ${monitorKey}`
+    );
     let updatedCount = 0;
 
-    // Update all button background colors
+    // Update button background colors only for the specified monitor
     for (const [button, layout] of layoutButtons.entries()) {
+      const buttonWithMeta = button as LayoutButtonWithMetadata;
+
+      // Skip buttons from other monitors
+      if (buttonWithMeta._monitorKey !== monitorKey) {
+        continue;
+      }
+
       const isSelected = layout.id === newSelectedLayoutId;
       const bgColor = isSelected ? BUTTON_BG_COLOR_SELECTED : BUTTON_BG_COLOR;
 
       // Update button's stored selection state
-      const buttonWithMeta = button as LayoutButtonWithMetadata;
       buttonWithMeta._isSelected = isSelected;
 
       // Access style property through type assertion
@@ -89,7 +99,7 @@ export class MainPanelLayoutSelector {
         updatedCount++;
         if (isSelected) {
           log(
-            `[MainPanelLayoutSelector] Set layout ${layout.label} (${layout.id}) to SELECTED (blue)`
+            `[MainPanelLayoutSelector] Set layout ${layout.label} (${layout.id}) to SELECTED (blue) on monitor ${monitorKey}`
           );
         }
       } else {
@@ -99,6 +109,8 @@ export class MainPanelLayoutSelector {
       }
     }
 
-    log(`[MainPanelLayoutSelector] Updated ${updatedCount} button(s) out of ${layoutButtons.size}`);
+    log(
+      `[MainPanelLayoutSelector] Updated ${updatedCount} button(s) out of ${layoutButtons.size} for monitor ${monitorKey}`
+    );
   }
 }

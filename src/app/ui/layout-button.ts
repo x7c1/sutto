@@ -92,7 +92,8 @@ export function createLayoutButton(
   displayHeight: number,
   debugConfig: DebugConfig | null,
   isSelected: boolean,
-  onLayoutSelected: (layout: Layout) => void
+  onLayoutSelected: (layout: Layout) => void,
+  monitorKey?: string
 ): LayoutButtonView {
   // Get screen work area for scaling fixed pixel values
   const monitor = global.display.get_current_monitor();
@@ -141,6 +142,7 @@ export function createLayoutButton(
   buttonWithMeta._buttonWidth = buttonWidth;
   buttonWithMeta._buttonHeight = buttonHeight;
   buttonWithMeta._debugConfig = debugConfig;
+  buttonWithMeta._monitorKey = monitorKey;
 
   // Add hover effect
   const enterEventId = button.connect('enter-event', () => {

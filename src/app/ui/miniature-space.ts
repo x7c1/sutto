@@ -11,6 +11,7 @@ import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import { DISPLAY_GROUP_SPACING, MAX_PANEL_HEIGHT, MAX_PANEL_WIDTH } from '../constants.js';
 import type { DebugConfig } from '../debug-panel/config.js';
+import type { LayoutHistoryRepository } from '../repository/layout-history.js';
 import type { DisplayGroup, Layout, Monitor } from '../types/index.js';
 import {
   createMiniatureDisplayErrorView,
@@ -79,7 +80,8 @@ export function createMiniatureSpaceView(
   monitors: Map<string, Monitor>,
   debugConfig: DebugConfig | null,
   window: Meta.Window | null,
-  onLayoutSelected: (layout: Layout, monitorKey: string) => void
+  onLayoutSelected: (layout: Layout, monitorKey: string) => void,
+  layoutHistoryRepository: LayoutHistoryRepository
 ): MiniatureSpaceView {
   // Calculate bounding box for all monitors in this Display Group
   const bbox = calculateBoundingBoxForDisplayGroup(displayGroup, monitors);
@@ -149,7 +151,8 @@ export function createMiniatureSpaceView(
       onLayoutSelected,
       false, // isLastInRow
       monitor,
-      monitorKey // Pass monitorKey for selection
+      monitorKey, // Pass monitorKey for selection
+      layoutHistoryRepository
     );
 
     // Position the miniature display

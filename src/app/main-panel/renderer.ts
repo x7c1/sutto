@@ -10,6 +10,7 @@ import {
   PANEL_PADDING,
 } from '../constants.js';
 import type { DebugConfig } from '../debug-panel/config.js';
+import type { LayoutHistoryRepository } from '../repository/layout-history.js';
 import type { Layout, LayoutCategory, Monitor } from '../types/index.js';
 import { createMiniatureSpaceView } from '../ui/miniature-space.js';
 
@@ -168,7 +169,8 @@ export function createCategoriesViewWithDisplayGroups(
   categories: LayoutCategory[],
   debugConfig: DebugConfig | null,
   window: Meta.Window | null,
-  onLayoutSelected: (layout: Layout, monitorKey: string) => void
+  onLayoutSelected: (layout: Layout, monitorKey: string) => void,
+  layoutHistoryRepository: LayoutHistoryRepository
 ): CategoriesView {
   const categoriesContainer = new St.BoxLayout({
     style_class: 'snap-categories-container',
@@ -204,7 +206,8 @@ export function createCategoriesViewWithDisplayGroups(
         monitors,
         debugConfig,
         window,
-        onLayoutSelected
+        onLayoutSelected,
+        layoutHistoryRepository
       );
       categoriesContainer.add_child(view.spaceContainer);
 

@@ -15,6 +15,7 @@ import { ExtensionSettings } from '../../settings/extension-settings.js';
 import { AUTO_HIDE_DELAY_MS, DEFAULT_LAYOUT_CONFIGURATION } from '../constants.js';
 import { getDebugConfig } from '../debug-panel/config.js';
 import type { MonitorManager } from '../monitor/manager.js';
+import type { LayoutHistoryRepository } from '../repository/layout-history.js';
 import { importLayoutConfiguration, loadLayoutsAsCategories } from '../repository/layouts.js';
 import type { Layout, Position } from '../types/index.js';
 import { MainPanelAutoHide } from './auto-hide.js';
@@ -42,6 +43,7 @@ export class MainPanel {
   private onPanelShownCallback: (() => void) | null = null;
   private onPanelHiddenCallback: (() => void) | null = null;
   private monitorManager: MonitorManager; // Always required
+  private layoutHistoryRepository: LayoutHistoryRepository;
 
   // Component instances
   private state: MainPanelState = new MainPanelState();
@@ -51,9 +53,14 @@ export class MainPanel {
   private autoHide: MainPanelAutoHide = new MainPanelAutoHide();
   private keyboardNavigator: MainPanelKeyboardNavigator = new MainPanelKeyboardNavigator();
 
-  constructor(metadata: ExtensionMetadata, monitorManager: MonitorManager) {
+  constructor(
+    metadata: ExtensionMetadata,
+    monitorManager: MonitorManager,
+    layoutHistoryRepository: LayoutHistoryRepository
+  ) {
     this.metadata = metadata;
     this.monitorManager = monitorManager;
+    this.layoutHistoryRepository = layoutHistoryRepository;
     // Setup auto-hide callback
     this.autoHide.setOnHide(() => {
       this.hide();
@@ -202,7 +209,8 @@ export class MainPanel {
           if (onLayoutSelected) {
             onLayoutSelected(layout, monitorKey);
           }
-        }
+        },
+        this.layoutHistoryRepository
       );
       categoriesElement = categoriesView.categoriesContainer;
       buttonEvents = categoriesView.buttonEvents;
@@ -359,14 +367,19 @@ export class MainPanel {
   /**
    * Update button styles when a layout is selected
    * Called after layout selection to immediately reflect the change in the panel
+   * Only updates buttons for the specified monitor
    */
-  updateSelectedLayoutHighlight(newSelectedLayoutId: string): void {
+  updateSelectedLayoutHighlight(newSelectedLayoutId: string, monitorKey: string): void {
     if (!this.container) {
       log('[MainPanel] Cannot update highlights: panel not visible');
       return;
     }
 
-    this.layoutSelector.updateSelectedLayoutHighlight(newSelectedLayoutId, this.layoutButtons);
+    this.layoutSelector.updateSelectedLayoutHighlight(
+      newSelectedLayoutId,
+      monitorKey,
+      this.layoutButtons
+    );
   }
 
   /**
