@@ -76,12 +76,23 @@ export class LayoutApplicator {
       `[LayoutApplicator] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`
     );
 
+
     if (window.get_maximized()) {
       log('[LayoutApplicator] Unmaximizing window');
       window.unmaximize(3); // Both horizontally and vertically
     }
 
-    window.move_resize_frame(false, x, y, width, height);
+    // Apply position and size
+    // Workaround: Some applications (e.g., Gnome-terminal) ignore position when move_resize_frame
+    // is called with both position and size changes simultaneously.
+    // To ensure reliable positioning across all applications, we first set the position with
+    // move_frame, then apply both position and size with move_resize_frame.
+    //
+    // Note: user_op=true is required for cross-monitor movement in multi-monitor setups.
+    // When user_op=false, GNOME restricts window movement between monitors.
+    window.move_frame(true, x, y);
+    window.move_resize_frame(true, x, y, width, height);
+
     log('[LayoutApplicator] Window moved');
   }
 }
