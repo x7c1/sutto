@@ -29,8 +29,8 @@ export const FOOTER_TEXT_COLOR = 'rgba(255, 255, 255, 0.5)';
 // Multi-monitor panel constants
 export const MAX_PANEL_WIDTH = 800; // Maximum width for multi-monitor panel layout
 export const MAX_PANEL_HEIGHT = 600; // Maximum height for multi-monitor panel layout
-export const DISPLAY_GROUP_SPACING = 8; // Vertical spacing between Display Group sections
-export const MONITOR_MARGIN = 6; // Margin around each monitor display in miniature space
+export const DISPLAY_GROUP_SPACING = 6; // Vertical spacing between Display Group sections
+export const MONITOR_MARGIN = 8; // Margin around each monitor display in miniature space
 
 // Default layout configuration (multi-monitor structure)
 // Includes a basic dual-monitor configuration
