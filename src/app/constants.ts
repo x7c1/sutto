@@ -52,12 +52,16 @@ export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
       ],
     },
     {
-      name: 'grid 2x2',
+      name: 'grid 4x2',
       layouts: [
-        { label: 'Top Left', x: '0', y: '0', width: '50%', height: '50%' },
-        { label: 'Top Right', x: '50%', y: '0', width: '50%', height: '50%' },
-        { label: 'Bottom Left', x: '0', y: '50%', width: '50%', height: '50%' },
-        { label: 'Bottom Right', x: '50%', y: '50%', width: '50%', height: '50%' },
+        { label: 'Top Left 1', x: '0', y: '0', width: '25%', height: '50%' },
+        { label: 'Top Left 2', x: '25%', y: '0', width: '25%', height: '50%' },
+        { label: 'Top Right 1', x: '50%', y: '0', width: '25%', height: '50%' },
+        { label: 'Top Right 2', x: '75%', y: '0', width: '25%', height: '50%' },
+        { label: 'Bottom Left 1', x: '0', y: '50%', width: '25%', height: '50%' },
+        { label: 'Bottom Left 2', x: '25%', y: '50%', width: '25%', height: '50%' },
+        { label: 'Bottom Right 1', x: '50%', y: '50%', width: '25%', height: '50%' },
+        { label: 'Bottom Right 2', x: '75%', y: '50%', width: '25%', height: '50%' },
       ],
     },
     {
@@ -67,18 +71,12 @@ export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
   ],
   layoutCategories: [
     {
-      name: 'Vertical Division Patterns',
+      name: '3-split Patterns',
       displayGroups: [
         {
           displays: {
             '0': 'vertical 3-split',
             '1': 'vertical 3-split',
-          },
-        },
-        {
-          displays: {
-            '0': 'vertical 2-split',
-            '1': 'vertical 2-split',
           },
         },
       ],
@@ -88,8 +86,14 @@ export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
       displayGroups: [
         {
           displays: {
-            '0': 'grid 2x2',
-            '1': 'grid 2x2',
+            '0': 'vertical 2-split',
+            '1': 'vertical 2-split',
+          },
+        },
+        {
+          displays: {
+            '0': 'grid 4x2',
+            '1': 'grid 4x2',
           },
         },
       ],
