@@ -48,14 +48,6 @@ export class ExtensionSettings {
   }
 
   /**
-   * Get whether debug panel is enabled
-   * @returns Boolean indicating if debug panel should be shown in debug mode
-   */
-  getDebugPanelEnabled(): boolean {
-    return this.settings.get_boolean('debug-panel-enabled');
-  }
-
-  /**
    * Get the raw GSettings object (needed for keybinding registration)
    * @returns Gio.Settings object
    */

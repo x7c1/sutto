@@ -33,3 +33,34 @@ Fix any issues before considering the task complete.
 2. **Internal helpers below** (private functions, utilities)
 
 This makes the code easier to understand - readers see the public interface immediately.
+
+## Comments
+
+**Avoid Obvious Comments**: Don't write comments that merely restate what the code does.
+
+❌ **Bad** (obvious comment):
+```typescript
+// Initialize monitor manager
+this.monitorManager = new MonitorManager();
+```
+
+✅ **Good** (explains WHY):
+```typescript
+// Load history lazily to avoid I/O until the panel is actually used
+this.ensureHistoryLoaded();
+```
+
+✅ **Better** (self-documenting code needs no comment):
+```typescript
+this.monitorManager = new MonitorManager();
+```
+
+**When to comment**:
+- Explain WHY something is done (rationale, constraints, gotchas)
+- Document non-obvious behavior or side effects
+- Add context that isn't clear from code alone
+
+**When NOT to comment**:
+- Don't explain WHAT the code does (the code itself shows that)
+- Don't add comments that duplicate the code in natural language
+

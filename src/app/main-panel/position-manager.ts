@@ -8,26 +8,28 @@
 import type St from 'gi://St';
 import {
   CATEGORY_SPACING,
-  DISPLAY_SPACING,
-  DISPLAY_SPACING_HORIZONTAL,
+  DISPLAY_GROUP_SPACING,
   FOOTER_MARGIN_TOP,
-  MAX_DISPLAYS_PER_ROW,
-  MINIATURE_DISPLAY_WIDTH,
   PANEL_EDGE_PADDING,
   PANEL_PADDING,
 } from '../constants.js';
+import type { MonitorManager } from '../monitor/manager.js';
 import { adjustMainPanelPosition } from '../positioning/index.js';
-import type { LayoutGroupCategory, Position, Size } from '../types/index.js';
+import type { ScreenBoundaries } from '../positioning/types.js';
+import type { LayoutCategory, Position, Size } from '../types/index.js';
+import { calculateDisplayGroupDimensions } from '../ui/display-group-dimensions.js';
 
 export class MainPanelPositionManager {
+  private monitorManager: MonitorManager;
+
+  constructor(monitorManager: MonitorManager) {
+    this.monitorManager = monitorManager;
+  }
   /**
    * Calculate panel dimensions based on categories to render
+   * Only supports new LayoutCategory format
    */
-  calculatePanelDimensions(
-    categoriesToRender: LayoutGroupCategory[],
-    aspectRatio: number,
-    showFooter: boolean
-  ): Size {
+  calculatePanelDimensions(categoriesToRender: LayoutCategory[], showFooter: boolean): Size {
     // Handle empty categories case
     if (categoriesToRender.length === 0) {
       const minWidth = 200; // Minimum width for "No categories" message
@@ -35,19 +37,30 @@ export class MainPanelPositionManager {
       return { width: minWidth, height: minHeight };
     }
 
-    const miniatureDisplayHeight = MINIATURE_DISPLAY_WIDTH * aspectRatio;
+    const monitors = this.monitorManager.getMonitors();
 
     // Calculate width: maximum category width
     let maxCategoryWidth = 0;
     for (const category of categoriesToRender) {
-      const numDisplays = category.layoutGroups.length;
-      if (numDisplays > 0) {
-        const displaysInWidestRow = Math.min(numDisplays, MAX_DISPLAYS_PER_ROW);
-        const categoryWidth =
-          displaysInWidestRow * MINIATURE_DISPLAY_WIDTH +
-          (displaysInWidestRow - 1) * DISPLAY_SPACING_HORIZONTAL;
-        maxCategoryWidth = Math.max(maxCategoryWidth, categoryWidth);
+      // Defensive check: ensure category has displayGroups array
+      if (!category.displayGroups || !Array.isArray(category.displayGroups)) {
+        continue;
       }
+
+      // Calculate total width for all Display Groups in this category (horizontal layout)
+      let categoryWidth = 0;
+      for (let j = 0; j < category.displayGroups.length; j++) {
+        const displayGroup = category.displayGroups[j];
+        const dimensions = calculateDisplayGroupDimensions(displayGroup, monitors);
+        categoryWidth += dimensions.width;
+
+        // Add spacing between Display Groups (except for last one)
+        if (j < category.displayGroups.length - 1) {
+          categoryWidth += DISPLAY_GROUP_SPACING;
+        }
+      }
+
+      maxCategoryWidth = Math.max(maxCategoryWidth, categoryWidth);
     }
     const panelWidth = maxCategoryWidth + PANEL_PADDING * 2;
 
@@ -55,12 +68,22 @@ export class MainPanelPositionManager {
     let totalHeight = PANEL_PADDING; // Top padding
     for (let i = 0; i < categoriesToRender.length; i++) {
       const category = categoriesToRender[i];
-      const numDisplays = category.layoutGroups.length;
-      if (numDisplays > 0) {
-        const numRows = Math.ceil(numDisplays / MAX_DISPLAYS_PER_ROW);
-        // Each row has display height + bottom margin (DISPLAY_SPACING)
-        const categoryHeight = numRows * (miniatureDisplayHeight + DISPLAY_SPACING);
-        totalHeight += categoryHeight;
+
+      // Defensive check: ensure category has displayGroups array
+      if (!category.displayGroups || !Array.isArray(category.displayGroups)) {
+        continue;
+      }
+
+      // Find the tallest Display Group in this category
+      let maxDisplayGroupHeight = 0;
+      for (const displayGroup of category.displayGroups) {
+        const dimensions = calculateDisplayGroupDimensions(displayGroup, monitors);
+        maxDisplayGroupHeight = Math.max(maxDisplayGroupHeight, dimensions.height);
+      }
+
+      if (maxDisplayGroupHeight > 0) {
+        // Add the height of this category (tallest Display Group + bottom margin)
+        totalHeight += maxDisplayGroupHeight + DISPLAY_GROUP_SPACING;
 
         // Add category spacing except for last category
         if (i < categoriesToRender.length - 1) {
@@ -81,32 +104,36 @@ export class MainPanelPositionManager {
 
   /**
    * Adjust panel position for screen boundaries with center alignment
+   * Constrains panel within the monitor that contains the cursor
    */
-  adjustPosition(
-    cursor: Position,
-    panelDimensions: Size,
-    hasDebugPanel: boolean,
-    centerVertically = false
-  ): Position {
-    const screenWidth = global.screen_width;
-    const screenHeight = global.screen_height;
+  adjustPosition(cursor: Position, panelDimensions: Size, centerVertically = false): Position {
+    // Get monitor at cursor position
+    const monitor = this.monitorManager.getMonitorAtPosition(cursor.x, cursor.y);
 
-    const adjusted = adjustMainPanelPosition(
-      cursor,
-      panelDimensions,
-      {
-        screenWidth,
-        screenHeight,
+    // Use monitor workArea if found, otherwise fallback to global screen
+    let boundaries: ScreenBoundaries;
+    if (monitor) {
+      boundaries = {
+        offsetX: monitor.workArea.x,
+        offsetY: monitor.workArea.y,
+        screenWidth: monitor.workArea.width,
+        screenHeight: monitor.workArea.height,
         edgePadding: PANEL_EDGE_PADDING,
-      },
-      {
-        centerHorizontally: true,
-        centerVertically,
-        reserveDebugPanelSpace: hasDebugPanel,
-        debugPanelGap: 20,
-        debugPanelWidth: 300,
-      }
-    );
+      };
+    } else {
+      boundaries = {
+        offsetX: 0,
+        offsetY: 0,
+        screenWidth: global.screen_width,
+        screenHeight: global.screen_height,
+        edgePadding: PANEL_EDGE_PADDING,
+      };
+    }
+
+    const adjusted = adjustMainPanelPosition(cursor, panelDimensions, boundaries, {
+      centerHorizontally: true,
+      centerVertically,
+    });
 
     return adjusted;
   }

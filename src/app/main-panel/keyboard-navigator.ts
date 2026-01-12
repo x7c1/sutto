@@ -268,8 +268,7 @@ export class MainPanelKeyboardNavigator {
       true, // isHovered = true to apply hover style
       buttonWithMeta._isSelected ?? false,
       buttonWithMeta._buttonWidth ?? 0,
-      buttonWithMeta._buttonHeight ?? 0,
-      buttonWithMeta._debugConfig ?? null
+      buttonWithMeta._buttonHeight ?? 0
     );
     button.set_style(style);
   }
@@ -285,8 +284,7 @@ export class MainPanelKeyboardNavigator {
       false, // isHovered = false
       buttonWithMeta._isSelected ?? false,
       buttonWithMeta._buttonWidth ?? 0,
-      buttonWithMeta._buttonHeight ?? 0,
-      buttonWithMeta._debugConfig ?? null
+      buttonWithMeta._buttonHeight ?? 0
     );
     button.set_style(style);
   }

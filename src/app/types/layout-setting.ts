@@ -12,7 +12,21 @@ export interface LayoutGroupSetting {
   layouts: LayoutSetting[];
 }
 
-export interface LayoutCategorySetting {
+// Display Group Setting - defines Layout Group assignment per monitor (for import input)
+export interface DisplayGroupSetting {
+  displays: {
+    [monitorKey: string]: string; // "0" -> "vertical 3-split" (Layout Group name)
+  };
+}
+
+// Layout Category with Display Groups (for import input)
+export interface LayoutCategoryWithDisplayGroups {
   name: string;
-  layoutGroups: LayoutGroupSetting[];
+  displayGroups: DisplayGroupSetting[];
+}
+
+// Complete layout configuration structure (for import input)
+export interface LayoutConfiguration {
+  layoutGroups: LayoutGroupSetting[]; // Global, reusable Layout Groups
+  layoutCategories: LayoutCategoryWithDisplayGroups[]; // Categories with Display Groups
 }

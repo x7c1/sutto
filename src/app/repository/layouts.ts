@@ -1,8 +1,10 @@
 import Gio from 'gi://Gio';
 
-import type { Layout, LayoutGroup, LayoutGroupCategory } from '../types/index.js';
+import type { DisplayGroup, Layout, LayoutCategory, LayoutGroup } from '../types/index.js';
 import type {
-  LayoutCategorySetting,
+  DisplayGroupSetting,
+  LayoutCategoryWithDisplayGroups,
+  LayoutConfiguration,
   LayoutGroupSetting,
   LayoutSetting,
 } from '../types/layout-setting.js';
@@ -47,11 +49,12 @@ function generateUUID(): string {
 /**
  * Converts a LayoutSetting to a Layout by adding ID and hash
  */
-function settingToLayout(setting: LayoutSetting): Layout {
+function settingToLayout(setting: LayoutSetting, monitorKey: string): Layout {
   return {
     id: generateUUID(),
     hash: generateLayoutHash(setting.x, setting.y, setting.width, setting.height),
     label: setting.label,
+    monitorKey,
     x: setting.x,
     y: setting.y,
     width: setting.width,
@@ -62,10 +65,13 @@ function settingToLayout(setting: LayoutSetting): Layout {
 /**
  * Converts LayoutGroupSetting to LayoutGroup
  */
-function settingToLayoutGroup(groupSetting: LayoutGroupSetting): LayoutGroup {
+function settingToLayoutGroup(
+  groupSetting: LayoutGroupSetting,
+  monitorKey: string = '0'
+): LayoutGroup {
   return {
     name: groupSetting.name,
-    layouts: groupSetting.layouts.map(settingToLayout),
+    layouts: groupSetting.layouts.map((setting) => settingToLayout(setting, monitorKey)),
   };
 }
 
@@ -74,102 +80,131 @@ function settingToLayoutGroup(groupSetting: LayoutGroupSetting): LayoutGroup {
  * Used for test layouts in debug mode
  */
 export function convertLayoutGroupSettings(groupSettings: LayoutGroupSetting[]): LayoutGroup[] {
-  return groupSettings.map(settingToLayoutGroup);
+  return groupSettings.map((setting) => settingToLayoutGroup(setting, '0'));
 }
 
+// ============================================================================
+// Multi-monitor support functions
+// ============================================================================
+
 /**
- * Ensure test layouts are imported to the repository.
- * If test layouts category doesn't exist, import it.
- * If it exists but has different layouts, update it.
+ * Convert DisplayGroupSetting to DisplayGroup (runtime type)
+ * Expands Layout Group names to full LayoutGroup objects with unique IDs
  */
-export function ensureTestLayoutsImported(
-  testGroupSettings: LayoutGroupSetting[]
-): LayoutGroupCategory | null {
-  if (testGroupSettings.length === 0) {
-    return null;
-  }
+function settingToDisplayGroup(
+  displayGroupSetting: DisplayGroupSetting,
+  layoutGroupSettings: LayoutGroupSetting[]
+): DisplayGroup {
+  const displays: { [monitorKey: string]: LayoutGroup } = {};
 
-  try {
-    const categories = loadLayouts();
-    const testCategoryName = 'Test Layouts';
-    let testCategory = categories.find((c) => c.name === testCategoryName);
+  // For each monitor in the Display Group
+  for (const [monitorKey, layoutGroupName] of Object.entries(displayGroupSetting.displays)) {
+    // Find the Layout Group definition by name
+    const layoutGroupSetting = layoutGroupSettings.find((g) => g.name === layoutGroupName);
 
-    if (!testCategory) {
-      // Test category doesn't exist, create it
-      log('[LayoutsRepository] Creating Test Layouts category');
-      testCategory = {
-        name: testCategoryName,
-        layoutGroups: testGroupSettings.map(settingToLayoutGroup),
-      };
-      categories.push(testCategory);
-      saveLayouts(categories);
-      return testCategory;
-    }
-
-    // Test category exists, check if we need to update layouts
-    // For simplicity, we'll recreate all test layouts if settings change
-    const existingGroupNames = testCategory.layoutGroups.map((g) => g.name).sort();
-    const newGroupNames = testGroupSettings.map((g) => g.name).sort();
-
-    const groupsChanged =
-      existingGroupNames.length !== newGroupNames.length ||
-      existingGroupNames.some((name, i) => name !== newGroupNames[i]);
-
-    if (groupsChanged) {
-      log('[LayoutsRepository] Updating Test Layouts category');
-      // Find groups that should be removed (disabled in debug config)
-      const newGroupNamesSet = new Set(newGroupNames);
-      testCategory.layoutGroups = testCategory.layoutGroups.filter((g) =>
-        newGroupNamesSet.has(g.name)
+    if (!layoutGroupSetting) {
+      log(
+        `[LayoutsRepository] Warning: Layout Group "${layoutGroupName}" not found for monitor ${monitorKey}`
       );
-
-      // Add new groups that don't exist yet
-      const existingGroupNamesSet = new Set(testCategory.layoutGroups.map((g) => g.name));
-      for (const groupSetting of testGroupSettings) {
-        if (!existingGroupNamesSet.has(groupSetting.name)) {
-          testCategory.layoutGroups.push(settingToLayoutGroup(groupSetting));
-        }
-      }
-
-      saveLayouts(categories);
+      continue;
     }
 
-    return testCategory;
-  } catch (e) {
-    log(`[LayoutsRepository] Error ensuring test layouts: ${e}`);
-    return null;
-  }
-}
+    // Create a new LayoutGroup instance with unique IDs for this monitor
+    // Each monitor gets its own LayoutGroup instance with separate IDs
+    const layoutGroup: LayoutGroup = {
+      name: layoutGroupSetting.name,
+      layouts: layoutGroupSetting.layouts.map((setting) => settingToLayout(setting, monitorKey)),
+    };
 
-/**
- * Converts LayoutCategorySetting to LayoutGroupCategory
- */
-function settingToCategory(categorySetting: LayoutCategorySetting): LayoutGroupCategory {
+    displays[monitorKey] = layoutGroup;
+  }
+
   return {
-    name: categorySetting.name,
-    layoutGroups: categorySetting.layoutGroups.map(settingToLayoutGroup),
+    id: generateUUID(),
+    displays,
   };
 }
 
 /**
- * Import settings as layouts and persist to disk.
- * Converts settings to layouts by adding UUID and hash to each layout.
+ * Convert LayoutCategoryWithDisplayGroups to LayoutCategory (runtime type)
  */
-export function importSettings(settings: LayoutCategorySetting[]): void {
+function settingToCategoryWithDisplayGroups(
+  categorySetting: LayoutCategoryWithDisplayGroups,
+  layoutGroupSettings: LayoutGroupSetting[]
+): LayoutCategory {
+  return {
+    name: categorySetting.name,
+    displayGroups: categorySetting.displayGroups.map((dg) =>
+      settingToDisplayGroup(dg, layoutGroupSettings)
+    ),
+  };
+}
+
+/**
+ * Convert LayoutConfiguration to LayoutCategory[] (runtime type)
+ * Expands Layout Group references into full LayoutGroup objects with unique IDs
+ */
+function configurationToCategories(config: LayoutConfiguration): LayoutCategory[] {
+  return config.layoutCategories.map((categorySetting) =>
+    settingToCategoryWithDisplayGroups(categorySetting, config.layoutGroups)
+  );
+}
+
+/**
+ * Import layout configuration and convert to runtime format
+ *
+ */
+export function importLayoutConfiguration(config: LayoutConfiguration): void {
   try {
-    const categories = settings.map(settingToCategory);
-    saveLayouts(categories);
-    log('[LayoutsRepository] Settings imported successfully');
+    const categories = configurationToCategories(config);
+    saveCategoriesWithDisplayGroups(categories);
+    log('[LayoutsRepository] Layout configuration imported successfully');
   } catch (e) {
-    log(`[LayoutsRepository] Error importing settings: ${e}`);
+    log(`[LayoutsRepository] Error importing layout configuration: ${e}`);
   }
 }
 
 /**
- * Load persisted layouts from disk.
- * Returns layouts with IDs and hashes already attached.
+ * Validate that data is in the new LayoutCategory[] format
+ * Returns true if valid, false if old format or invalid
  */
-export function loadLayouts(): LayoutGroupCategory[] {
+function isValidLayoutCategoryData(data: unknown): data is LayoutCategory[] {
+  if (!Array.isArray(data)) {
+    return false;
+  }
+
+  // Check if all categories have displayGroups (new format)
+  for (const category of data) {
+    if (typeof category !== 'object' || category === null) {
+      return false;
+    }
+
+    // Check for old format (has layoutGroups instead of displayGroups)
+    if ('layoutGroups' in category && !('displayGroups' in category)) {
+      log(
+        `[LayoutsRepository] Detected old format: category "${category.name}" has layoutGroups instead of displayGroups`
+      );
+      return false;
+    }
+
+    // Check for required fields in new format
+    if (!('name' in category) || !('displayGroups' in category)) {
+      return false;
+    }
+
+    if (!Array.isArray(category.displayGroups)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Load layouts as categories (returns LayoutCategory[] with expanded Display Groups)
+ *
+ */
+export function loadLayoutsAsCategories(): LayoutCategory[] {
   const layoutsPath = getLayoutsFilePath();
   const file = Gio.File.new_for_path(layoutsPath);
 
@@ -186,20 +221,35 @@ export function loadLayouts(): LayoutGroupCategory[] {
     }
 
     const contentsString = new TextDecoder('utf-8').decode(contents);
-    const categories: LayoutGroupCategory[] = JSON.parse(contentsString);
+    const data: unknown = JSON.parse(contentsString);
 
-    log('[LayoutsRepository] Layouts loaded successfully');
-    return categories;
+    // Validate data format
+    if (!isValidLayoutCategoryData(data)) {
+      log('[LayoutsRepository] WARNING: Invalid or old format data detected in layouts file');
+      log('[LayoutsRepository] Deleting old format file and returning empty array');
+      // Delete the old format file
+      try {
+        file.delete(null);
+        log('[LayoutsRepository] Old format file deleted successfully');
+      } catch (deleteError) {
+        log(`[LayoutsRepository] Failed to delete old format file: ${deleteError}`);
+      }
+      return [];
+    }
+
+    log('[LayoutsRepository] Layout categories loaded successfully');
+    return data;
   } catch (e) {
-    log(`[LayoutsRepository] Error loading layouts: ${e}`);
+    log(`[LayoutsRepository] Error loading layout categories: ${e}`);
     return [];
   }
 }
 
 /**
- * Save layouts to disk
+ * Save LayoutCategory[] to disk (runtime format with Display Groups)
+ *
  */
-function saveLayouts(categories: LayoutGroupCategory[]): void {
+function saveCategoriesWithDisplayGroups(categories: LayoutCategory[]): void {
   const layoutsPath = getLayoutsFilePath();
   const file = Gio.File.new_for_path(layoutsPath);
 
@@ -214,50 +264,8 @@ function saveLayouts(categories: LayoutGroupCategory[]): void {
     const json = JSON.stringify(categories, null, 2);
     file.replace_contents(json, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
-    log('[LayoutsRepository] Layouts saved successfully');
+    log('[LayoutsRepository] Layout categories saved successfully');
   } catch (e) {
-    log(`[LayoutsRepository] Error saving layouts: ${e}`);
-  }
-}
-
-/**
- * Add a single layout setting to the repository.
- * Converts the setting to a layout (adds UUID + hash) and saves it.
- */
-export function addLayout(setting: LayoutSetting, categoryName: string, groupName: string): void {
-  try {
-    const categories = loadLayouts();
-    const category = categories.find((c) => c.name === categoryName);
-
-    if (!category) {
-      log(`[LayoutsRepository] Category "${categoryName}" not found`);
-      return;
-    }
-
-    const group = category.layoutGroups.find((g) => g.name === groupName);
-
-    if (!group) {
-      log(`[LayoutsRepository] Group "${groupName}" not found in category "${categoryName}"`);
-      return;
-    }
-
-    // Convert setting to layout (add ID and hash)
-    const layout = settingToLayout(setting);
-
-    // Check for duplicates using hash
-    const isDuplicate = group.layouts.some((l) => l.hash === layout.hash);
-    if (isDuplicate) {
-      log(
-        `[LayoutsRepository] Layout with identical coordinates already exists (hash: ${layout.hash})`
-      );
-      return;
-    }
-
-    group.layouts.push(layout);
-    saveLayouts(categories);
-
-    log('[LayoutsRepository] Layout added successfully');
-  } catch (e) {
-    log(`[LayoutsRepository] Error adding layout: ${e}`);
+    log(`[LayoutsRepository] Error saving layout categories: ${e}`);
   }
 }

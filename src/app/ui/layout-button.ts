@@ -9,7 +9,6 @@ import {
   BUTTON_BORDER_COLOR_HOVER,
   BUTTON_BORDER_WIDTH,
 } from '../constants.js';
-import type { DebugConfig } from '../debug-panel/config.js';
 import { evaluate, parse } from '../layout-expression/index.js';
 import type { LayoutButtonWithMetadata } from '../types/button.js';
 import type { Layout } from '../types/index.js';
@@ -51,8 +50,7 @@ export function getButtonStyle(
   isHovered: boolean,
   isSelected: boolean,
   buttonWidth: number,
-  buttonHeight: number,
-  debugConfig: DebugConfig | null
+  buttonHeight: number
 ): string {
   // Color priority: Hover > Selected > Normal
   let bgColor: string;
@@ -66,15 +64,9 @@ export function getButtonStyle(
 
   const borderColor = isHovered ? BUTTON_BORDER_COLOR_HOVER : BUTTON_BORDER_COLOR;
 
-  // Apply debug configuration for button borders
-  const showBorders = !debugConfig || debugConfig.showButtonBorders;
-  const borderStyle = showBorders
-    ? `border: ${BUTTON_BORDER_WIDTH}px solid ${borderColor};`
-    : 'border: none;';
-
   return `
         background-color: ${bgColor};
-        ${borderStyle}
+        border: ${BUTTON_BORDER_WIDTH}px solid ${borderColor};
         border-radius: 2px;
         width: ${buttonWidth}px;
         height: ${buttonHeight}px;
@@ -90,13 +82,12 @@ export function createLayoutButton(
   layout: Layout,
   displayWidth: number,
   displayHeight: number,
-  debugConfig: DebugConfig | null,
   isSelected: boolean,
-  onLayoutSelected: (layout: Layout) => void
+  onLayoutSelected: (layout: Layout) => void,
+  monitorIndex: number
 ): LayoutButtonView {
   // Get screen work area for scaling fixed pixel values
-  const monitor = global.display.get_current_monitor();
-  const workArea = Main.layoutManager.getWorkAreaForMonitor(monitor);
+  const workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
 
   // Calculate button position relative to miniature display
   const buttonX = resolveLayoutValue(layout.x, displayWidth, workArea.width);
@@ -110,7 +101,7 @@ export function createLayoutButton(
   // Create button with initial style (not hovered, but might be selected)
   const button = new St.Button({
     style_class: 'snap-layout-button',
-    style: getButtonStyle(false, isSelected, buttonWidth, buttonHeight, debugConfig),
+    style: getButtonStyle(false, isSelected, buttonWidth, buttonHeight),
     reactive: true,
     can_focus: true,
     track_hover: true,
@@ -119,41 +110,19 @@ export function createLayoutButton(
   // Set position
   button.set_position(buttonX, buttonY);
 
-  // Add size label if debug mode is enabled
-  if (debugConfig?.showSizeLabels) {
-    const sizeLabel = new St.Label({
-      text: `${buttonWidth}x${buttonHeight}`,
-      style: `
-                color: rgba(255, 255, 255, 0.9);
-                font-size: 7pt;
-                background-color: rgba(0, 0, 0, 0.7);
-                padding: 2px 4px;
-                border-radius: 2px;
-            `,
-    });
-    button.set_child(sizeLabel);
-  }
-
   // Store button metadata for dynamic style updates
   const buttonWithMeta = button as LayoutButtonWithMetadata;
   buttonWithMeta._isSelected = isSelected;
   buttonWithMeta._isFocused = false;
   buttonWithMeta._buttonWidth = buttonWidth;
   buttonWithMeta._buttonHeight = buttonHeight;
-  buttonWithMeta._debugConfig = debugConfig;
 
   // Add hover effect
   const enterEventId = button.connect('enter-event', () => {
     // Only apply hover style if not keyboard-focused
     if (!buttonWithMeta._isFocused) {
       button.set_style(
-        getButtonStyle(
-          true,
-          buttonWithMeta._isSelected ?? false,
-          buttonWidth,
-          buttonHeight,
-          debugConfig
-        )
+        getButtonStyle(true, buttonWithMeta._isSelected ?? false, buttonWidth, buttonHeight)
       );
     }
     global.display.set_cursor(Meta.Cursor.POINTING_HAND);
@@ -164,13 +133,7 @@ export function createLayoutButton(
     // Only remove hover style if not keyboard-focused
     if (!buttonWithMeta._isFocused) {
       button.set_style(
-        getButtonStyle(
-          false,
-          buttonWithMeta._isSelected ?? false,
-          buttonWidth,
-          buttonHeight,
-          debugConfig
-        )
+        getButtonStyle(false, buttonWithMeta._isSelected ?? false, buttonWidth, buttonHeight)
       );
     }
     global.display.set_cursor(Meta.Cursor.DEFAULT);

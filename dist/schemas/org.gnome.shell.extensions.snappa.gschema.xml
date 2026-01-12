@@ -11,10 +11,5 @@
       <summary>Hide main panel shortcut</summary>
       <description>Keyboard shortcut to hide the main panel. Default is Escape key.</description>
     </key>
-    <key name="debug-panel-enabled" type="b">
-      <default>true</default>
-      <summary>Enable debug panel in debug builds</summary>
-      <description>Controls whether the debug panel is shown when in debug mode (development builds). This setting has no effect in release builds.</description>
-    </key>
   </schema>
 </schemalist>

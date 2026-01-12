@@ -8,12 +8,10 @@ export interface AutoHideEventIds {
 /**
  * Manages auto-hide behavior for the main panel
  *
- * Coordinates hover states between the panel and debug panel,
- * and manages the auto-hide timeout logic.
+ * Tracks hover state and manages the auto-hide timeout logic.
  */
 export class MainPanelAutoHide {
   private isPanelHovered: boolean = false;
-  private isDebugPanelHovered: boolean = false;
   private autoHideTimeoutId: number | null = null;
   private onHide: (() => void) | null = null;
 
@@ -53,31 +51,17 @@ export class MainPanelAutoHide {
   }
 
   /**
-   * Update debug panel hover state
-   */
-  setDebugPanelHovered(hovered: boolean, autoHideDelayMs: number): void {
-    this.isDebugPanelHovered = hovered;
-    if (!hovered) {
-      this.checkAndStartAutoHide(autoHideDelayMs);
-    } else {
-      this.clearAutoHideTimeout();
-    }
-  }
-
-  /**
    * Reset hover states
    */
   resetHoverStates(): void {
     this.isPanelHovered = false;
-    this.isDebugPanelHovered = false;
   }
 
   /**
-   * Check if both panel and debug panel are not hovered, then start auto-hide
+   * Check if panel is not hovered, then start auto-hide
    */
   private checkAndStartAutoHide(autoHideDelayMs: number): void {
-    // Only start auto-hide if both panel and debug panel are not hovered
-    if (!this.isPanelHovered && !this.isDebugPanelHovered) {
+    if (!this.isPanelHovered) {
       this.startAutoHideTimeout(autoHideDelayMs);
     }
   }
@@ -91,8 +75,8 @@ export class MainPanelAutoHide {
 
     // Start new timeout
     this.autoHideTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, autoHideDelayMs, () => {
-      // Double-check that neither panel nor debug panel is hovered before hiding
-      if (!this.isPanelHovered && !this.isDebugPanelHovered) {
+      // Double-check that panel is not hovered before hiding
+      if (!this.isPanelHovered) {
         if (this.onHide) {
           this.onHide();
         }
@@ -118,6 +102,5 @@ export class MainPanelAutoHide {
   cleanup(): void {
     this.clearAutoHideTimeout();
     this.isPanelHovered = false;
-    this.isDebugPanelHovered = false;
   }
 }

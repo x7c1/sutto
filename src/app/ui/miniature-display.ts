@@ -2,9 +2,8 @@ import Clutter from 'gi://Clutter';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import { DISPLAY_BG_COLOR, DISPLAY_SPACING, DISPLAY_SPACING_HORIZONTAL } from '../constants.js';
-import type { DebugConfig } from '../debug-panel/config.js';
-import { getSelectedLayoutId } from '../repository/layout-history.js';
-import type { Layout, LayoutGroup } from '../types/index.js';
+import type { LayoutHistoryRepository } from '../repository/layout-history.js';
+import type { Layout, LayoutGroup, Monitor } from '../types/index.js';
 import { createLayoutButton } from './layout-button.js';
 
 export interface MiniatureDisplayView {
@@ -20,35 +19,29 @@ export interface MiniatureDisplayView {
 
 /**
  * Create a miniature display view with light black background for a specific group
+ *
  */
 export function createMiniatureDisplayView(
   group: LayoutGroup,
   displayWidth: number,
   displayHeight: number,
-  debugConfig: DebugConfig | null,
   window: Meta.Window | null,
   onLayoutSelected: (layout: Layout) => void,
-  isLastInRow: boolean = false
+  monitor: Monitor,
+  layoutHistoryRepository: LayoutHistoryRepository,
+  isLastInRow: boolean = false,
+  monitorMargin: number = 0,
+  totalMonitors: number = 1
 ): MiniatureDisplayView {
-  // Apply debug configuration
-  const showBackground = !debugConfig || debugConfig.showMiniatureDisplayBackground;
-  const showBorder = debugConfig?.showMiniatureDisplayBorder;
-
-  let style = `
+  const style = `
         width: ${displayWidth}px;
         height: ${displayHeight}px;
         border-radius: 4px;
         margin-bottom: ${DISPLAY_SPACING}px;
         ${!isLastInRow ? `margin-right: ${DISPLAY_SPACING_HORIZONTAL}px;` : ''}
+        ${monitorMargin > 0 ? `margin: ${monitorMargin}px;` : ''}
+        background-color: ${DISPLAY_BG_COLOR};
     `;
-
-  if (showBackground) {
-    style += `background-color: ${DISPLAY_BG_COLOR};`;
-  }
-
-  if (showBorder) {
-    style += `border: 2px solid rgba(255, 0, 0, 0.5);`; // Red border for debugging
-  }
 
   const miniatureDisplay = new St.Widget({
     style_class: 'snap-miniature-display',
@@ -67,7 +60,7 @@ export function createMiniatureDisplayView(
     const wmClass = window.get_wm_class();
     const title = window.get_title();
     if (wmClass !== null) {
-      selectedLayoutId = getSelectedLayoutId(windowId, wmClass, title);
+      selectedLayoutId = layoutHistoryRepository.getSelectedLayoutId(windowId, wmClass, title);
     }
   }
 
@@ -76,15 +69,22 @@ export function createMiniatureDisplayView(
     // Determine if this layout is selected
     const isSelected = selectedLayoutId !== null && layout.id === selectedLayoutId;
 
+    // Create layout button with selection callback
+    const wrappedCallback = (selectedLayout: Layout) => {
+      onLayoutSelected(selectedLayout);
+    };
+
+    // Create button using full display size
     const result = createLayoutButton(
       layout,
       displayWidth,
       displayHeight,
-      debugConfig,
       isSelected,
-      onLayoutSelected
+      wrappedCallback,
+      monitor.index
     );
     layoutButtons.set(result.button, layout);
+
     miniatureDisplay.add_child(result.button);
     buttonEvents.push({
       button: result.button,
@@ -94,35 +94,42 @@ export function createMiniatureDisplayView(
     });
   }
 
-  // Add spacing guide labels if enabled
-  if (debugConfig?.showSpacingGuides) {
-    // Add group name label at the top
-    const groupLabel = new St.Label({
-      text: group.name,
+  // Add monitor visual indicators (as overlay)
+  // Add menu bar for primary monitor (Ubuntu Displays style)
+  if (monitor.isPrimary) {
+    const menuBar = new St.Widget({
       style: `
-                color: rgba(0, 200, 255, 0.9);
-                font-size: 7pt;
-                background-color: rgba(0, 0, 0, 0.8);
-                padding: 2px 4px;
-                border-radius: 2px;
-            `,
+        width: ${displayWidth}px;
+        height: 4px;
+        background-color: rgba(200, 200, 200, 0.9);
+      `,
     });
-    groupLabel.set_position(4, 4);
-    miniatureDisplay.add_child(groupLabel);
+    menuBar.set_position(0, 0);
+    miniatureDisplay.add_child(menuBar);
+  }
 
-    // Add spacing info label at the bottom
-    const spacingLabel = new St.Label({
-      text: `Spacing: ${DISPLAY_SPACING}px`,
+  // Add monitor label at bottom left (number only) when there are multiple monitors
+  if (totalMonitors > 1) {
+    const monitorLabel = `${monitor.index + 1}`;
+
+    const headerLabel = new St.Label({
+      text: monitorLabel,
       style: `
-                color: rgba(255, 255, 0, 0.9);
-                font-size: 7pt;
-                background-color: rgba(0, 0, 0, 0.7);
-                padding: 2px 4px;
-                border-radius: 2px;
-            `,
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 11pt;
+        font-weight: bold;
+        padding: 2px 6px;
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 3px;
+      `,
     });
-    spacingLabel.set_position(4, displayHeight - 20);
-    miniatureDisplay.add_child(spacingLabel);
+
+    // Position at bottom left
+    // Estimated label height: ~20px (9pt font + padding)
+    const labelHeight = 20;
+    const margin = 3;
+    headerLabel.set_position(margin, displayHeight - labelHeight - margin);
+    miniatureDisplay.add_child(headerLabel);
   }
 
   return { miniatureDisplay, layoutButtons, buttonEvents };

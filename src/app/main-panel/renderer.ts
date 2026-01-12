@@ -3,15 +3,16 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {
+  DISPLAY_GROUP_SPACING,
   FOOTER_MARGIN_TOP,
   FOOTER_TEXT_COLOR,
   PANEL_BG_COLOR,
   PANEL_BORDER_COLOR,
   PANEL_PADDING,
 } from '../constants.js';
-import type { DebugConfig } from '../debug-panel/config.js';
-import type { Layout, LayoutGroupCategory } from '../types/index.js';
-import { createCategoryView } from '../ui/index.js';
+import type { LayoutHistoryRepository } from '../repository/layout-history.js';
+import type { Layout, LayoutCategory, Monitor } from '../types/index.js';
+import { createMiniatureSpaceView } from '../ui/miniature-space.js';
 
 declare function log(message: string): void;
 
@@ -161,15 +162,14 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
 }
 
 /**
- * Create categories view with category-based rendering
+ * Create categories view with Display Groups and multi-monitor support
  */
-export function createCategoriesView(
-  displayWidth: number,
-  displayHeight: number,
-  categories: LayoutGroupCategory[],
-  debugConfig: DebugConfig | null,
+export function createCategoriesViewWithDisplayGroups(
+  monitors: Map<string, Monitor>,
+  categories: LayoutCategory[],
   window: Meta.Window | null,
-  onLayoutSelected: (layout: Layout) => void
+  onLayoutSelected: (layout: Layout) => void,
+  layoutHistoryRepository: LayoutHistoryRepository
 ): CategoriesView {
   const categoriesContainer = new St.BoxLayout({
     style_class: 'snap-categories-container',
@@ -181,26 +181,52 @@ export function createCategoriesView(
   const layoutButtons = new Map<St.Button, Layout>();
   const buttonEvents: PanelEventIds['buttonEvents'] = [];
 
-  // Create one category view for each category
-  for (let i = 0; i < categories.length; i++) {
-    const category = categories[i];
-    const isLastCategory = i === categories.length - 1;
-    const view = createCategoryView(
-      category,
-      displayWidth,
-      displayHeight,
-      debugConfig,
-      window,
-      onLayoutSelected,
-      isLastCategory
-    );
-    categoriesContainer.add_child(view.categoryContainer);
-
-    // Collect layout buttons and events
-    for (const [button, layout] of view.layoutButtons) {
-      layoutButtons.set(button, layout);
+  // Create Miniature Spaces for each Display Group in each category
+  for (const category of categories) {
+    // Defensive check: ensure category has displayGroups array
+    if (!category || !category.displayGroups || !Array.isArray(category.displayGroups)) {
+      log(
+        `[Renderer] WARNING: Invalid category data detected (missing or invalid displayGroups), skipping category: ${category?.name ?? 'unknown'}`
+      );
+      continue;
     }
-    buttonEvents.push(...view.buttonEvents);
+
+    // Create a horizontal container for this category's display groups
+    const categoryBox = new St.BoxLayout({
+      style_class: 'snap-category-box',
+      vertical: false, // Horizontal layout: display groups side by side
+      x_expand: false,
+      y_expand: false,
+      style: `spacing: ${DISPLAY_GROUP_SPACING}px;`,
+    });
+
+    for (const displayGroup of category.displayGroups) {
+      // Defensive check: ensure displayGroup is valid
+      if (!displayGroup || !displayGroup.displays) {
+        log(
+          `[Renderer] WARNING: Invalid display group detected in category "${category.name}", skipping`
+        );
+        continue;
+      }
+
+      const view = createMiniatureSpaceView(
+        displayGroup,
+        monitors,
+        window,
+        onLayoutSelected,
+        layoutHistoryRepository
+      );
+      categoryBox.add_child(view.spaceContainer);
+
+      // Collect layout buttons and events
+      for (const [button, layout] of view.layoutButtons) {
+        layoutButtons.set(button, layout);
+      }
+      buttonEvents.push(...view.buttonEvents);
+    }
+
+    // Add the category box to the categories container
+    categoriesContainer.add_child(categoryBox);
   }
 
   return { categoriesContainer, layoutButtons, buttonEvents };

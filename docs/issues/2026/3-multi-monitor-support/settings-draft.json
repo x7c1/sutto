@@ -1,0 +1,87 @@
+{
+  "layoutGroups": [
+    {
+      "name": "vertical 2-split",
+      "layouts": []
+    },
+    {
+      "name": "vertical 3-split",
+      "layouts": []
+    },
+    {
+      "name": "horizontal 2-split",
+      "layouts": []
+    },
+    {
+      "name": "horizontal 3-split",
+      "layouts": []
+    },
+    {
+      "name": "grid 2x2",
+      "layouts": []
+    },
+    {
+      "name": "grid 3x3",
+      "layouts": []
+    },
+    {
+      "name": "grid 4x2",
+      "layouts": []
+    }
+  ],
+  "layoutCategories": [
+    {
+      "name": "vertical division patterns",
+      "displayGroups": [
+        {
+          "name": "vertical 3-split",
+          "displays": {
+            "0": "vertical 3-split",
+            "1": "vertical 3-split"
+          }
+        },
+        {
+          "name": "vertical 2-split & 3-split",
+          "displays": {
+            "0": "horizontal 2-split",
+            "1": "horizontal 3-split"
+          }
+        },
+        {
+          "name": "grid 3x3",
+          "displays": {
+            "0": "grid 3x3",
+            "1": "grid 3x3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "grid patterns",
+      "displayGroups": [
+        {
+          "name": "vertical split",
+          "displays": {
+            "0": "vertical 3-split",
+            "1": "vertical 2-split"
+          }
+        },
+        {
+          "name": "grid",
+          "displays": {
+            "0": "grid 3x3",
+            "1": "grid 2x2"
+          }
+        },
+        {
+          "name": "grid 4x2",
+          "displays": {
+            "0": "grid 4x2",
+            "1": "grid 2x2"
+          }
+        }
+      ]
+    }
+
+  ]
+}

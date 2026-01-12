@@ -6,10 +6,12 @@
  */
 
 import type Meta from 'gi://Meta';
-import type { LayoutGroupCategory, Position, Size } from '../types/index.js';
+import type { LayoutCategory, Position, Size } from '../types/index.js';
+
+declare function log(message: string): void;
 
 export class MainPanelState {
-  private categories: LayoutGroupCategory[] = [];
+  private categories: LayoutCategory[] = [];
   private currentWindow: Meta.Window | null = null;
   private originalCursorX: number = 0;
   private originalCursorY: number = 0;
@@ -20,15 +22,26 @@ export class MainPanelState {
   /**
    * Get the current categories
    */
-  getCategories(): LayoutGroupCategory[] {
+  getCategories(): LayoutCategory[] {
     return this.categories;
   }
 
   /**
    * Set the categories
    */
-  setCategories(categories: LayoutGroupCategory[]): void {
-    this.categories = categories;
+  setCategories(categories: LayoutCategory[]): void {
+    // Defensive check: validate all categories have displayGroups
+    const validCategories = categories.filter((category) => {
+      if (!category.displayGroups || !Array.isArray(category.displayGroups)) {
+        log(
+          `[MainPanelState] WARNING: Invalid category detected (missing displayGroups), filtering out: ${category.name}`
+        );
+        return false;
+      }
+      return true;
+    });
+
+    this.categories = validCategories;
   }
 
   /**
