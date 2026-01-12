@@ -151,10 +151,9 @@ export function createMiniatureSpaceView(
       scaledHeight,
       window,
       onLayoutSelected,
-      false, // isLastInRow
       monitor,
-      monitorKey, // Pass monitorKey for selection
       layoutHistoryRepository,
+      false, // isLastInRow
       0 // No CSS margin needed - spacing handled by size/position adjustment
     );
 

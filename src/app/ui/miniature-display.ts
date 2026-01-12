@@ -27,10 +27,9 @@ export function createMiniatureDisplayView(
   displayHeight: number,
   window: Meta.Window | null,
   onLayoutSelected: (layout: Layout) => void,
-  isLastInRow: boolean = false,
-  monitor: Monitor | null = null,
-  monitorKey: string,
+  monitor: Monitor,
   layoutHistoryRepository: LayoutHistoryRepository,
+  isLastInRow: boolean = false,
   monitorMargin: number = 0
 ): MiniatureDisplayView {
   const style = `
@@ -60,12 +59,7 @@ export function createMiniatureDisplayView(
     const wmClass = window.get_wm_class();
     const title = window.get_title();
     if (wmClass !== null) {
-      selectedLayoutId = layoutHistoryRepository.getSelectedLayoutIdForMonitor(
-        monitorKey,
-        windowId,
-        wmClass,
-        title
-      );
+      selectedLayoutId = layoutHistoryRepository.getSelectedLayoutId(windowId, wmClass, title);
     }
   }
 
@@ -99,41 +93,39 @@ export function createMiniatureDisplayView(
   }
 
   // Add monitor visual indicators (as overlay)
-  if (monitor) {
-    // Add menu bar for primary monitor (Ubuntu Displays style)
-    if (monitor.isPrimary) {
-      const menuBar = new St.Widget({
-        style: `
-          width: ${displayWidth}px;
-          height: 4px;
-          background-color: rgba(200, 200, 200, 0.9);
-        `,
-      });
-      menuBar.set_position(0, 0);
-      miniatureDisplay.add_child(menuBar);
-    }
-
-    // Add monitor label at bottom left (number only)
-    const monitorLabel = `${monitor.index + 1}`;
-
-    const headerLabel = new St.Label({
-      text: monitorLabel,
+  // Add menu bar for primary monitor (Ubuntu Displays style)
+  if (monitor.isPrimary) {
+    const menuBar = new St.Widget({
       style: `
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 11pt;
-        font-weight: bold;
-        padding: 2px 6px;
-        background-color: rgba(0, 0, 0, 0.6);
-        border-radius: 3px;
+        width: ${displayWidth}px;
+        height: 4px;
+        background-color: rgba(200, 200, 200, 0.9);
       `,
     });
-
-    // Position at bottom left
-    // Estimated label height: ~20px (9pt font + padding)
-    const labelHeight = 20;
-    headerLabel.set_position(6, displayHeight - labelHeight - 6);
-    miniatureDisplay.add_child(headerLabel);
+    menuBar.set_position(0, 0);
+    miniatureDisplay.add_child(menuBar);
   }
+
+  // Add monitor label at bottom left (number only)
+  const monitorLabel = `${monitor.index + 1}`;
+
+  const headerLabel = new St.Label({
+    text: monitorLabel,
+    style: `
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 11pt;
+      font-weight: bold;
+      padding: 2px 6px;
+      background-color: rgba(0, 0, 0, 0.6);
+      border-radius: 3px;
+    `,
+  });
+
+  // Position at bottom left
+  // Estimated label height: ~20px (9pt font + padding)
+  const labelHeight = 20;
+  headerLabel.set_position(6, displayHeight - labelHeight - 6);
+  miniatureDisplay.add_child(headerLabel);
 
   return { miniatureDisplay, layoutButtons, buttonEvents };
 }

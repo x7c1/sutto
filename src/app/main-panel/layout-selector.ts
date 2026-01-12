@@ -52,7 +52,7 @@ export class MainPanelLayoutSelector {
   /**
    * Update button styles when a layout is selected
    * Called after layout selection to immediately reflect the change in the panel
-   * Only updates buttons for the specified monitor
+   * Highlights only the selected layout on the specified monitor, clears all other highlights
    */
   updateSelectedLayoutHighlight(
     newSelectedLayoutId: string,
@@ -64,16 +64,12 @@ export class MainPanelLayoutSelector {
     );
     let updatedCount = 0;
 
-    // Update button background colors only for the specified monitor
+    // Update all buttons: only highlight the selected layout on the selected monitor
     for (const [button, layout] of layoutButtons.entries()) {
       const buttonWithMeta = button as LayoutButtonWithMetadata;
 
-      // Skip buttons from other monitors
-      if (layout.monitorKey !== monitorKey) {
-        continue;
-      }
-
-      const isSelected = layout.id === newSelectedLayoutId;
+      // Only highlight if this is the selected layout on the selected monitor
+      const isSelected = layout.monitorKey === monitorKey && layout.id === newSelectedLayoutId;
       const bgColor = isSelected ? BUTTON_BG_COLOR_SELECTED : BUTTON_BG_COLOR;
 
       // Update button's stored selection state
@@ -101,10 +97,6 @@ export class MainPanelLayoutSelector {
             `[MainPanelLayoutSelector] Set layout ${layout.label} (${layout.id}) to SELECTED (blue) on monitor ${monitorKey}`
           );
         }
-      } else {
-        log(
-          `[MainPanelLayoutSelector] Warning: Failed to update style for ${layout.label}. Style: ${String(currentStyle).substring(0, 100)}`
-        );
       }
     }
 
