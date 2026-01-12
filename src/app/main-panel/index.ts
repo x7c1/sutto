@@ -15,7 +15,7 @@ import { AUTO_HIDE_DELAY_MS, DEFAULT_LAYOUT_CONFIGURATION } from '../constants.j
 import type { MonitorManager } from '../monitor/manager.js';
 import type { LayoutHistoryRepository } from '../repository/layout-history.js';
 import { importLayoutConfiguration, loadLayoutsAsCategories } from '../repository/layouts.js';
-import type { Layout, Position } from '../types/index.js';
+import type { Layout, LayoutCategory, Position, Size } from '../types/index.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
 import { MainPanelLayoutSelector } from './layout-selector.js';
@@ -116,144 +116,63 @@ export class MainPanel {
    * Show the main panel at the specified position
    */
   show(cursor: Position, window: Meta.Window | null = null, centerVertically = false): void {
-    // Hide existing panel if any
     this.hide();
 
-    // Store original cursor position and window
+    // Initialize state
     this.state.updateOriginalCursor(cursor);
     this.state.setCurrentWindow(window);
-
-    // Reset auto-hide states
     this.autoHide.resetHoverStates();
 
-    // Get screen dimensions and calculate aspect ratio
-    const screenWidth = global.screen_width;
-    const screenHeight = global.screen_height;
-    const aspectRatio = screenHeight / screenWidth;
-
-    // Get categories to render
+    // Calculate panel dimensions and position
     const categories = this.state.getCategories();
     log(
       `[MainPanel] Categories count: ${categories.length}, items: ${categories.map((c) => c.name).join(', ')}`
     );
 
-    // Calculate panel dimensions
-    const showFooter = true;
+    const aspectRatio = global.screen_height / global.screen_width;
     const panelDimensions = this.positionManager.calculatePanelDimensions(
       categories,
       aspectRatio,
-      showFooter
+      true // showFooter
     );
     this.state.setPanelDimensions(panelDimensions);
 
-    // Adjust position for boundaries with center alignment
     const adjusted = this.positionManager.adjustPosition(cursor, panelDimensions, centerVertically);
-
-    // Store adjusted panel position
     this.state.updatePanelPosition(adjusted);
 
-    // Create background
-    const { background, clickOutsideId } = createBackground(() => {
-      this.hide();
-    });
+    // Create UI elements
+    const { background, clickOutsideId } = createBackground(() => this.hide());
     this.background = background;
 
-    // Create categories view or empty message
-    let categoriesElement: St.BoxLayout | St.Label;
-    let buttonEvents: PanelEventIds['buttonEvents'] = [];
+    const { element: categoriesElement, buttonEvents } = this.createCategoriesElement(
+      categories,
+      window
+    );
 
-    if (categories.length === 0) {
-      // Show "No categories" message
-      categoriesElement = new St.Label({
-        text: 'No categories available',
-        style: `
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.7);
-          text-align: center;
-          padding: 40px 60px;
-        `,
-        x_align: 2, // CENTER
-      });
-      this.layoutButtons.clear();
-    } else {
-      const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
-
-      const monitors = this.monitorManager.getMonitors();
-      const categoriesView = createCategoriesViewWithDisplayGroups(
-        monitors,
-        categories,
-        window,
-        (layout) => {
-          if (onLayoutSelected) {
-            onLayoutSelected(layout);
-          }
-        },
-        this.layoutHistoryRepository
-      );
-      categoriesElement = categoriesView.categoriesContainer;
-      buttonEvents = categoriesView.buttonEvents;
-      this.layoutButtons = categoriesView.layoutButtons;
-    }
-
-    // Create footer with settings button
     const footer = createFooter(() => {
       log('[MainPanel] Settings button clicked');
       this.openPreferences();
-      this.hide(); // Close panel after opening preferences
+      this.hide();
     });
 
-    // Create main container
+    // Build and position container
     const container = createPanelContainer();
     this.container = container;
-
-    // Add children to container
     container.add_child(categoriesElement);
     container.add_child(footer);
+    container.set_position(adjusted.x, adjusted.y);
 
-    // Position panel at adjusted coordinates
-    const position = this.state.getPanelPosition();
-    container.set_position(position.x, position.y);
-
-    // Add panel container to chrome
+    // Add to chrome and adjust for actual size
     Main.layoutManager.addChrome(container, {
       affectsInputRegion: true,
       trackFullscreen: false,
     });
+    this.adjustContainerPosition(container, cursor, panelDimensions, centerVertically);
 
-    // Recalculate position with actual container size after adding to chrome
-    // GTK may adjust layout during rendering, so calculated size may differ from actual size
-    const actualWidth = container.get_width();
-    const actualHeight = container.get_height();
-    if (actualWidth !== panelDimensions.width || actualHeight !== panelDimensions.height) {
-      const actualDimensions = { width: actualWidth, height: actualHeight };
-      const reposition = this.positionManager.adjustPosition(
-        cursor,
-        actualDimensions,
-        centerVertically
-      );
-      container.set_position(reposition.x, reposition.y);
-      this.state.updatePanelPosition(reposition);
-      this.state.setPanelDimensions(actualDimensions);
-    }
+    // Setup interactions
+    this.setupPanelInteractions(container, clickOutsideId, buttonEvents);
 
-    // Setup auto-hide
-    this.autoHide.setupAutoHide(container, AUTO_HIDE_DELAY_MS);
-
-    // Store event IDs for cleanup
-    this.rendererEventIds = {
-      clickOutsideId,
-      buttonEvents: buttonEvents,
-    };
-
-    // Enable keyboard navigation
-    const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
-    if (this.container && onLayoutSelected) {
-      this.keyboardNavigator.enable(this.container, this.layoutButtons, (layout) => {
-        onLayoutSelected(layout);
-      });
-    }
-
-    // Notify that panel is shown
+    // Notify
     if (this.onPanelShownCallback) {
       this.onPanelShownCallback();
     }
@@ -395,6 +314,103 @@ export class MainPanel {
     if (!success) {
       log('[MainPanel] ERROR: Could not open preferences with any method');
       log('[MainPanel] Please open preferences manually from Extensions app');
+    }
+  }
+
+  /**
+   * Create categories element or empty message
+   */
+  private createCategoriesElement(
+    categories: LayoutCategory[],
+    window: Meta.Window | null
+  ): {
+    element: St.BoxLayout | St.Label;
+    buttonEvents: PanelEventIds['buttonEvents'];
+  } {
+    if (categories.length === 0) {
+      const element = new St.Label({
+        text: 'No categories available',
+        style: `
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.7);
+          text-align: center;
+          padding: 40px 60px;
+        `,
+        x_align: 2, // CENTER
+      });
+      this.layoutButtons.clear();
+      return { element, buttonEvents: [] };
+    }
+
+    const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
+    const monitors = this.monitorManager.getMonitors();
+    const categoriesView = createCategoriesViewWithDisplayGroups(
+      monitors,
+      categories,
+      window,
+      (layout) => {
+        if (onLayoutSelected) {
+          onLayoutSelected(layout);
+        }
+      },
+      this.layoutHistoryRepository
+    );
+
+    this.layoutButtons = categoriesView.layoutButtons;
+    return {
+      element: categoriesView.categoriesContainer,
+      buttonEvents: categoriesView.buttonEvents,
+    };
+  }
+
+  /**
+   * Setup event handlers and keyboard navigation
+   */
+  private setupPanelInteractions(
+    container: St.BoxLayout,
+    clickOutsideId: number,
+    buttonEvents: PanelEventIds['buttonEvents']
+  ): void {
+    // Setup auto-hide
+    this.autoHide.setupAutoHide(container, AUTO_HIDE_DELAY_MS);
+
+    // Store event IDs for cleanup
+    this.rendererEventIds = {
+      clickOutsideId,
+      buttonEvents,
+    };
+
+    // Enable keyboard navigation
+    const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
+    if (onLayoutSelected) {
+      this.keyboardNavigator.enable(container, this.layoutButtons, (layout) => {
+        onLayoutSelected(layout);
+      });
+    }
+  }
+
+  /**
+   * Adjust container position using actual size after rendering
+   */
+  private adjustContainerPosition(
+    container: St.BoxLayout,
+    cursor: Position,
+    panelDimensions: Size,
+    centerVertically: boolean
+  ): void {
+    const actualWidth = container.get_width();
+    const actualHeight = container.get_height();
+
+    if (actualWidth !== panelDimensions.width || actualHeight !== panelDimensions.height) {
+      const actualDimensions = { width: actualWidth, height: actualHeight };
+      const reposition = this.positionManager.adjustPosition(
+        cursor,
+        actualDimensions,
+        centerVertically
+      );
+      container.set_position(reposition.x, reposition.y);
+      this.state.updatePanelPosition(reposition);
+      this.state.setPanelDimensions(actualDimensions);
     }
   }
 }
