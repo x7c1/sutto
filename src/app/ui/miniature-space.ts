@@ -1,19 +1,19 @@
 /**
  * Miniature Space
  *
- * Creates a 2D spatial layout of monitors showing a Display Group.
- * Each Miniature Space represents one Display Group with monitors positioned
+ * Creates a 2D spatial layout of monitors showing a Space.
+ * Each Miniature Space represents one Space with monitors positioned
  * according to their physical arrangement.
  */
 
 import Clutter from 'gi://Clutter';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
-import { DISPLAY_GROUP_SPACING, MINIATURE_SPACE_BG_COLOR, MONITOR_MARGIN } from '../constants.js';
+import { MINIATURE_SPACE_BG_COLOR, MONITOR_MARGIN, SPACE_SPACING } from '../constants.js';
 import type { LayoutHistoryRepository } from '../repository/layout-history.js';
-import type { DisplayGroup, Layout, Monitor } from '../types/index.js';
-import { calculateDisplayGroupDimensions } from './display-group-dimensions.js';
+import type { Layout, Monitor, Space } from '../types/index.js';
 import { createMiniatureDisplayView } from './miniature-display.js';
+import { calculateSpaceDimensions } from './space-dimensions.js';
 
 export interface MiniatureSpaceView {
   spaceContainer: St.Widget;
@@ -27,13 +27,13 @@ export interface MiniatureSpaceView {
 }
 
 /**
- * Calculate bounding box for monitors referenced in a Display Group
+ * Calculate bounding box for monitors referenced in a Space
  */
-function calculateBoundingBoxForDisplayGroup(
-  displayGroup: DisplayGroup,
+function calculateBoundingBoxForSpace(
+  space: Space,
   monitors: Map<string, Monitor>
 ): { minX: number; minY: number; width: number; height: number } {
-  const monitorKeys = Object.keys(displayGroup.displays);
+  const monitorKeys = Object.keys(space.displays);
   const relevantMonitors: Monitor[] = [];
 
   for (const key of monitorKeys) {
@@ -69,22 +69,22 @@ function calculateBoundingBoxForDisplayGroup(
 }
 
 /**
- * Create a Miniature Space view for a Display Group
+ * Create a Miniature Space view for a Space
  * Shows all monitors in their physical 2D arrangement
  */
 export function createMiniatureSpaceView(
-  displayGroup: DisplayGroup,
+  space: Space,
   monitors: Map<string, Monitor>,
   window: Meta.Window | null,
   onLayoutSelected: (layout: Layout) => void,
   layoutHistoryRepository: LayoutHistoryRepository
 ): MiniatureSpaceView {
-  // Calculate dimensions and scale for this Display Group
-  const dimensions = calculateDisplayGroupDimensions(displayGroup, monitors);
+  // Calculate dimensions and scale for this Space
+  const dimensions = calculateSpaceDimensions(space, monitors);
   const scale = dimensions.scale;
 
-  // Calculate bounding box for all monitors in this Display Group (needed for positioning)
-  const bbox = calculateBoundingBoxForDisplayGroup(displayGroup, monitors);
+  // Calculate bounding box for all monitors in this Space (needed for positioning)
+  const bbox = calculateBoundingBoxForSpace(space, monitors);
 
   // Create container with absolute positioning (size will be calculated after placing displays)
   // FixedLayout doesn't respect padding, so we handle margins via position calculation
@@ -92,7 +92,7 @@ export function createMiniatureSpaceView(
     style: `
       background-color: ${MINIATURE_SPACE_BG_COLOR};
       border-radius: 6px;
-      margin-bottom: ${DISPLAY_GROUP_SPACING}px;
+      margin-bottom: ${SPACE_SPACING}px;
     `,
     layout_manager: new Clutter.FixedLayout(),
   });
@@ -103,8 +103,8 @@ export function createMiniatureSpaceView(
   // Get total number of connected monitors
   const totalMonitors = monitors.size;
 
-  // Create miniature display for each monitor in the Display Group
-  for (const [monitorKey, layoutGroup] of Object.entries(displayGroup.displays)) {
+  // Create miniature display for each monitor in the Space
+  for (const [monitorKey, layoutGroup] of Object.entries(space.displays)) {
     const monitor = monitors.get(monitorKey);
 
     if (!monitor) {

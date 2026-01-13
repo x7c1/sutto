@@ -6,9 +6,9 @@ export const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding panel when 
 // Dimensions
 export const PANEL_PADDING = 12; // Padding around panel content
 export const PANEL_EDGE_PADDING = 10; // Minimum distance from screen edges
-export const DISPLAY_SPACING = 4; // Spacing between miniature displays (vertical within categories, or old vertical spacing)
-export const CATEGORY_SPACING = 10; // Vertical spacing between categories
-export const DISPLAY_SPACING_HORIZONTAL = 12; // Horizontal spacing between displays within a category
+export const DISPLAY_SPACING = 4; // Spacing between miniature displays (vertical within rows, or old vertical spacing)
+export const ROW_SPACING = 10; // Vertical spacing between space rows
+export const DISPLAY_SPACING_HORIZONTAL = 12; // Horizontal spacing between displays within a row
 export const BUTTON_BORDER_WIDTH = 1; // Border width for layout buttons
 export const FOOTER_MARGIN_TOP = 2; // Margin above footer
 
@@ -26,11 +26,11 @@ export const FOOTER_TEXT_COLOR = 'rgba(255, 255, 255, 0.5)';
 
 // Multi-monitor panel constants
 export const MAX_MONITOR_DISPLAY_WIDTH = 240; // Maximum width for the widest monitor in miniature display
-export const DISPLAY_GROUP_SPACING = 6; // Vertical spacing between Display Group sections
+export const SPACE_SPACING = 6; // Vertical spacing between Space sections
 export const MONITOR_MARGIN = 6; // Margin around each monitor display in miniature space
 
 // Default layout configuration (multi-monitor structure)
-// Includes a basic dual-monitor configuration
+// Includes a basic dual-monitor configuration with space rows
 export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
   layoutGroups: [
     {
@@ -74,10 +74,9 @@ export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
       layouts: [{ label: 'full', x: '0', y: '0', width: '100%', height: '100%' }],
     },
   ],
-  layoutCategories: [
+  rows: [
     {
-      name: '3-split Patterns',
-      displayGroups: [
+      spaces: [
         {
           displays: {
             '0': 'vertical 3-split',
@@ -93,8 +92,7 @@ export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
       ],
     },
     {
-      name: 'Grid Patterns',
-      displayGroups: [
+      spaces: [
         {
           displays: {
             '0': 'vertical 2-split',
@@ -110,8 +108,7 @@ export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
       ],
     },
     {
-      name: 'Full Screen',
-      displayGroups: [
+      spaces: [
         {
           displays: {
             '0': 'full screen',

@@ -14,8 +14,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { AUTO_HIDE_DELAY_MS, DEFAULT_LAYOUT_CONFIGURATION } from '../constants.js';
 import type { MonitorManager } from '../monitor/manager.js';
 import type { LayoutHistoryRepository } from '../repository/layout-history.js';
-import { importLayoutConfiguration, loadLayoutsAsCategories } from '../repository/layouts.js';
-import type { Layout, LayoutCategory, Position, Size } from '../types/index.js';
+import { importLayoutConfiguration, loadLayoutsAsSpacesRows } from '../repository/layouts.js';
+import type { Layout, Position, Size, SpacesRow } from '../types/index.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
 import { MainPanelLayoutSelector } from './layout-selector.js';
@@ -23,9 +23,9 @@ import { MainPanelPositionManager } from './position-manager.js';
 import type { PanelEventIds } from './renderer.js';
 import {
   createBackground,
-  createCategoriesViewWithDisplayGroups,
   createFooter,
   createPanelContainer,
+  createSpacesRowView,
 } from './renderer.js';
 import { MainPanelState } from './state.js';
 
@@ -65,14 +65,14 @@ export class MainPanel {
 
     // Initialize layouts repository
     // First launch: import default settings if repository is empty
-    let layouts = loadLayoutsAsCategories();
-    if (layouts.length === 0) {
+    let rows = loadLayoutsAsSpacesRows();
+    if (rows.length === 0) {
       log('[MainPanel] Layouts repository is empty, importing default configuration');
       importLayoutConfiguration(DEFAULT_LAYOUT_CONFIGURATION);
-      layouts = loadLayoutsAsCategories();
+      rows = loadLayoutsAsSpacesRows();
     }
 
-    this.state.setCategories(layouts);
+    this.state.setSpacesRows(rows);
   }
 
   /**
@@ -124,13 +124,11 @@ export class MainPanel {
     this.autoHide.resetHoverStates();
 
     // Calculate panel dimensions and position
-    const categories = this.state.getCategories();
-    log(
-      `[MainPanel] Categories count: ${categories.length}, items: ${categories.map((c) => c.name).join(', ')}`
-    );
+    const rows = this.state.getSpacesRows();
+    log(`[MainPanel] Spaces rows count: ${rows.length}`);
 
     const panelDimensions = this.positionManager.calculatePanelDimensions(
-      categories,
+      rows,
       true // showFooter
     );
     this.state.setPanelDimensions(panelDimensions);
@@ -142,10 +140,7 @@ export class MainPanel {
     const { background, clickOutsideId } = createBackground(() => this.hide());
     this.background = background;
 
-    const { element: categoriesElement, buttonEvents } = this.createCategoriesElement(
-      categories,
-      window
-    );
+    const { element: rowsElement, buttonEvents } = this.createRowsElement(rows, window);
 
     const footer = createFooter(() => {
       log('[MainPanel] Settings button clicked');
@@ -156,7 +151,7 @@ export class MainPanel {
     // Build and position container
     const container = createPanelContainer();
     this.container = container;
-    container.add_child(categoriesElement);
+    container.add_child(rowsElement);
     container.add_child(footer);
     container.set_position(adjusted.x, adjusted.y);
 
@@ -222,7 +217,7 @@ export class MainPanel {
       this.background = null;
       this.layoutButtons.clear();
 
-      // Reset state (but keep currentWmClass and categories)
+      // Reset state (but keep currentWmClass and spacesRows)
       this.state.reset();
 
       // Notify that panel is hidden
@@ -316,18 +311,18 @@ export class MainPanel {
   }
 
   /**
-   * Create categories element or empty message
+   * Create spaces rows element or empty message
    */
-  private createCategoriesElement(
-    categories: LayoutCategory[],
+  private createRowsElement(
+    rows: SpacesRow[],
     window: Meta.Window | null
   ): {
     element: St.BoxLayout | St.Label;
     buttonEvents: PanelEventIds['buttonEvents'];
   } {
-    if (categories.length === 0) {
+    if (rows.length === 0) {
       const element = new St.Label({
-        text: 'No categories available',
+        text: 'No spaces rows available',
         style: `
           font-size: 14px;
           color: rgba(255, 255, 255, 0.7);
@@ -342,9 +337,9 @@ export class MainPanel {
 
     const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
     const monitors = this.monitorManager.getMonitors();
-    const categoriesView = createCategoriesViewWithDisplayGroups(
+    const rowsView = createSpacesRowView(
       monitors,
-      categories,
+      rows,
       window,
       (layout) => {
         if (onLayoutSelected) {
@@ -354,10 +349,10 @@ export class MainPanel {
       this.layoutHistoryRepository
     );
 
-    this.layoutButtons = categoriesView.layoutButtons;
+    this.layoutButtons = rowsView.layoutButtons;
     return {
-      element: categoriesView.categoriesContainer,
-      buttonEvents: categoriesView.buttonEvents,
+      element: rowsView.rowsContainer,
+      buttonEvents: rowsView.buttonEvents,
     };
   }
 

@@ -1,27 +1,27 @@
 /**
- * Display Group Dimensions Calculator
+ * Space Dimensions Calculator
  *
- * Shared utilities for calculating Display Group sizes based on monitor configuration.
+ * Shared utilities for calculating Space sizes based on monitor configuration.
  * Used by both miniature-space.ts (for rendering) and position-manager.ts (for layout).
  */
 
 import { MAX_MONITOR_DISPLAY_WIDTH, MONITOR_MARGIN } from '../constants.js';
-import type { DisplayGroup, Monitor } from '../types/index.js';
+import type { Monitor, Space } from '../types/index.js';
 
-export interface DisplayGroupDimensions {
+export interface SpaceDimensions {
   width: number;
   height: number;
   scale: number;
 }
 
 /**
- * Calculate bounding box for monitors referenced in a Display Group
+ * Calculate bounding box for monitors referenced in a Space
  */
-function calculateBoundingBoxForDisplayGroup(
-  displayGroup: DisplayGroup,
+function calculateBoundingBoxForSpace(
+  space: Space,
   monitors: Map<string, Monitor>
 ): { minX: number; minY: number; width: number; height: number } {
-  const monitorKeys = Object.keys(displayGroup.displays);
+  const monitorKeys = Object.keys(space.displays);
   const relevantMonitors: Monitor[] = [];
 
   for (const key of monitorKeys) {
@@ -57,16 +57,16 @@ function calculateBoundingBoxForDisplayGroup(
 }
 
 /**
- * Calculate the dimensions of a Display Group
+ * Calculate the dimensions of a Space
  * Returns the width and height of the miniature space container
  */
-export function calculateDisplayGroupDimensions(
-  displayGroup: DisplayGroup,
+export function calculateSpaceDimensions(
+  space: Space,
   monitors: Map<string, Monitor>
-): DisplayGroupDimensions {
-  // Find the widest monitor in this Display Group
+): SpaceDimensions {
+  // Find the widest monitor in this Space
   let maxMonitorWidth = 0;
-  for (const [monitorKey, _] of Object.entries(displayGroup.displays)) {
+  for (const [monitorKey, _] of Object.entries(space.displays)) {
     const monitor = monitors.get(monitorKey);
     if (monitor) {
       maxMonitorWidth = Math.max(maxMonitorWidth, monitor.geometry.width);
@@ -77,8 +77,8 @@ export function calculateDisplayGroupDimensions(
   const scale =
     maxMonitorWidth > 0 ? Math.min(MAX_MONITOR_DISPLAY_WIDTH / maxMonitorWidth, 1.0) : 1.0;
 
-  // Calculate bounding box for all monitors in this Display Group
-  const bbox = calculateBoundingBoxForDisplayGroup(displayGroup, monitors);
+  // Calculate bounding box for all monitors in this Space
+  const bbox = calculateBoundingBoxForSpace(space, monitors);
 
   // Track actual bounding box of placed displays (including margins)
   let actualMinX = Infinity;
@@ -87,7 +87,7 @@ export function calculateDisplayGroupDimensions(
   let actualMaxY = -Infinity;
 
   // Calculate positions and sizes for each monitor
-  for (const [monitorKey, _] of Object.entries(displayGroup.displays)) {
+  for (const [monitorKey, _] of Object.entries(space.displays)) {
     const monitor = monitors.get(monitorKey);
 
     if (!monitor) {

@@ -1,12 +1,12 @@
 import Gio from 'gi://Gio';
 
-import type { DisplayGroup, Layout, LayoutCategory, LayoutGroup } from '../types/index.js';
+import type { Layout, LayoutGroup, Space, SpacesRow } from '../types/index.js';
 import type {
-  DisplayGroupSetting,
-  LayoutCategoryWithDisplayGroups,
   LayoutConfiguration,
   LayoutGroupSetting,
   LayoutSetting,
+  SpaceSetting,
+  SpacesRowSetting,
 } from '../types/layout-setting.js';
 import { getExtensionDataPath } from './extension-path.js';
 import { generateLayoutHash } from './layout-hash-generator.js';
@@ -88,17 +88,17 @@ export function convertLayoutGroupSettings(groupSettings: LayoutGroupSetting[]):
 // ============================================================================
 
 /**
- * Convert DisplayGroupSetting to DisplayGroup (runtime type)
+ * Convert SpaceSetting to Space (runtime type)
  * Expands Layout Group names to full LayoutGroup objects with unique IDs
  */
-function settingToDisplayGroup(
-  displayGroupSetting: DisplayGroupSetting,
+function settingToSpace(
+  spaceSetting: SpaceSetting,
   layoutGroupSettings: LayoutGroupSetting[]
-): DisplayGroup {
+): Space {
   const displays: { [monitorKey: string]: LayoutGroup } = {};
 
-  // For each monitor in the Display Group
-  for (const [monitorKey, layoutGroupName] of Object.entries(displayGroupSetting.displays)) {
+  // For each monitor in the Space
+  for (const [monitorKey, layoutGroupName] of Object.entries(spaceSetting.displays)) {
     // Find the Layout Group definition by name
     const layoutGroupSetting = layoutGroupSettings.find((g) => g.name === layoutGroupName);
 
@@ -126,28 +126,23 @@ function settingToDisplayGroup(
 }
 
 /**
- * Convert LayoutCategoryWithDisplayGroups to LayoutCategory (runtime type)
+ * Convert SpacesRowSetting to SpacesRow (runtime type)
  */
-function settingToCategoryWithDisplayGroups(
-  categorySetting: LayoutCategoryWithDisplayGroups,
+function settingToSpacesRow(
+  rowSetting: SpacesRowSetting,
   layoutGroupSettings: LayoutGroupSetting[]
-): LayoutCategory {
+): SpacesRow {
   return {
-    name: categorySetting.name,
-    displayGroups: categorySetting.displayGroups.map((dg) =>
-      settingToDisplayGroup(dg, layoutGroupSettings)
-    ),
+    spaces: rowSetting.spaces.map((s) => settingToSpace(s, layoutGroupSettings)),
   };
 }
 
 /**
- * Convert LayoutConfiguration to LayoutCategory[] (runtime type)
+ * Convert LayoutConfiguration to SpacesRow[] (runtime type)
  * Expands Layout Group references into full LayoutGroup objects with unique IDs
  */
-function configurationToCategories(config: LayoutConfiguration): LayoutCategory[] {
-  return config.layoutCategories.map((categorySetting) =>
-    settingToCategoryWithDisplayGroups(categorySetting, config.layoutGroups)
-  );
+function configurationToSpacesRows(config: LayoutConfiguration): SpacesRow[] {
+  return config.rows.map((rowSetting) => settingToSpacesRow(rowSetting, config.layoutGroups));
 }
 
 /**
@@ -156,8 +151,8 @@ function configurationToCategories(config: LayoutConfiguration): LayoutCategory[
  */
 export function importLayoutConfiguration(config: LayoutConfiguration): void {
   try {
-    const categories = configurationToCategories(config);
-    saveCategoriesWithDisplayGroups(categories);
+    const rows = configurationToSpacesRows(config);
+    saveSpacesRows(rows);
     log('[LayoutsRepository] Layout configuration imported successfully');
   } catch (e) {
     log(`[LayoutsRepository] Error importing layout configuration: ${e}`);
@@ -165,34 +160,27 @@ export function importLayoutConfiguration(config: LayoutConfiguration): void {
 }
 
 /**
- * Validate that data is in the new LayoutCategory[] format
+ * Validate that data is in the SpacesRow[] format
  * Returns true if valid, false if old format or invalid
  */
-function isValidLayoutCategoryData(data: unknown): data is LayoutCategory[] {
+function isValidSpacesRowsData(data: unknown): data is SpacesRow[] {
   if (!Array.isArray(data)) {
     return false;
   }
 
-  // Check if all categories have displayGroups (new format)
-  for (const category of data) {
-    if (typeof category !== 'object' || category === null) {
+  // Check if all rows have spaces
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    if (typeof row !== 'object' || row === null) {
       return false;
     }
 
-    // Check for old format (has layoutGroups instead of displayGroups)
-    if ('layoutGroups' in category && !('displayGroups' in category)) {
-      log(
-        `[LayoutsRepository] Detected old format: category "${category.name}" has layoutGroups instead of displayGroups`
-      );
+    // Check for required fields
+    if (!('spaces' in row)) {
       return false;
     }
 
-    // Check for required fields in new format
-    if (!('name' in category) || !('displayGroups' in category)) {
-      return false;
-    }
-
-    if (!Array.isArray(category.displayGroups)) {
+    if (!Array.isArray(row.spaces)) {
       return false;
     }
   }
@@ -201,10 +189,10 @@ function isValidLayoutCategoryData(data: unknown): data is LayoutCategory[] {
 }
 
 /**
- * Load layouts as categories (returns LayoutCategory[] with expanded Display Groups)
+ * Load layouts as spaces rows (returns SpacesRow[] with expanded Spaces)
  *
  */
-export function loadLayoutsAsCategories(): LayoutCategory[] {
+export function loadLayoutsAsSpacesRows(): SpacesRow[] {
   const layoutsPath = getLayoutsFilePath();
   const file = Gio.File.new_for_path(layoutsPath);
 
@@ -224,7 +212,7 @@ export function loadLayoutsAsCategories(): LayoutCategory[] {
     const data: unknown = JSON.parse(contentsString);
 
     // Validate data format
-    if (!isValidLayoutCategoryData(data)) {
+    if (!isValidSpacesRowsData(data)) {
       log('[LayoutsRepository] WARNING: Invalid or old format data detected in layouts file');
       log('[LayoutsRepository] Deleting old format file and returning empty array');
       // Delete the old format file
@@ -237,19 +225,19 @@ export function loadLayoutsAsCategories(): LayoutCategory[] {
       return [];
     }
 
-    log('[LayoutsRepository] Layout categories loaded successfully');
+    log('[LayoutsRepository] Spaces rows loaded successfully');
     return data;
   } catch (e) {
-    log(`[LayoutsRepository] Error loading layout categories: ${e}`);
+    log(`[LayoutsRepository] Error loading spaces rows: ${e}`);
     return [];
   }
 }
 
 /**
- * Save LayoutCategory[] to disk (runtime format with Display Groups)
+ * Save SpacesRow[] to disk (runtime format with Spaces)
  *
  */
-function saveCategoriesWithDisplayGroups(categories: LayoutCategory[]): void {
+function saveSpacesRows(rows: SpacesRow[]): void {
   const layoutsPath = getLayoutsFilePath();
   const file = Gio.File.new_for_path(layoutsPath);
 
@@ -261,11 +249,11 @@ function saveCategoriesWithDisplayGroups(categories: LayoutCategory[]): void {
     }
 
     // Write to file
-    const json = JSON.stringify(categories, null, 2);
+    const json = JSON.stringify(rows, null, 2);
     file.replace_contents(json, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
-    log('[LayoutsRepository] Layout categories saved successfully');
+    log('[LayoutsRepository] Spaces rows saved successfully');
   } catch (e) {
-    log(`[LayoutsRepository] Error saving layout categories: ${e}`);
+    log(`[LayoutsRepository] Error saving spaces rows: ${e}`);
   }
 }

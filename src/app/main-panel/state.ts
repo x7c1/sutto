@@ -6,12 +6,12 @@
  */
 
 import type Meta from 'gi://Meta';
-import type { LayoutCategory, Position, Size } from '../types/index.js';
+import type { Position, Size, SpacesRow } from '../types/index.js';
 
 declare function log(message: string): void;
 
 export class MainPanelState {
-  private categories: LayoutCategory[] = [];
+  private spacesRows: SpacesRow[] = [];
   private currentWindow: Meta.Window | null = null;
   private originalCursorX: number = 0;
   private originalCursorY: number = 0;
@@ -20,28 +20,26 @@ export class MainPanelState {
   private panelDimensions: Size | null = null;
 
   /**
-   * Get the current categories
+   * Get the current spaces rows
    */
-  getCategories(): LayoutCategory[] {
-    return this.categories;
+  getSpacesRows(): SpacesRow[] {
+    return this.spacesRows;
   }
 
   /**
-   * Set the categories
+   * Set the spaces rows
    */
-  setCategories(categories: LayoutCategory[]): void {
-    // Defensive check: validate all categories have displayGroups
-    const validCategories = categories.filter((category) => {
-      if (!category.displayGroups || !Array.isArray(category.displayGroups)) {
-        log(
-          `[MainPanelState] WARNING: Invalid category detected (missing displayGroups), filtering out: ${category.name}`
-        );
+  setSpacesRows(rows: SpacesRow[]): void {
+    // Defensive check: validate all rows have spaces
+    const validRows = rows.filter((row, index) => {
+      if (!row.spaces || !Array.isArray(row.spaces)) {
+        log(`[MainPanelState] WARNING: Invalid row detected (missing spaces) at index ${index}`);
         return false;
       }
       return true;
     });
 
-    this.categories = validCategories;
+    this.spacesRows = validRows;
   }
 
   /**
@@ -111,6 +109,6 @@ export class MainPanelState {
     this.panelX = 0;
     this.panelY = 0;
     this.panelDimensions = null;
-    // Note: Keep currentWindow and categories to preserve across panel reopens
+    // Note: Keep currentWindow and spacesRows to preserve across panel reopens
   }
 }

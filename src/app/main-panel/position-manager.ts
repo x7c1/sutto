@@ -7,17 +7,17 @@
 
 import type St from 'gi://St';
 import {
-  CATEGORY_SPACING,
-  DISPLAY_GROUP_SPACING,
   FOOTER_MARGIN_TOP,
   PANEL_EDGE_PADDING,
   PANEL_PADDING,
+  ROW_SPACING,
+  SPACE_SPACING,
 } from '../constants.js';
 import type { MonitorManager } from '../monitor/manager.js';
 import { adjustMainPanelPosition } from '../positioning/index.js';
 import type { ScreenBoundaries } from '../positioning/types.js';
-import type { LayoutCategory, Position, Size } from '../types/index.js';
-import { calculateDisplayGroupDimensions } from '../ui/display-group-dimensions.js';
+import type { Position, Size, SpacesRow } from '../types/index.js';
+import { calculateSpaceDimensions } from '../ui/space-dimensions.js';
 
 export class MainPanelPositionManager {
   private monitorManager: MonitorManager;
@@ -26,68 +26,68 @@ export class MainPanelPositionManager {
     this.monitorManager = monitorManager;
   }
   /**
-   * Calculate panel dimensions based on categories to render
-   * Only supports new LayoutCategory format
+   * Calculate panel dimensions based on rows to render
+   * Only supports SpacesRow format
    */
-  calculatePanelDimensions(categoriesToRender: LayoutCategory[], showFooter: boolean): Size {
-    // Handle empty categories case
-    if (categoriesToRender.length === 0) {
-      const minWidth = 200; // Minimum width for "No categories" message
+  calculatePanelDimensions(rowsToRender: SpacesRow[], showFooter: boolean): Size {
+    // Handle empty rows case
+    if (rowsToRender.length === 0) {
+      const minWidth = 200; // Minimum width for "No rows" message
       const minHeight = 120 + (showFooter ? FOOTER_MARGIN_TOP + 20 : 0);
       return { width: minWidth, height: minHeight };
     }
 
     const monitors = this.monitorManager.getMonitors();
 
-    // Calculate width: maximum category width
-    let maxCategoryWidth = 0;
-    for (const category of categoriesToRender) {
-      // Defensive check: ensure category has displayGroups array
-      if (!category.displayGroups || !Array.isArray(category.displayGroups)) {
+    // Calculate width: maximum row width
+    let maxRowWidth = 0;
+    for (const row of rowsToRender) {
+      // Defensive check: ensure row has spaces array
+      if (!row.spaces || !Array.isArray(row.spaces)) {
         continue;
       }
 
-      // Calculate total width for all Display Groups in this category (horizontal layout)
-      let categoryWidth = 0;
-      for (let j = 0; j < category.displayGroups.length; j++) {
-        const displayGroup = category.displayGroups[j];
-        const dimensions = calculateDisplayGroupDimensions(displayGroup, monitors);
-        categoryWidth += dimensions.width;
+      // Calculate total width for all Spaces in this row (horizontal layout)
+      let rowWidth = 0;
+      for (let j = 0; j < row.spaces.length; j++) {
+        const space = row.spaces[j];
+        const dimensions = calculateSpaceDimensions(space, monitors);
+        rowWidth += dimensions.width;
 
-        // Add spacing between Display Groups (except for last one)
-        if (j < category.displayGroups.length - 1) {
-          categoryWidth += DISPLAY_GROUP_SPACING;
+        // Add spacing between Spaces (except for last one)
+        if (j < row.spaces.length - 1) {
+          rowWidth += SPACE_SPACING;
         }
       }
 
-      maxCategoryWidth = Math.max(maxCategoryWidth, categoryWidth);
+      maxRowWidth = Math.max(maxRowWidth, rowWidth);
     }
-    const panelWidth = maxCategoryWidth + PANEL_PADDING * 2;
+    const panelWidth = maxRowWidth + PANEL_PADDING * 2;
 
-    // Calculate height: sum of all category heights with spacing
+    // Calculate height: sum of all row heights with spacing
     let totalHeight = PANEL_PADDING; // Top padding
-    for (let i = 0; i < categoriesToRender.length; i++) {
-      const category = categoriesToRender[i];
+    for (let i = 0; i < rowsToRender.length; i++) {
+      const row = rowsToRender[i];
 
-      // Defensive check: ensure category has displayGroups array
-      if (!category.displayGroups || !Array.isArray(category.displayGroups)) {
+      // Defensive check: ensure row has spaces array
+      if (!row.spaces || !Array.isArray(row.spaces)) {
         continue;
       }
 
-      // Find the tallest Display Group in this category
-      let maxDisplayGroupHeight = 0;
-      for (const displayGroup of category.displayGroups) {
-        const dimensions = calculateDisplayGroupDimensions(displayGroup, monitors);
-        maxDisplayGroupHeight = Math.max(maxDisplayGroupHeight, dimensions.height);
+      // Find the tallest Space in this row
+      let maxSpaceHeight = 0;
+      for (const space of row.spaces) {
+        const dimensions = calculateSpaceDimensions(space, monitors);
+        maxSpaceHeight = Math.max(maxSpaceHeight, dimensions.height);
       }
 
-      if (maxDisplayGroupHeight > 0) {
-        // Add the height of this category (tallest Display Group + bottom margin)
-        totalHeight += maxDisplayGroupHeight + DISPLAY_GROUP_SPACING;
+      if (maxSpaceHeight > 0) {
+        // Add the height of this row (tallest Space + bottom margin)
+        totalHeight += maxSpaceHeight + SPACE_SPACING;
 
-        // Add category spacing except for last category
-        if (i < categoriesToRender.length - 1) {
-          totalHeight += CATEGORY_SPACING;
+        // Add row spacing except for last row
+        if (i < rowsToRender.length - 1) {
+          totalHeight += ROW_SPACING;
         }
       }
     }
