@@ -78,16 +78,44 @@ Update all import statements across the codebase.
 
 **File**: `src/app/main-panel/index.ts`
 
+- Reload SpacesRows from repository on every `show()` call (simplest notification mechanism)
 - Filter out Spaces where `enabled === false` before rendering
-- Add method to reload Spaces from repository
+- Hide entire row when all Spaces in that row are disabled
 
 ### Phase 5: Add Preferences UI
 
-**File**: `src/settings/preferences.ts`
+**Files**:
+- `src/settings/preferences.ts`
+- `src/settings/gtk-miniature-space.ts` (new)
+- `src/settings/gtk-miniature-display.ts` (new)
 
-- Add new `Adw.PreferencesGroup` titled "Spaces"
+#### UI Structure (Multiple Pages)
+
+```
+PreferencesWindow
+├── PreferencesPage "General" (icon: preferences-system-symbolic)
+│   └── PreferencesGroup "Keyboard Shortcuts"
+│       └── (existing shortcut settings)
+└── PreferencesPage "Spaces" (icon: view-grid-symbolic)
+    └── PreferencesGroup
+        ├── Space 1 (Miniature + Switch)
+        ├── Space 2 (Miniature + Switch)
+        └── ...
+```
+
+#### Implementation
+
+- Restructure preferences.ts to use multiple `Adw.PreferencesPage`
+  - "General" page: existing keyboard shortcut settings
+  - "Spaces" page: new Space management UI
+- Create new GTK-based Miniature Space components using `Gtk.DrawingArea` + Cairo
+  - `gtk-miniature-space.ts`: Space container, positions multiple displays
+  - `gtk-miniature-display.ts`: Single monitor view with layout rectangles
+  - Shares types, constants, and calculation logic with Shell version
+  - Cannot reuse existing Shell components (Clutter/St not available in GTK process)
+  - See [adr-002-ui-component-sharing.md](./adr-002-ui-component-sharing.md) for rationale
 - For each Space in loaded SpacesRows:
-  - Display the Miniature Space visualization (reuse existing UI component)
+  - Display the GTK Miniature Space visualization (with layout rectangles for identification)
   - Add `Gtk.Switch` to toggle enabled/disabled state
   - On toggle: call `setSpaceEnabled(space.id, enabled)`
 
@@ -98,8 +126,10 @@ Update all import statements across the codebase.
 | `src/app/types/space.ts` | Modify | Add `enabled` property |
 | `src/app/repository/layouts.ts` | Rename | → `spaces.ts`, add `setSpaceEnabled` |
 | `src/app/repository/layout-history.ts` | Rename | → `history.ts` |
-| `src/app/main-panel/index.ts` | Modify | Filter disabled Spaces |
-| `src/settings/preferences.ts` | Modify | Add Spaces management UI with Miniature Space |
+| `src/app/main-panel/index.ts` | Modify | Reload on show(), filter disabled Spaces, hide empty rows |
+| `src/settings/gtk-miniature-space.ts` | Create | GTK Space container, positions multiple displays |
+| `src/settings/gtk-miniature-display.ts` | Create | GTK single monitor view with layout rectangles |
+| `src/settings/preferences.ts` | Modify | Restructure to multiple pages (General, Spaces) |
 | Various files | Modify | Update import statements for renamed modules |
 
 ## Verification
@@ -111,17 +141,19 @@ Update all import statements across the codebase.
   - Restart extension, verify disabled state persists
   - Toggle Space back on, verify it reappears in panel
 
-## Timeline
+## Effort Estimate
 
 - Phase 1: 1 point (type update)
 - Phase 2: 1 point (file renames and import updates)
 - Phase 3: 1 point (setSpaceEnabled function)
 - Phase 4: 1 point (MainPanel filtering)
-- Phase 5: 2 points (Preferences UI with Miniature Space)
+- Phase 5: 4 points (GTK Miniature Space/Display + Preferences UI)
 - Testing: 1 point
-- **Total: 7 points**
+- **Total: 9 points**
 
 ## Related Documents
 
 - [roadmap.md](./roadmap.md) - Future Space features (preset/custom spaces)
-- [adr.md](./adr.md) - Architecture decision for storage strategy
+- [adr-001-storage-strategy.md](./adr-001-storage-strategy.md) - Storage strategy decision
+- [adr-002-ui-component-sharing.md](./adr-002-ui-component-sharing.md) - UI component sharing decision
+- [adr-003-preferences-ui-structure.md](./adr-003-preferences-ui-structure.md) - Preferences UI structure decision
