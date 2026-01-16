@@ -8,22 +8,87 @@ import Gtk from 'gi://Gtk';
 
 import { loadLayoutsAsSpacesRows, setSpaceEnabled } from '../app/repository/spaces.js';
 import type { Monitor, Space, SpacesRow } from '../app/types/index.js';
-import { createGtkMiniatureSpace } from './gtk-miniature-space.js';
+import { calculateSpaceDimensions, createGtkMiniatureSpace } from './gtk-miniature-space.js';
 
 const SETTINGS_KEY_SHORTCUT = 'show-panel-shortcut';
 const MONITORS_FILE_NAME = 'monitors.json';
+
+// Window size constants
+const MIN_WINDOW_WIDTH = 400;
+const DEFAULT_WINDOW_HEIGHT = 500;
+const WINDOW_HORIZONTAL_PADDING = 80;
+
+// Spacing between spaces in a row
+const SPACE_SPACING = 12;
 
 /**
  * Build the preferences UI
  */
 export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.Settings): void {
+  // Load spaces and monitors for width calculation
+  const rows = loadLayoutsAsSpacesRows();
+  const monitors = loadMonitors(rows);
+
+  // Calculate required width and set window size
+  const contentWidth = calculateRequiredWidth(rows, monitors);
+  const screenWidth = getScreenWidth();
+  const windowWidth = Math.min(contentWidth + WINDOW_HORIZONTAL_PADDING, screenWidth);
+  window.set_default_size(Math.max(windowWidth, MIN_WINDOW_WIDTH), DEFAULT_WINDOW_HEIGHT);
+
   // Create General page (existing keyboard shortcut settings)
   const generalPage = createGeneralPage(window, settings);
   window.add(generalPage);
 
-  // Create Spaces page
-  const spacesPage = createSpacesPage();
+  // Create Spaces page (reuse already loaded data)
+  const spacesPage = createSpacesPageWithData(rows, monitors);
   window.add(spacesPage);
+}
+
+/**
+ * Calculate the required width to display all space rows
+ */
+function calculateRequiredWidth(rows: SpacesRow[], monitors: Map<string, Monitor>): number {
+  let maxRowWidth = 0;
+
+  for (const row of rows) {
+    if (row.spaces.length === 0) continue;
+
+    let rowWidth = 0;
+    for (const space of row.spaces) {
+      const dimensions = calculateSpaceDimensions(space, monitors);
+      rowWidth += dimensions.width;
+    }
+    // Add spacing between spaces
+    rowWidth += (row.spaces.length - 1) * SPACE_SPACING;
+
+    maxRowWidth = Math.max(maxRowWidth, rowWidth);
+  }
+
+  return maxRowWidth;
+}
+
+/**
+ * Get the width of the primary screen/monitor
+ */
+function getScreenWidth(): number {
+  const display = Gdk.Display.get_default();
+  if (!display) {
+    return 1920;
+  }
+
+  const monitorList = display.get_monitors();
+  if (!monitorList || monitorList.get_n_items() === 0) {
+    return 1920;
+  }
+
+  // Get the first monitor (primary)
+  const monitor = monitorList.get_item(0) as Gdk.Monitor | null;
+  if (!monitor) {
+    return 1920;
+  }
+
+  const geometry = monitor.get_geometry();
+  return geometry.width;
 }
 
 /**
@@ -89,10 +154,17 @@ function createGeneralPage(
   return page;
 }
 
+// Opacity values for space visibility
+const ENABLED_OPACITY = 1.0;
+const DISABLED_OPACITY = 0.35;
+
 /**
- * Create the Spaces preferences page
+ * Create the Spaces preferences page with pre-loaded data
  */
-function createSpacesPage(): Adw.PreferencesPage {
+function createSpacesPageWithData(
+  rows: SpacesRow[],
+  monitors: Map<string, Monitor>
+): Adw.PreferencesPage {
   const page = new Adw.PreferencesPage({
     title: 'Spaces',
     icon_name: 'view-grid-symbolic',
@@ -100,26 +172,21 @@ function createSpacesPage(): Adw.PreferencesPage {
 
   const group = new Adw.PreferencesGroup({
     title: 'Space Visibility',
-    description: 'Toggle Spaces on/off. Disabled Spaces are hidden from the main panel.',
+    description:
+      'Click a Space to toggle visibility. Disabled Spaces are hidden from the main panel.',
   });
 
-  // Load spaces from repository
-  const rows = loadLayoutsAsSpacesRows();
-
-  // Load monitor configuration saved by extension
-  const monitors = loadMonitors(rows);
-
-  // Add each Space with a toggle
-  let spaceIndex = 0;
+  // Add each row as a horizontal container (matching main panel layout)
+  let hasSpaces = false;
   for (const row of rows) {
-    for (const space of row.spaces) {
-      spaceIndex++;
-      const spaceRow = createSpaceRow(space, spaceIndex, monitors);
-      group.add(spaceRow);
-    }
+    if (row.spaces.length === 0) continue;
+    hasSpaces = true;
+
+    const rowWidget = createSpacesRowWidget(row, monitors);
+    group.add(rowWidget);
   }
 
-  if (spaceIndex === 0) {
+  if (!hasSpaces) {
     const emptyRow = new Adw.ActionRow({
       title: 'No Spaces configured',
       subtitle: 'Import a layout configuration to add Spaces',
@@ -130,6 +197,28 @@ function createSpacesPage(): Adw.PreferencesPage {
   page.add(group);
 
   return page;
+}
+
+/**
+ * Create a horizontal row container for multiple spaces
+ */
+function createSpacesRowWidget(row: SpacesRow, monitors: Map<string, Monitor>): Gtk.Widget {
+  // Create horizontal container for spaces in this row
+  const rowBox = new Gtk.Box({
+    orientation: Gtk.Orientation.HORIZONTAL,
+    spacing: SPACE_SPACING,
+    halign: Gtk.Align.CENTER,
+    margin_top: 8,
+    margin_bottom: 8,
+  });
+
+  // Add each space in this row
+  for (const space of row.spaces) {
+    const spaceWidget = createClickableSpace(space, monitors);
+    rowBox.append(spaceWidget);
+  }
+
+  return rowBox;
 }
 
 /**
@@ -209,42 +298,11 @@ function loadMonitors(rows: SpacesRow[]): Map<string, Monitor> {
 }
 
 /**
- * Create a row for a Space with miniature visualization and toggle switch
+ * Create a clickable space widget with opacity-based enabled/disabled feedback
  */
-function createSpaceRow(space: Space, index: number, monitors: Map<string, Monitor>): Gtk.Widget {
-  // Alternate background colors for rows
-  const isEven = index % 2 === 0;
-  const bgColor = isEven ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)';
-
-  // Create outer frame with background
-  const frame = new Gtk.Frame({
-    margin_top: 2,
-    margin_bottom: 2,
-  });
-
-  // Apply CSS for background color
-  const cssProvider = new Gtk.CssProvider();
-  cssProvider.load_from_string(`
-    frame {
-      background-color: ${bgColor};
-      border-radius: 8px;
-      border: none;
-    }
-  `);
-  frame.get_style_context().add_provider(cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-  // Create horizontal box: [spacer] [miniature] [toggle]
-  const row = new Gtk.Box({
-    orientation: Gtk.Orientation.HORIZONTAL,
-    spacing: 12,
-    margin_top: 12,
-    margin_bottom: 12,
-    margin_start: 16,
-    margin_end: 16,
-  });
-
-  // Left spacer for centering
-  const leftSpacer = new Gtk.Box({ hexpand: true });
+function createClickableSpace(space: Space, monitors: Map<string, Monitor>): Gtk.Widget {
+  // Track current enabled state
+  let enabled = space.enabled !== false;
 
   // Create miniature space visualization
   const miniatureWidget = createGtkMiniatureSpace({
@@ -252,27 +310,42 @@ function createSpaceRow(space: Space, index: number, monitors: Map<string, Monit
     monitors,
   });
 
-  // Right spacer for centering
-  const rightSpacer = new Gtk.Box({ hexpand: true });
+  // Set initial opacity based on enabled state
+  miniatureWidget.set_opacity(enabled ? ENABLED_OPACITY : DISABLED_OPACITY);
 
-  // Create toggle switch
-  const toggle = new Gtk.Switch({
-    valign: Gtk.Align.CENTER,
-    active: space.enabled !== false,
+  // Create button wrapper with flat style (no button appearance)
+  const button = new Gtk.Button({
+    child: miniatureWidget,
+    has_frame: false,
   });
 
-  toggle.connect('notify::active', () => {
-    const enabled = toggle.get_active();
+  // Apply CSS to remove button styling
+  const cssProvider = new Gtk.CssProvider();
+  cssProvider.load_from_string(`
+    button {
+      padding: 0;
+      min-width: 0;
+      min-height: 0;
+      background: transparent;
+    }
+    button:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+    }
+    button:active {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  `);
+  button.get_style_context().add_provider(cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+  // Handle click to toggle enabled state
+  button.connect('clicked', () => {
+    enabled = !enabled;
     setSpaceEnabled(space.id, enabled);
+    miniatureWidget.set_opacity(enabled ? ENABLED_OPACITY : DISABLED_OPACITY);
   });
 
-  row.append(leftSpacer);
-  row.append(miniatureWidget);
-  row.append(rightSpacer);
-  row.append(toggle);
-
-  frame.set_child(row);
-  return frame;
+  return button;
 }
 
 /**

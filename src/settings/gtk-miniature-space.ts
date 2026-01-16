@@ -84,7 +84,7 @@ function calculateScale(space: Space, monitors: Map<string, Monitor>): number {
 /**
  * Calculate space dimensions
  */
-function calculateSpaceDimensions(
+export function calculateSpaceDimensions(
   space: Space,
   monitors: Map<string, Monitor>
 ): { width: number; height: number; scale: number } {
