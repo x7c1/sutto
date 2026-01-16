@@ -42,6 +42,9 @@ export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.
   // Create Spaces page (reuse already loaded data)
   const spacesPage = createSpacesPageWithData(rows, monitors);
   window.add(spacesPage);
+
+  // Set Spaces page as the default visible page
+  window.set_visible_page(spacesPage);
 }
 
 /**
@@ -207,7 +210,7 @@ function createSpacesRowWidget(row: SpacesRow, monitors: Map<string, Monitor>): 
   const rowBox = new Gtk.Box({
     orientation: Gtk.Orientation.HORIZONTAL,
     spacing: SPACE_SPACING,
-    halign: Gtk.Align.CENTER,
+    halign: Gtk.Align.START,
     margin_top: 8,
     margin_bottom: 8,
   });
