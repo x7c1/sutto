@@ -87,15 +87,14 @@ export function createGtkMiniatureDisplay(options: GtkMiniatureDisplayOptions): 
   drawingArea.set_draw_func((_area: Gtk.DrawingArea, cr: any, width: number, height: number) => {
     const ctx = cr as CairoContext;
 
-    // Draw background (rounded rectangle)
-    const radius = 4;
-    drawRoundedRect(ctx, 0, 0, width, height, radius);
+    // Draw display background (simple rectangle - no rounded corners)
     ctx.setSourceRGBA(
       DISPLAY_BG_COLOR.r,
       DISPLAY_BG_COLOR.g,
       DISPLAY_BG_COLOR.b,
       DISPLAY_BG_COLOR.a
     );
+    ctx.rectangle(0, 0, width, height);
     ctx.fill();
 
     // Draw layout rectangles
