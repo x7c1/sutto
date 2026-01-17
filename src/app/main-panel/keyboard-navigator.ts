@@ -189,9 +189,7 @@ export class MainPanelKeyboardNavigator {
     let minX = Infinity;
 
     for (const button of this.layoutButtons.keys()) {
-      const allocation = button.get_allocation_box();
-      const x = allocation.x1;
-      const y = allocation.y1;
+      const [x, y] = button.get_transformed_position();
 
       if (y < minY || (y === minY && x < minX)) {
         minY = y;
