@@ -244,15 +244,19 @@ export class MainPanelKeyboardNavigator {
       [Clutter.KEY_Down]: 'down',
       [Clutter.KEY_Left]: 'left',
       [Clutter.KEY_Right]: 'right',
-      [Clutter.KEY_k]: 'up',
-      [Clutter.KEY_j]: 'down',
-      [Clutter.KEY_h]: 'left',
-      [Clutter.KEY_l]: 'right',
       [Clutter.KEY_Return]: 'select',
       [Clutter.KEY_KP_Enter]: 'select',
     };
 
-    const direction = keyMap[symbol];
+    const ctrlKeyMap: { [key: number]: string } = {
+      [Clutter.KEY_p]: 'up',
+      [Clutter.KEY_n]: 'down',
+      [Clutter.KEY_b]: 'left',
+      [Clutter.KEY_f]: 'right',
+    };
+
+    const hasCtrl = (state & Clutter.ModifierType.CONTROL_MASK) !== 0;
+    const direction = hasCtrl ? ctrlKeyMap[symbol] : keyMap[symbol];
     if (!direction) return false; // Propagate event
 
     if (direction === 'select') {
