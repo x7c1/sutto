@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio';
 
+import { SPACES_FILE_NAME } from '../constants.js';
 import type { Layout, LayoutGroup, Space, SpacesRow } from '../types/index.js';
 import type {
   LayoutConfiguration,
@@ -12,9 +13,6 @@ import { getExtensionDataPath } from './extension-path.js';
 import { generateLayoutHash } from './layout-hash-generator.js';
 
 declare function log(message: string): void;
-
-// Storage file path
-const SPACES_FILE_NAME = 'spaces.json';
 
 function getSpacesFilePath(): string {
   return getExtensionDataPath(SPACES_FILE_NAME);

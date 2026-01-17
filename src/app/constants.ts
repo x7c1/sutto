@@ -3,6 +3,11 @@ import type { LayoutConfiguration } from './types/layout-setting';
 // Extension
 export const EXTENSION_UUID = 'snappa@x7c1.github.io';
 
+// Data files (snappa-generated, distinct from GNOME Shell required files like metadata.json)
+export const HISTORY_FILE_NAME = 'history.snappa.json';
+export const MONITORS_FILE_NAME = 'monitors.snappa.json';
+export const SPACES_FILE_NAME = 'spaces.snappa.json';
+
 // Timing
 export const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding panel when cursor leaves
 

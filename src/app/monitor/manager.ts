@@ -9,10 +9,9 @@ import Gio from 'gi://Gio';
 import type Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+import { MONITORS_FILE_NAME } from '../constants.js';
 import { getExtensionDataPath } from '../repository/extension-path.js';
 import type { BoundingBox, Monitor } from '../types/monitor-config.js';
-
-const MONITORS_FILE_NAME = 'monitors.json';
 
 declare function log(message: string): void;
 

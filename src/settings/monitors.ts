@@ -1,10 +1,8 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-import { EXTENSION_UUID } from '../app/constants.js';
+import { EXTENSION_UUID, MONITORS_FILE_NAME } from '../app/constants.js';
 import type { Monitor, SpacesRow } from '../app/types/index.js';
-
-const MONITORS_FILE_NAME = 'monitors.json';
 
 /**
  * Get extension data directory path

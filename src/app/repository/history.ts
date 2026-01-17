@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio';
 
+import { HISTORY_FILE_NAME } from '../constants.js';
 import { getExtensionDataPath } from './extension-path.js';
 
 declare function log(message: string): void;
@@ -23,8 +24,6 @@ interface LayoutHistory {
     [key: string]: string; // "wmClass::label" -> layoutId (persistent)
   };
 }
-
-const HISTORY_FILE_NAME = 'history.json';
 
 /**
  * LayoutHistoryRepository
