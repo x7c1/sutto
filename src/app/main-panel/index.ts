@@ -333,7 +333,7 @@ export class MainPanel {
   } {
     if (rows.length === 0) {
       const element = new St.Label({
-        text: 'No spaces rows available',
+        text: 'No spaces available',
         style: `
           font-size: 14px;
           color: rgba(255, 255, 255, 0.7);

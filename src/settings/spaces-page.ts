@@ -56,6 +56,12 @@ export function createSpacesPage(
       'Click a Space to toggle visibility. Disabled Spaces are hidden from the main panel.',
   });
 
+  // Create a container to hold all rows (centered as a block, rows left-aligned within)
+  const rowsContainer = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    halign: Gtk.Align.CENTER,
+  });
+
   // Add each row as a horizontal container (matching main panel layout)
   let hasSpaces = false;
   for (const row of rows) {
@@ -63,10 +69,12 @@ export function createSpacesPage(
     hasSpaces = true;
 
     const rowWidget = createSpacesRowWidget(row, monitors);
-    group.add(rowWidget);
+    rowsContainer.append(rowWidget);
   }
 
-  if (!hasSpaces) {
+  if (hasSpaces) {
+    group.add(rowsContainer);
+  } else {
     const emptyRow = new Adw.ActionRow({
       title: 'No Spaces configured',
       subtitle: 'Import a layout configuration to add Spaces',
