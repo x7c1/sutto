@@ -1,3 +1,4 @@
+import { BASE_LAYOUT_GROUPS } from './config/base-layout-groups.js';
 import type { LayoutConfiguration } from './types/layout-setting';
 
 // Extension
@@ -6,7 +7,11 @@ export const EXTENSION_UUID = 'snappa@x7c1.github.io';
 // Data files (snappa-generated, distinct from GNOME Shell required files like metadata.json)
 export const HISTORY_FILE_NAME = 'history.snappa.json';
 export const MONITORS_FILE_NAME = 'monitors.snappa.json';
+// Legacy file (will be removed after migration to SpaceCollection)
 export const SPACES_FILE_NAME = 'spaces.snappa.json';
+// SpaceCollection files
+export const PRESET_SPACE_COLLECTIONS_FILE_NAME = 'preset-space-collections.snappa.json';
+export const CUSTOM_SPACE_COLLECTIONS_FILE_NAME = 'custom-space-collections.snappa.json';
 
 // Timing
 export const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding panel when cursor leaves
@@ -38,50 +43,12 @@ export const SPACE_SPACING = 6; // Vertical spacing between Space sections
 export const MONITOR_MARGIN = 6; // Margin around each monitor display in miniature space
 
 // Default layout configuration (multi-monitor structure)
-// Includes a basic dual-monitor configuration with space rows
+// Used as fallback when no SpaceCollection exists
+// Note: This is a legacy configuration for dual-monitor setup
+// New code should use preset generation instead
 export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
-  layoutGroups: [
-    {
-      name: 'vertical 2-split',
-      layouts: [
-        { label: 'Left Half', x: '0', y: '0', width: '50%', height: '100%' },
-        { label: 'Right Half', x: '50%', y: '0', width: '50%', height: '100%' },
-      ],
-    },
-    {
-      name: 'vertical 3-split',
-      layouts: [
-        { label: 'Left Third', x: '0', y: '0', width: '1/3', height: '100%' },
-        { label: 'Center Third', x: '1/3', y: '0', width: '1/3', height: '100%' },
-        { label: 'Right Third', x: '2/3', y: '0', width: '1/3', height: '100%' },
-      ],
-    },
-    {
-      name: 'vertical 3-split wide center',
-      layouts: [
-        { label: 'Left Third', x: '0', y: '0', width: '1/4', height: '100%' },
-        { label: 'Center Third', x: '1/4', y: '0', width: '1/2', height: '100%' },
-        { label: 'Right Third', x: '3/4', y: '0', width: '1/4', height: '100%' },
-      ],
-    },
-    {
-      name: 'grid 4x2',
-      layouts: [
-        { label: 'Top Left 1', x: '0', y: '0', width: '25%', height: '50%' },
-        { label: 'Top Left 2', x: '25%', y: '0', width: '25%', height: '50%' },
-        { label: 'Top Right 1', x: '50%', y: '0', width: '25%', height: '50%' },
-        { label: 'Top Right 2', x: '75%', y: '0', width: '25%', height: '50%' },
-        { label: 'Bottom Left 1', x: '0', y: '50%', width: '25%', height: '50%' },
-        { label: 'Bottom Left 2', x: '25%', y: '50%', width: '25%', height: '50%' },
-        { label: 'Bottom Right 1', x: '50%', y: '50%', width: '25%', height: '50%' },
-        { label: 'Bottom Right 2', x: '75%', y: '50%', width: '25%', height: '50%' },
-      ],
-    },
-    {
-      name: 'full screen',
-      layouts: [{ label: 'full', x: '0', y: '0', width: '100%', height: '100%' }],
-    },
-  ],
+  name: 'Dual Monitor',
+  layoutGroups: BASE_LAYOUT_GROUPS,
   rows: [
     {
       spaces: [

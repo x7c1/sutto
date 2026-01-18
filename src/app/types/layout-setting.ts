@@ -26,6 +26,7 @@ export interface SpacesRowSetting {
 
 // Complete layout configuration structure (for import input)
 export interface LayoutConfiguration {
+  name: string; // Required name for SpaceCollection (e.g., "Work", "Home", "Single Monitor")
   layoutGroups: LayoutGroupSetting[]; // Global, reusable Layout Groups
   rows: SpacesRowSetting[]; // Rows of Spaces
 }

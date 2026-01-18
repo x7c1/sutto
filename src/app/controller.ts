@@ -78,6 +78,8 @@ export class Controller {
     });
     // Pass getter function so shortcuts are read fresh from settings each time panel is shown
     this.mainPanel.setOpenPreferencesShortcutsGetter(() => settings.getOpenPreferencesShortcut());
+    // Pass getter for active SpaceCollection ID
+    this.mainPanel.setActiveSpaceCollectionIdGetter(() => settings.getActiveSpaceCollectionId());
     // Dynamic registration prevents shortcut conflicts when panel is hidden
     this.mainPanel.setOnPanelShown(() => {
       this.keyboardShortcutManager.registerHidePanelShortcut(() => this.onHidePanelShortcut());

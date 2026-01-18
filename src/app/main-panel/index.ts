@@ -11,10 +11,11 @@ import St from 'gi://St';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { AUTO_HIDE_DELAY_MS, DEFAULT_LAYOUT_CONFIGURATION } from '../constants.js';
+import { AUTO_HIDE_DELAY_MS } from '../constants.js';
 import type { MonitorManager } from '../monitor/manager.js';
 import type { LayoutHistoryRepository } from '../repository/history.js';
-import { importLayoutConfiguration, loadLayoutsAsSpacesRows } from '../repository/spaces.js';
+import { getActiveSpaceCollection } from '../service/active-space-collection.js';
+import { ensurePresetForCurrentMonitors } from '../service/preset-generator.js';
 import type { Layout, Position, Size, SpacesRow } from '../types/index.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
@@ -42,6 +43,7 @@ export class MainPanel {
   private monitorManager: MonitorManager; // Always required
   private layoutHistoryRepository: LayoutHistoryRepository;
   private getOpenPreferencesShortcuts: () => string[] = () => [];
+  private getActiveSpaceCollectionId: () => string = () => '';
 
   // Component instances
   private state: MainPanelState = new MainPanelState();
@@ -63,17 +65,14 @@ export class MainPanel {
     this.autoHide.setOnHide(() => {
       this.hide();
     });
+  }
 
-    // Initialize layouts repository
-    // First launch: import default settings if repository is empty
-    let rows = loadLayoutsAsSpacesRows();
-    if (rows.length === 0) {
-      log('[MainPanel] Layouts repository is empty, importing default configuration');
-      importLayoutConfiguration(DEFAULT_LAYOUT_CONFIGURATION);
-      rows = loadLayoutsAsSpacesRows();
-    }
-
-    this.state.setSpacesRows(rows);
+  /**
+   * Set getter function for active SpaceCollection ID
+   * Using a getter ensures fresh values are read from settings each time
+   */
+  setActiveSpaceCollectionIdGetter(getter: () => string): void {
+    this.getActiveSpaceCollectionId = getter;
   }
 
   /**
@@ -132,11 +131,18 @@ export class MainPanel {
     this.state.setCurrentWindow(window);
     this.autoHide.resetHoverStates();
 
-    // Reload from repository and filter disabled Spaces
-    const allRows = loadLayoutsAsSpacesRows();
+    // Ensure preset exists for current monitor count
+    ensurePresetForCurrentMonitors();
+
+    // Load active SpaceCollection and filter disabled Spaces
+    const activeId = this.getActiveSpaceCollectionId();
+    const activeCollection = getActiveSpaceCollection(activeId);
+    const allRows = activeCollection?.rows ?? [];
     const rows = this.filterEnabledSpaces(allRows);
     this.state.setSpacesRows(rows);
-    log(`[MainPanel] Spaces rows count: ${rows.length} (filtered from ${allRows.length})`);
+    log(
+      `[MainPanel] Using SpaceCollection: ${activeCollection?.name ?? 'none'}, rows: ${rows.length} (filtered from ${allRows.length})`
+    );
 
     const panelDimensions = this.positionManager.calculatePanelDimensions(
       rows,

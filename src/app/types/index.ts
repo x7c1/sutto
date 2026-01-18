@@ -3,4 +3,5 @@ export type { Layout } from './layout.js';
 export type { LayoutGroup } from './layout-group.js';
 export type { BoundingBox, Monitor } from './monitor-config.js';
 export type { Space } from './space.js';
+export type { SpaceCollection } from './space-collection.js';
 export type { SpacesRow } from './spaces-row.js';
