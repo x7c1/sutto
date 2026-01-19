@@ -224,14 +224,8 @@ export class MonitorManager {
         const json = new TextDecoder('utf-8').decode(contents);
         const parsed = JSON.parse(json);
 
-        // Check if this is new multi-environment format or legacy format
-        if (parsed.environments && Array.isArray(parsed.environments)) {
-          this.storage = parsed as MonitorEnvironmentStorage;
-          log(`[MonitorManager] Loaded ${this.storage.environments.length} environments`);
-        } else {
-          // Legacy format (flat array) - ignore, will be overwritten
-          log('[MonitorManager] Legacy format detected, will migrate on save');
-        }
+        this.storage = parsed as MonitorEnvironmentStorage;
+        log(`[MonitorManager] Loaded ${this.storage.environments.length} environments`);
       }
     } catch (e) {
       log(`[MonitorManager] Error loading storage: ${e}`);

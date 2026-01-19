@@ -135,14 +135,12 @@ function getMonitorCountFromGdk(): number {
 /**
  * Load monitor count from monitors.snappa.json
  * Falls back to Gdk detection if file doesn't exist (for settings context)
- * Supports both legacy array format and new multi-environment format
  */
 export function loadMonitorCount(): number {
   const filePath = getExtensionDataPath(MONITORS_FILE_NAME);
   const file = Gio.File.new_for_path(filePath);
 
   if (!file.query_exists(null)) {
-    // Try Gdk fallback (works in settings context)
     const gdkCount = getMonitorCountFromGdk();
     if (gdkCount > 0) {
       log(`[PresetGenerator] No monitor file, using Gdk count: ${gdkCount}`);
@@ -159,25 +157,12 @@ export function loadMonitorCount(): number {
 
     const contentsString = new TextDecoder('utf-8').decode(contents);
     const data = JSON.parse(contentsString);
-
-    // New multi-environment format
-    if (data.environments && Array.isArray(data.environments) && data.current) {
-      const currentEnv = data.environments.find(
-        (e: { id: string; monitors: unknown[] }) => e.id === data.current
-      );
-      if (currentEnv && Array.isArray(currentEnv.monitors)) {
-        return currentEnv.monitors.length;
-      }
-      // File exists but no current environment - try Gdk
-      return getMonitorCountFromGdk();
+    const currentEnv = data.environments.find(
+      (e: { id: string; monitors: unknown[] }) => e.id === data.current
+    );
+    if (currentEnv && Array.isArray(currentEnv.monitors)) {
+      return currentEnv.monitors.length;
     }
-
-    // Legacy array format
-    if (Array.isArray(data)) {
-      return data.length;
-    }
-
-    // Invalid format - try Gdk
     return getMonitorCountFromGdk();
   } catch (e) {
     log(`[PresetGenerator] Error loading monitor count: ${e}`);

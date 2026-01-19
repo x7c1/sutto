@@ -1,14 +1,9 @@
-import { BASE_LAYOUT_GROUPS } from './config/base-layout-groups.js';
-import type { LayoutConfiguration } from './types/layout-setting';
-
 // Extension
 export const EXTENSION_UUID = 'snappa@x7c1.github.io';
 
 // Data files (snappa-generated, distinct from GNOME Shell required files like metadata.json)
 export const HISTORY_FILE_NAME = 'history.snappa.json';
 export const MONITORS_FILE_NAME = 'monitors.snappa.json';
-// Legacy file (will be removed after migration to SpaceCollection)
-export const SPACES_FILE_NAME = 'spaces.snappa.json';
 // SpaceCollection files
 export const PRESET_SPACE_COLLECTIONS_FILE_NAME = 'preset-space-collections.snappa.json';
 export const CUSTOM_SPACE_COLLECTIONS_FILE_NAME = 'custom-space-collections.snappa.json';
@@ -41,56 +36,3 @@ export const FOOTER_TEXT_COLOR = 'rgba(255, 255, 255, 0.5)';
 export const MAX_MONITOR_DISPLAY_WIDTH = 240; // Maximum width for the widest monitor in miniature display
 export const SPACE_SPACING = 6; // Vertical spacing between Space sections
 export const MONITOR_MARGIN = 6; // Margin around each monitor display in miniature space
-
-// Default layout configuration (multi-monitor structure)
-// Used as fallback when no SpaceCollection exists
-// Note: This is a legacy configuration for dual-monitor setup
-// New code should use preset generation instead
-export const DEFAULT_LAYOUT_CONFIGURATION: LayoutConfiguration = {
-  name: 'Dual Monitor',
-  layoutGroups: BASE_LAYOUT_GROUPS,
-  rows: [
-    {
-      spaces: [
-        {
-          displays: {
-            '0': 'vertical 3-split',
-            '1': 'vertical 3-split',
-          },
-        },
-        {
-          displays: {
-            '0': 'vertical 3-split wide center',
-            '1': 'vertical 3-split wide center',
-          },
-        },
-      ],
-    },
-    {
-      spaces: [
-        {
-          displays: {
-            '0': 'vertical 2-split',
-            '1': 'vertical 2-split',
-          },
-        },
-        {
-          displays: {
-            '0': 'grid 4x2',
-            '1': 'grid 4x2',
-          },
-        },
-      ],
-    },
-    {
-      spaces: [
-        {
-          displays: {
-            '0': 'full screen',
-            '1': 'full screen',
-          },
-        },
-      ],
-    },
-  ],
-};
