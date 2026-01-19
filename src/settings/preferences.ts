@@ -17,11 +17,11 @@ import {
 // Window size constants
 const MIN_WINDOW_WIDTH = 500;
 const MIN_WINDOW_HEIGHT = 400;
-const MAX_WINDOW_HEIGHT = 800; // Prevent excessively tall windows; content scrolls instead
 const DEFAULT_SCREEN_WIDTH = 1920;
 const DEFAULT_SCREEN_HEIGHT = 1080;
 const WINDOW_HORIZONTAL_PADDING = 80;
 const WINDOW_VERTICAL_PADDING = 100;
+const SCREEN_HEIGHT_MARGIN = 100; // Margin for taskbars, panels, etc.
 
 /**
  * Build the preferences UI
@@ -48,21 +48,27 @@ export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.
     console.log(`[Snappa Prefs] ERROR loading collections: ${e}`);
   }
 
-  const rows = collections.length > 0 ? collections[0].rows : [];
-  const monitors = loadMonitors(rows);
+  // Load monitors using any available rows
+  const anyRows = collections.length > 0 ? collections[0].rows : [];
+  const monitors = loadMonitors(anyRows);
   console.log(`[Snappa Prefs] Loaded ${monitors.size} monitors`);
 
-  // Calculate required size and set window size
-  const contentWidth = calculateRequiredWidth(rows, monitors);
-  const contentHeight = calculateRequiredHeight(rows, monitors);
+  // Calculate required size from ALL collections (use maximum)
+  let maxContentWidth = 0;
+  let maxContentHeight = 0;
+  for (const collection of collections) {
+    const width = calculateRequiredWidth(collection.rows, monitors);
+    const height = calculateRequiredHeight(collection.rows, monitors);
+    maxContentWidth = Math.max(maxContentWidth, width);
+    maxContentHeight = Math.max(maxContentHeight, height);
+  }
+  const contentWidth = maxContentWidth;
+  const contentHeight = maxContentHeight;
   const { screenWidth, screenHeight } = getScreenSize();
   const windowWidth = Math.min(contentWidth + WINDOW_HORIZONTAL_PADDING, screenWidth);
-  // Clamp height to MAX_WINDOW_HEIGHT to prevent excessively tall windows
-  const windowHeight = Math.min(
-    contentHeight + WINDOW_VERTICAL_PADDING,
-    screenHeight,
-    MAX_WINDOW_HEIGHT
-  );
+  // Clamp height to screen height minus margin for taskbars/panels
+  const maxWindowHeight = screenHeight - SCREEN_HEIGHT_MARGIN;
+  const windowHeight = Math.min(contentHeight + WINDOW_VERTICAL_PADDING, maxWindowHeight);
   window.set_default_size(
     Math.max(windowWidth, MIN_WINDOW_WIDTH),
     Math.max(windowHeight, MIN_WINDOW_HEIGHT)

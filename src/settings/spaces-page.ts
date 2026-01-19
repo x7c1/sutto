@@ -1,9 +1,9 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
 import {
+  findCollectionById,
   loadAllCollections,
   loadCustomCollections,
   loadPresetCollections,
@@ -31,9 +31,9 @@ const HOVER_OPACITY_CHANGE = 0.15;
 const LIST_PANE_WIDTH = 200;
 
 /**
- * Calculate the required width to display all space rows
+ * Calculate the preview content width for a set of rows (without list pane)
  */
-export function calculateRequiredWidth(rows: SpacesRow[], monitors: Map<string, Monitor>): number {
+function calculatePreviewWidth(rows: SpacesRow[], monitors: Map<string, Monitor>): number {
   let maxRowWidth = 0;
 
   for (const row of rows) {
@@ -49,7 +49,14 @@ export function calculateRequiredWidth(rows: SpacesRow[], monitors: Map<string, 
     maxRowWidth = Math.max(maxRowWidth, rowWidth);
   }
 
-  return maxRowWidth + LIST_PANE_WIDTH + 50; // Add list pane width and some padding
+  return maxRowWidth;
+}
+
+/**
+ * Calculate the required width to display all space rows
+ */
+export function calculateRequiredWidth(rows: SpacesRow[], monitors: Map<string, Monitor>): number {
+  return calculatePreviewWidth(rows, monitors) + LIST_PANE_WIDTH + 50; // Add list pane width and some padding
 }
 
 /**
@@ -70,8 +77,13 @@ export function calculateRequiredHeight(rows: SpacesRow[], monitors: Map<string,
     totalHeight += maxRowHeight + SPACE_SPACING;
   }
 
-  // Add padding for: title (50), group header (80), collection name label (30), margins (40)
-  return totalHeight + 200;
+  // Add padding for UI chrome:
+  // - Adw.PreferencesPage title bar: ~50
+  // - Adw.PreferencesGroup header + description: ~100
+  // - Collection name label in preview: ~40
+  // - Margins and spacing: ~60
+  // - Extra buffer for GTK decorations: ~50
+  return totalHeight + 300;
 }
 
 interface SpacesPageState {
@@ -80,6 +92,9 @@ interface SpacesPageState {
   previewContainer: Gtk.Box;
   monitors: Map<string, Monitor>;
   checkButtons: Map<string, Gtk.CheckButton>;
+  selectionIndicators: Map<string, Gtk.Image>;
+  firstRadioButton: Gtk.CheckButton | null;
+  totalCollectionCount: number;
   onActiveChanged: (collectionId: string) => void;
 }
 
@@ -127,13 +142,33 @@ export function createSpacesPage(
   });
   previewScrolled.set_child(previewContainer);
 
+  // Determine initial active collection before creating UI
+  const allCollections = loadAllCollections();
+  const initialCollection =
+    allCollections.find((c) => c.id === activeCollectionId) || allCollections[0];
+  const resolvedActiveId = initialCollection?.id ?? '';
+
+  // Calculate max preview width across all collections to fix the preview pane width
+  let maxPreviewWidth = 0;
+  for (const collection of allCollections) {
+    const width = calculatePreviewWidth(collection.rows, monitors);
+    maxPreviewWidth = Math.max(maxPreviewWidth, width);
+  }
+  // Set fixed width on preview scrolled window to prevent left pane shifting
+  if (maxPreviewWidth > 0) {
+    previewScrolled.set_size_request(maxPreviewWidth + 20, -1); // Add padding
+  }
+
   // Create state object for managing selections
   const state: SpacesPageState = {
-    activeCollectionId,
-    selectedCollectionId: activeCollectionId,
+    activeCollectionId: resolvedActiveId,
+    selectedCollectionId: resolvedActiveId,
     previewContainer,
     monitors,
     checkButtons: new Map(),
+    selectionIndicators: new Map(),
+    firstRadioButton: null,
+    totalCollectionCount: allCollections.length,
     onActiveChanged,
   };
 
@@ -151,12 +186,12 @@ export function createSpacesPage(
   mainBox.append(previewScrolled);
 
   // Load initial preview
-  const allCollections = loadAllCollections();
-  const initialCollection =
-    allCollections.find((c) => c.id === activeCollectionId) || allCollections[0];
   if (initialCollection) {
-    state.selectedCollectionId = initialCollection.id;
     updatePreview(state, initialCollection);
+    // Notify settings of resolved active ID if it changed
+    if (resolvedActiveId !== activeCollectionId) {
+      onActiveChanged(resolvedActiveId);
+    }
   }
 
   group.add(mainBox);
@@ -259,32 +294,36 @@ function createCollectionRow(
     spacing: 8,
   });
 
-  // Radio button for selection (first button has no group, subsequent buttons join the group)
-  const existingButton = state.checkButtons.values().next().value as Gtk.CheckButton | undefined;
-  const radio = new Gtk.CheckButton();
-  if (existingButton) {
-    radio.set_group(existingButton);
-  }
-  if (collection.id === state.activeCollectionId) {
-    radio.set_active(true);
-  }
-  state.checkButtons.set(collection.id, radio);
-
-  radio.connect('toggled', () => {
-    if (radio.get_active()) {
-      state.activeCollectionId = collection.id;
-      state.selectedCollectionId = collection.id;
-      state.onActiveChanged(collection.id);
-      updatePreview(state, collection);
+  // Only show radio button when there are multiple collections to choose from
+  if (state.totalCollectionCount > 1) {
+    const radio = new Gtk.CheckButton();
+    if (state.firstRadioButton) {
+      radio.set_group(state.firstRadioButton);
     } else {
-      // Prevent unchecking - radio buttons must always have one selected
-      if (state.activeCollectionId === collection.id) {
-        radio.set_active(true);
-      }
+      state.firstRadioButton = radio;
     }
-  });
+    if (collection.id === state.activeCollectionId) {
+      radio.set_active(true);
+    }
+    state.checkButtons.set(collection.id, radio);
 
-  rowBox.append(radio);
+    radio.connect('toggled', () => {
+      // Only act when this radio becomes active (ignore deactivation events)
+      if (radio.get_active()) {
+        state.activeCollectionId = collection.id;
+        state.selectedCollectionId = collection.id;
+        state.onActiveChanged(collection.id);
+        updateSelectionIndicators(state);
+        // Reload collection from file to get latest enabled states
+        const freshCollection = findCollectionById(collection.id);
+        if (freshCollection) {
+          updatePreview(state, freshCollection);
+        }
+      }
+    });
+
+    rowBox.append(radio);
+  }
 
   // Collection name label (clickable)
   const nameButton = new Gtk.Button({
@@ -294,9 +333,32 @@ function createCollectionRow(
     halign: Gtk.Align.START,
   });
   nameButton.connect('clicked', () => {
-    radio.set_active(true);
+    // When there's a radio button, activate it (which triggers the selection logic)
+    // Otherwise, just select this collection directly
+    const radio = state.checkButtons.get(collection.id);
+    if (radio) {
+      radio.set_active(true);
+    } else {
+      state.activeCollectionId = collection.id;
+      state.selectedCollectionId = collection.id;
+      state.onActiveChanged(collection.id);
+      updateSelectionIndicators(state);
+      // Reload collection from file to get latest enabled states
+      const freshCollection = findCollectionById(collection.id);
+      if (freshCollection) {
+        updatePreview(state, freshCollection);
+      }
+    }
   });
   rowBox.append(nameButton);
+
+  // Selection indicator (">") shown for the active collection
+  const indicator = new Gtk.Image({
+    icon_name: 'go-next-symbolic',
+    visible: collection.id === state.activeCollectionId,
+  });
+  state.selectionIndicators.set(collection.id, indicator);
+  rowBox.append(indicator);
 
   // Delete button for custom collections
   if (isCustom) {
@@ -334,6 +396,15 @@ function createCollectionRow(
 }
 
 /**
+ * Update selection indicators to show which collection is active
+ */
+function updateSelectionIndicators(state: SpacesPageState): void {
+  for (const [collectionId, indicator] of state.selectionIndicators) {
+    indicator.set_visible(collectionId === state.activeCollectionId);
+  }
+}
+
+/**
  * Update the preview pane with the selected collection
  */
 function updatePreview(state: SpacesPageState, collection: SpaceCollection): void {
@@ -344,14 +415,6 @@ function updatePreview(state: SpacesPageState, collection: SpaceCollection): voi
     state.previewContainer.remove(child);
     child = next;
   }
-
-  // Add collection name
-  const titleLabel = new Gtk.Label({
-    label: `<b>${GLib.markup_escape_text(collection.name, -1)}</b>`,
-    use_markup: true,
-    margin_bottom: 12,
-  });
-  state.previewContainer.append(titleLabel);
 
   // Add rows
   if (collection.rows.length === 0) {

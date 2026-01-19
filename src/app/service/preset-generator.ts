@@ -17,14 +17,9 @@ const log = (message: string): void => console.log(message);
  */
 function getPresetName(monitorCount: number): string {
   if (monitorCount === 1) {
-    return 'Single Monitor';
-  } else if (monitorCount === 2) {
-    return 'Dual Monitor';
-  } else if (monitorCount === 3) {
-    return 'Triple Monitor';
-  } else {
-    return `${monitorCount} Monitors`;
+    return '1 Monitor';
   }
+  return `${monitorCount} Monitors`;
 }
 
 /**
