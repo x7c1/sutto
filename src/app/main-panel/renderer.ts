@@ -163,13 +163,15 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
 
 /**
  * Create spaces row view with Spaces and multi-monitor support
+ * @param inactiveMonitorKeys - Set of monitor keys that don't exist in current physical setup (will be grayed out)
  */
 export function createSpacesRowView(
   monitors: Map<string, Monitor>,
   rows: SpacesRow[],
   window: Meta.Window | null,
   onLayoutSelected: (layout: Layout) => void,
-  layoutHistoryRepository: LayoutHistoryRepository
+  layoutHistoryRepository: LayoutHistoryRepository,
+  inactiveMonitorKeys: Set<string> = new Set()
 ): SpacesRowView {
   const rowsContainer = new St.BoxLayout({
     style_class: 'snap-rows-container',
@@ -213,7 +215,8 @@ export function createSpacesRowView(
         monitors,
         window,
         onLayoutSelected,
-        layoutHistoryRepository
+        layoutHistoryRepository,
+        inactiveMonitorKeys
       );
       rowBox.add_child(view.spaceContainer);
 

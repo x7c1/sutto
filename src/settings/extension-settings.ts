@@ -62,4 +62,20 @@ export class ExtensionSettings {
   getGSettings(): Gio.Settings {
     return this.settings;
   }
+
+  /**
+   * Get the active SpaceCollection ID
+   * @returns The ID of the active SpaceCollection, or empty string if not set
+   */
+  getActiveSpaceCollectionId(): string {
+    return this.settings.get_string('active-space-collection-id');
+  }
+
+  /**
+   * Set the active SpaceCollection ID
+   * @param id The ID of the SpaceCollection to set as active
+   */
+  setActiveSpaceCollectionId(id: string): void {
+    this.settings.set_string('active-space-collection-id', id);
+  }
 }

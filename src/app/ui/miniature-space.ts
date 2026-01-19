@@ -71,13 +71,15 @@ function calculateBoundingBoxForSpace(
 /**
  * Create a Miniature Space view for a Space
  * Shows all monitors in their physical 2D arrangement
+ * @param inactiveMonitorKeys - Set of monitor keys that don't exist in current physical setup (will be grayed out)
  */
 export function createMiniatureSpaceView(
   space: Space,
   monitors: Map<string, Monitor>,
   window: Meta.Window | null,
   onLayoutSelected: (layout: Layout) => void,
-  layoutHistoryRepository: LayoutHistoryRepository
+  layoutHistoryRepository: LayoutHistoryRepository,
+  inactiveMonitorKeys: Set<string> = new Set()
 ): MiniatureSpaceView {
   // Calculate dimensions and scale for this Space
   const dimensions = calculateSpaceDimensions(space, monitors);
@@ -123,6 +125,9 @@ export function createMiniatureSpaceView(
     const scaledX = (monitor.geometry.x - bbox.minX) * scale + MONITOR_MARGIN;
     const scaledY = (monitor.geometry.y - bbox.minY) * scale + MONITOR_MARGIN;
 
+    // Check if this monitor is inactive (doesn't exist in current physical setup)
+    const isInactive = inactiveMonitorKeys.has(monitorKey);
+
     // Create miniature display for this monitor
     const miniatureView = createMiniatureDisplayView(
       layoutGroup,
@@ -134,7 +139,8 @@ export function createMiniatureSpaceView(
       layoutHistoryRepository,
       false, // isLastInRow
       0, // No CSS margin needed - spacing handled by size/position adjustment
-      totalMonitors
+      totalMonitors,
+      isInactive
     );
 
     // Position the miniature display

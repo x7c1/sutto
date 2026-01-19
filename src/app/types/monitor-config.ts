@@ -11,3 +11,21 @@ export interface BoundingBox {
   width: number;
   height: number;
 }
+
+/**
+ * Monitor environment - stores monitors configuration for a specific physical setup
+ */
+export interface MonitorEnvironment {
+  id: string; // Hash computed from all monitors' geometry data
+  monitors: Monitor[];
+  lastActiveCollectionId: string;
+  lastActiveAt: number; // Timestamp when environment was last active
+}
+
+/**
+ * Multi-environment monitor storage structure
+ */
+export interface MonitorEnvironmentStorage {
+  environments: MonitorEnvironment[];
+  current: string; // ID of the current environment
+}

@@ -16,5 +16,10 @@
       <summary>Open preferences shortcut</summary>
       <description>Keyboard shortcut to open preferences while main panel is visible. Default is Ctrl+Comma.</description>
     </key>
+    <key name="active-space-collection-id" type="s">
+      <default>''</default>
+      <summary>Active space collection ID</summary>
+      <description>The ID of the currently active SpaceCollection. Empty string means use the first available preset.</description>
+    </key>
   </schema>
 </schemalist>
