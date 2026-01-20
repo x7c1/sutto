@@ -168,6 +168,7 @@ export class MainPanelKeyboardNavigator {
   private initializeFocus(): St.Button | null {
     // Find selected button if exists
     for (const [button] of this.layoutButtons.entries()) {
+      if (!button.reactive) continue;
       const buttonWithMeta = button as LayoutButtonWithMetadata;
       if (buttonWithMeta._isSelected) {
         this.applyFocusStyle(button);
@@ -189,6 +190,7 @@ export class MainPanelKeyboardNavigator {
     let minX = Infinity;
 
     for (const button of this.layoutButtons.keys()) {
+      if (!button.reactive) continue;
       const [x, y] = button.get_transformed_position();
 
       if (y < minY || (y === minY && x < minX)) {
@@ -361,8 +363,8 @@ export class MainPanelKeyboardNavigator {
     let minDistance = Infinity;
     for (const [button, layout] of this.layoutButtons.entries()) {
       layout; // Prevent unused variable warning
-      // Skip current button
-      if (button === this.focusedButton) {
+      // Skip current button and inactive buttons
+      if (button === this.focusedButton || !button.reactive) {
         continue;
       }
 

@@ -18,7 +18,7 @@ export const DISPLAY_SPACING = 4; // Spacing between miniature displays (vertica
 export const ROW_SPACING = 10; // Vertical spacing between space rows
 export const DISPLAY_SPACING_HORIZONTAL = 12; // Horizontal spacing between displays within a row
 export const BUTTON_BORDER_WIDTH = 1; // Border width for layout buttons
-export const FOOTER_MARGIN_TOP = 2; // Margin above footer
+export const FOOTER_MARGIN_TOP = 3; // Margin above footer
 
 // Colors
 export const PANEL_BG_COLOR = 'rgba(40, 40, 40, 0.9)'; // Main panel background

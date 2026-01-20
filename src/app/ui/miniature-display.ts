@@ -17,9 +17,8 @@ export interface MiniatureDisplayView {
   }>;
 }
 
-// Colors for inactive displays
-const INACTIVE_DISPLAY_BG_COLOR = 'rgba(40, 40, 40, 0.6)';
-const INACTIVE_OVERLAY_COLOR = 'rgba(60, 60, 60, 0.7)';
+// Opacity for inactive displays (0-255, where 255 is fully opaque)
+const INACTIVE_OPACITY = 100;
 
 /**
  * Create a miniature display view with light black background for a specific group
@@ -38,7 +37,6 @@ export function createMiniatureDisplayView(
   totalMonitors: number = 1,
   isInactive: boolean = false
 ): MiniatureDisplayView {
-  const bgColor = isInactive ? INACTIVE_DISPLAY_BG_COLOR : DISPLAY_BG_COLOR;
   const style = `
         width: ${displayWidth}px;
         height: ${displayHeight}px;
@@ -46,7 +44,7 @@ export function createMiniatureDisplayView(
         margin-bottom: ${DISPLAY_SPACING}px;
         ${!isLastInRow ? `margin-right: ${DISPLAY_SPACING_HORIZONTAL}px;` : ''}
         ${monitorMargin > 0 ? `margin: ${monitorMargin}px;` : ''}
-        background-color: ${bgColor};
+        background-color: ${DISPLAY_BG_COLOR};
     `;
 
   const miniatureDisplay = new St.Widget({
@@ -138,19 +136,9 @@ export function createMiniatureDisplayView(
     miniatureDisplay.add_child(headerLabel);
   }
 
-  // Add overlay for inactive displays (monitors that don't exist in current setup)
+  // Gray out inactive displays (monitors that don't exist in current setup)
   if (isInactive) {
-    const overlay = new St.Widget({
-      style: `
-        width: ${displayWidth}px;
-        height: ${displayHeight}px;
-        background-color: ${INACTIVE_OVERLAY_COLOR};
-        border-radius: 4px;
-      `,
-      reactive: true,
-    });
-    overlay.set_position(0, 0);
-    miniatureDisplay.add_child(overlay);
+    miniatureDisplay.opacity = INACTIVE_OPACITY;
 
     // Disable click interactions by making buttons non-reactive
     for (const [button] of layoutButtons) {
