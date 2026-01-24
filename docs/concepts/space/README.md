@@ -13,10 +13,16 @@ A space represents a virtual desktop or workspace that spans across multiple phy
 
 Each space can have different layout configurations for the same set of physical monitors.
 
+## Collocations
+
+- switch (to a Space)
+- create (a Space)
+- delete (a Space)
+
 ## Related Features
 
 This concept is used in the **miniature space** feature.
 
 ## Related Concepts
 
-- See [Monitor vs Display](./monitor-vs-display.md) for the distinction between monitors and displays
+- See [Monitor vs Display](../display/monitor-vs-display.md) for the distinction between monitors and displays
