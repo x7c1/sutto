@@ -5,8 +5,8 @@
 **Layout** is a window arrangement that defines where and how a window should be placed on the screen.
 
 Each Layout specifies:
-- Position (where the window appears)
-- Size (how large the window is)
+- [Layout Position](./layout-position/) (where the window appears)
+- [Layout Size](./layout-size/) (how large the window is)
 
 ## Examples
 
