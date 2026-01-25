@@ -99,10 +99,10 @@ export function createGtkMiniatureDisplay(options: GtkMiniatureDisplayOptions): 
 
     // Draw layout rectangles
     for (const layout of layoutGroup.layouts) {
-      const x = evaluateExpression(layout.x, width);
-      const y = evaluateExpression(layout.y, height);
-      const w = evaluateExpression(layout.width, width);
-      const h = evaluateExpression(layout.height, height);
+      const x = evaluateExpression(layout.position.x, width);
+      const y = evaluateExpression(layout.position.y, height);
+      const w = evaluateExpression(layout.size.width, width);
+      const h = evaluateExpression(layout.size.height, height);
 
       // Fill
       ctx.setSourceRGBA(LAYOUT_BG_COLOR.r, LAYOUT_BG_COLOR.g, LAYOUT_BG_COLOR.b, LAYOUT_BG_COLOR.a);

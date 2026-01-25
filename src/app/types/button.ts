@@ -13,4 +13,5 @@ export interface LayoutButtonWithMetadata extends St.Button {
   _isFocused?: boolean;
   _buttonWidth?: number;
   _buttonHeight?: number;
+  _monitorKey?: string;
 }

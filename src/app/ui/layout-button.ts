@@ -11,7 +11,7 @@ import {
 } from '../constants.js';
 import { evaluate, parse } from '../layout-expression/index.js';
 import type { LayoutButtonWithMetadata } from '../types/button.js';
-import type { Layout } from '../types/index.js';
+import type { Layout, LayoutSelectedEvent } from '../types/index.js';
 
 declare function log(message: string): void;
 
@@ -38,7 +38,7 @@ function resolveLayoutValue(value: string, containerSize: number, screenSize?: n
  * Calculate button width based on layout width
  */
 function calculateButtonWidth(layout: Layout, displayWidth: number, screenWidth?: number): number {
-  const layoutWidth = resolveLayoutValue(layout.width, displayWidth, screenWidth);
+  const layoutWidth = resolveLayoutValue(layout.size.width, displayWidth, screenWidth);
   return layoutWidth - BUTTON_BORDER_WIDTH * 2;
 }
 
@@ -83,20 +83,22 @@ export function createLayoutButton(
   displayWidth: number,
   displayHeight: number,
   isSelected: boolean,
-  onLayoutSelected: (layout: Layout) => void,
-  monitorIndex: number
+  onLayoutSelected: (event: LayoutSelectedEvent) => void,
+  monitorIndex: number,
+  monitorKey: string
 ): LayoutButtonView {
   // Get screen work area for scaling fixed pixel values
   const workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
 
   // Calculate button position relative to miniature display
-  const buttonX = resolveLayoutValue(layout.x, displayWidth, workArea.width);
-  const buttonY = resolveLayoutValue(layout.y, displayHeight, workArea.height);
+  const buttonX = resolveLayoutValue(layout.position.x, displayWidth, workArea.width);
+  const buttonY = resolveLayoutValue(layout.position.y, displayHeight, workArea.height);
 
   // Calculate button dimensions
   const buttonWidth = calculateButtonWidth(layout, displayWidth, workArea.width);
   const buttonHeight =
-    resolveLayoutValue(layout.height, displayHeight, workArea.height) - BUTTON_BORDER_WIDTH * 2;
+    resolveLayoutValue(layout.size.height, displayHeight, workArea.height) -
+    BUTTON_BORDER_WIDTH * 2;
 
   // Create button with initial style (not hovered, but might be selected)
   const button = new St.Button({
@@ -116,6 +118,7 @@ export function createLayoutButton(
   buttonWithMeta._isFocused = false;
   buttonWithMeta._buttonWidth = buttonWidth;
   buttonWithMeta._buttonHeight = buttonHeight;
+  buttonWithMeta._monitorKey = monitorKey;
 
   // Add hover effect
   const enterEventId = button.connect('enter-event', () => {
@@ -143,7 +146,7 @@ export function createLayoutButton(
   // Connect click event
   const clickEventId = button.connect('button-press-event', () => {
     log(`[MainPanel] Layout selected: ${layout.label}`);
-    onLayoutSelected(layout);
+    onLayoutSelected({ layout, monitorKey });
     return true; // Clutter.EVENT_STOP
   });
 

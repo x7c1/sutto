@@ -26,26 +26,23 @@ function getPresetName(monitorCount: number): string {
 /**
  * Convert a LayoutSetting to a Layout with generated ID and hash
  */
-function createLayout(setting: LayoutSetting, monitorKey: string): Layout {
+function createLayout(setting: LayoutSetting): Layout {
   return {
     id: generateUUID(),
     hash: generateLayoutHash(setting.x, setting.y, setting.width, setting.height),
     label: setting.label,
-    monitorKey,
-    x: setting.x,
-    y: setting.y,
-    width: setting.width,
-    height: setting.height,
+    position: { x: setting.x, y: setting.y },
+    size: { width: setting.width, height: setting.height },
   };
 }
 
 /**
- * Create a LayoutGroup from a LayoutGroupSetting for a specific monitor
+ * Create a LayoutGroup from a LayoutGroupSetting
  */
-function createLayoutGroup(groupSetting: LayoutGroupSetting, monitorKey: string): LayoutGroup {
+function createLayoutGroup(groupSetting: LayoutGroupSetting): LayoutGroup {
   return {
     name: groupSetting.name,
-    layouts: groupSetting.layouts.map((setting) => createLayout(setting, monitorKey)),
+    layouts: groupSetting.layouts.map((setting) => createLayout(setting)),
   };
 }
 
@@ -60,7 +57,7 @@ function createSpace(layoutGroupName: string, monitorCount: number): Space {
 
   const displays: { [monitorKey: string]: LayoutGroup } = {};
   for (let i = 0; i < monitorCount; i++) {
-    displays[String(i)] = createLayoutGroup(layoutGroupSetting, String(i));
+    displays[String(i)] = createLayoutGroup(layoutGroupSetting);
   }
 
   return {

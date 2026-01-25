@@ -11,7 +11,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { evaluate, parse } from '../layout-expression/index.js';
 import type { MonitorManager } from '../monitor/manager.js';
 import type { LayoutHistoryRepository } from '../repository/history.js';
-import type { Layout } from '../types/index.js';
+import type { LayoutSelectedEvent } from '../types/index.js';
 
 declare function log(message: string): void;
 
@@ -29,18 +29,14 @@ export class LayoutApplicator {
   /**
    * Apply layout to window
    */
-  applyLayout(window: Meta.Window | null, layout: Layout): void {
+  applyLayout(window: Meta.Window, event: LayoutSelectedEvent): void {
+    const { layout, monitorKey } = event;
     log(`[LayoutApplicator] Apply layout: ${layout.label} (ID: ${layout.id})`);
 
-    if (!window) {
-      log('[LayoutApplicator] No window to apply layout to');
-      return;
-    }
-
-    log(`[LayoutApplicator] Using monitor from layout: ${layout.monitorKey}`);
-    const targetMonitor = this.monitorManager.getMonitorByKey(layout.monitorKey);
+    log(`[LayoutApplicator] Using monitor: ${monitorKey}`);
+    const targetMonitor = this.monitorManager.getMonitorByKey(monitorKey);
     if (!targetMonitor) {
-      log(`[LayoutApplicator] Could not find monitor with key: ${layout.monitorKey}`);
+      log(`[LayoutApplicator] Could not find monitor with key: ${monitorKey}`);
       return;
     }
 
@@ -54,7 +50,7 @@ export class LayoutApplicator {
     if (wmClass) {
       this.layoutHistoryRepository.setSelectedLayout(windowId, wmClass, title, layout.id);
       if (this.callbacks.onLayoutApplied) {
-        this.callbacks.onLayoutApplied(layout.id, layout.monitorKey);
+        this.callbacks.onLayoutApplied(layout.id, monitorKey);
       }
     } else {
       log('[LayoutApplicator] Window has no WM_CLASS, skipping history update');
@@ -65,10 +61,10 @@ export class LayoutApplicator {
       return evaluate(expr, containerSize);
     };
 
-    const x = workArea.x + resolve(layout.x, workArea.width);
-    const y = workArea.y + resolve(layout.y, workArea.height);
-    const width = resolve(layout.width, workArea.width);
-    const height = resolve(layout.height, workArea.height);
+    const x = workArea.x + resolve(layout.position.x, workArea.width);
+    const y = workArea.y + resolve(layout.position.y, workArea.height);
+    const width = resolve(layout.size.width, workArea.width);
+    const height = resolve(layout.size.height, workArea.height);
 
     log(
       `[LayoutApplicator] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`

@@ -2,7 +2,7 @@ import Clutter from 'gi://Clutter';
 import type St from 'gi://St';
 
 import type { LayoutButtonWithMetadata } from '../types/button.js';
-import type { Layout } from '../types/layout.js';
+import type { Layout, LayoutSelectedEvent } from '../types/layout.js';
 import { getButtonStyle } from '../ui/layout-button.js';
 
 declare function log(message: string): void;
@@ -104,7 +104,7 @@ interface ButtonPosition {
 export interface KeyboardNavigatorOptions {
   container: St.BoxLayout;
   layoutButtons: Map<St.Button, Layout>;
-  onLayoutSelected: (layout: Layout) => void;
+  onLayoutSelected: (event: LayoutSelectedEvent) => void;
   onOpenPreferences: () => void;
   openPreferencesShortcuts: string[];
 }
@@ -114,7 +114,7 @@ export class MainPanelKeyboardNavigator {
   private focusedButton: St.Button | null = null;
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private keyEventId: number | null = null;
-  private onLayoutSelected: ((layout: Layout) => void) | null = null;
+  private onLayoutSelected: ((event: LayoutSelectedEvent) => void) | null = null;
   private onOpenPreferences: (() => void) | null = null;
   private parsedShortcuts: ParsedShortcut[] = [];
 
@@ -425,6 +425,8 @@ export class MainPanelKeyboardNavigator {
     const layout = this.layoutButtons.get(this.focusedButton);
     if (!layout || !this.onLayoutSelected) return;
 
-    this.onLayoutSelected(layout);
+    const buttonWithMeta = this.focusedButton as LayoutButtonWithMetadata;
+    const monitorKey = buttonWithMeta._monitorKey ?? '0';
+    this.onLayoutSelected({ layout, monitorKey });
   }
 }

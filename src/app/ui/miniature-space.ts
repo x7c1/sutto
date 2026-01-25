@@ -11,7 +11,7 @@ import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import { MINIATURE_SPACE_BG_COLOR, MONITOR_MARGIN, SPACE_SPACING } from '../constants.js';
 import type { LayoutHistoryRepository } from '../repository/history.js';
-import type { Layout, Monitor, Space } from '../types/index.js';
+import type { Layout, LayoutSelectedEvent, Monitor, Space } from '../types/index.js';
 import { createMiniatureDisplayView } from './miniature-display.js';
 import { calculateSpaceDimensions } from './space-dimensions.js';
 
@@ -77,7 +77,7 @@ export function createMiniatureSpaceView(
   space: Space,
   monitors: Map<string, Monitor>,
   window: Meta.Window | null,
-  onLayoutSelected: (layout: Layout) => void,
+  onLayoutSelected: (event: LayoutSelectedEvent) => void,
   layoutHistoryRepository: LayoutHistoryRepository,
   inactiveMonitorKeys: Set<string> = new Set()
 ): MiniatureSpaceView {
@@ -136,6 +136,7 @@ export function createMiniatureSpaceView(
       window,
       onLayoutSelected,
       monitor,
+      monitorKey,
       layoutHistoryRepository,
       false, // isLastInRow
       0, // No CSS margin needed - spacing handled by size/position adjustment

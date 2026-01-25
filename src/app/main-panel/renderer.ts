@@ -11,7 +11,7 @@ import {
   SPACE_SPACING,
 } from '../constants.js';
 import type { LayoutHistoryRepository } from '../repository/history.js';
-import type { Layout, Monitor, SpacesRow } from '../types/index.js';
+import type { Layout, LayoutSelectedEvent, Monitor, SpacesRow } from '../types/index.js';
 import { createMiniatureSpaceView } from '../ui/miniature-space.js';
 
 declare function log(message: string): void;
@@ -169,7 +169,7 @@ export function createSpacesRowView(
   monitors: Map<string, Monitor>,
   rows: SpacesRow[],
   window: Meta.Window | null,
-  onLayoutSelected: (layout: Layout) => void,
+  onLayoutSelected: (event: LayoutSelectedEvent) => void,
   layoutHistoryRepository: LayoutHistoryRepository,
   inactiveMonitorKeys: Set<string> = new Set()
 ): SpacesRowView {
