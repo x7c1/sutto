@@ -24,7 +24,7 @@ import { MainPanel } from './main-panel/index.js';
 import { MonitorManager } from './monitor/manager.js';
 import { LayoutHistoryRepository } from './repository/history.js';
 import { KeyboardShortcutManager } from './shortcuts/keyboard-shortcut-manager.js';
-import type { Layout, Position } from './types/index.js';
+import type { LayoutSelectedEvent, Position } from './types/index.js';
 import { LayoutApplicator } from './window/layout-applicator.js';
 
 declare function log(message: string): void;
@@ -75,8 +75,8 @@ export class Controller {
     this.keyboardShortcutManager = new KeyboardShortcutManager(settings);
 
     this.mainPanel = new MainPanel(metadata, this.monitorManager, this.layoutHistoryRepository);
-    this.mainPanel.setOnLayoutSelected((layout) => {
-      this.applyLayoutToCurrentWindow(layout);
+    this.mainPanel.setOnLayoutSelected((event) => {
+      this.applyLayoutToCurrentWindow(event);
     });
     // Pass getter function so shortcuts are read fresh from settings each time panel is shown
     this.mainPanel.setOpenPreferencesShortcutsGetter(() => settings.getOpenPreferencesShortcut());
@@ -269,10 +269,14 @@ export class Controller {
   /**
    * Apply layout to currently dragged window (called when panel button is clicked)
    */
-  private applyLayoutToCurrentWindow(layout: Layout): void {
+  private applyLayoutToCurrentWindow(event: LayoutSelectedEvent): void {
     // currentWindow is null after drag ends, so fallback to lastDraggedWindow
     const targetWindow = this.currentWindow || this.lastDraggedWindow;
-    this.layoutApplicator.applyLayout(targetWindow, layout);
+    if (!targetWindow) {
+      log('[Controller] No window to apply layout to');
+      return;
+    }
+    this.layoutApplicator.applyLayout(targetWindow, event);
   }
 
   /**

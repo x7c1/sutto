@@ -16,10 +16,10 @@ import type { MonitorManager } from '../monitor/manager.js';
 import type { LayoutHistoryRepository } from '../repository/history.js';
 import { getActiveSpaceCollection } from '../service/active-space-collection.js';
 import { ensurePresetForCurrentMonitors } from '../service/preset-generator.js';
-import type { Layout, Position, Size, SpacesRow } from '../types/index.js';
+import type { Layout, LayoutSelectedEvent, Position, Size, SpacesRow } from '../types/index.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
-import { MainPanelLayoutSelector } from './layout-selector.js';
+import { LayoutButtonStyleUpdater } from './layout-button-style-updater.js';
 import { MainPanelPositionManager } from './position-manager.js';
 import type { PanelEventIds } from './renderer.js';
 import {
@@ -44,11 +44,12 @@ export class MainPanel {
   private layoutHistoryRepository: LayoutHistoryRepository;
   private getOpenPreferencesShortcuts: () => string[] = () => [];
   private getActiveSpaceCollectionId: () => string = () => '';
+  private onLayoutSelected!: (event: LayoutSelectedEvent) => void;
 
   // Component instances
   private state: MainPanelState = new MainPanelState();
   private positionManager: MainPanelPositionManager;
-  private layoutSelector: MainPanelLayoutSelector = new MainPanelLayoutSelector();
+  private layoutButtonStyleUpdater: LayoutButtonStyleUpdater = new LayoutButtonStyleUpdater();
   private autoHide: MainPanelAutoHide = new MainPanelAutoHide();
   private keyboardNavigator: MainPanelKeyboardNavigator = new MainPanelKeyboardNavigator();
 
@@ -78,8 +79,8 @@ export class MainPanel {
   /**
    * Set callback for when a layout is selected
    */
-  setOnLayoutSelected(callback: (layout: Layout) => void): void {
-    this.layoutSelector.setOnLayoutSelected(callback);
+  setOnLayoutSelected(callback: (event: LayoutSelectedEvent) => void): void {
+    this.onLayoutSelected = callback;
   }
 
   /**
@@ -286,7 +287,7 @@ export class MainPanel {
       return;
     }
 
-    this.layoutSelector.updateSelectedLayoutHighlight(
+    this.layoutButtonStyleUpdater.updateSelectedLayoutHighlight(
       newSelectedLayoutId,
       monitorKey,
       this.layoutButtons
@@ -352,8 +353,6 @@ export class MainPanel {
       return { element, buttonEvents: [] };
     }
 
-    const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
-
     // Get the max display count from rows to find appropriate monitors
     let maxDisplayCount = 0;
     for (const row of rows) {
@@ -371,11 +370,7 @@ export class MainPanel {
       monitors,
       rows,
       window,
-      (layout) => {
-        if (onLayoutSelected) {
-          onLayoutSelected(layout);
-        }
-      },
+      (event) => this.onLayoutSelected(event),
       this.layoutHistoryRepository,
       inactiveMonitorKeys
     );
@@ -405,21 +400,16 @@ export class MainPanel {
     };
 
     // Enable keyboard navigation
-    const onLayoutSelected = this.layoutSelector.getOnLayoutSelected();
-    if (onLayoutSelected) {
-      this.keyboardNavigator.enable({
-        container,
-        layoutButtons: this.layoutButtons,
-        onLayoutSelected: (layout) => {
-          onLayoutSelected(layout);
-        },
-        onOpenPreferences: () => {
-          this.openPreferences();
-          this.hide();
-        },
-        openPreferencesShortcuts: this.getOpenPreferencesShortcuts(),
-      });
-    }
+    this.keyboardNavigator.enable({
+      container,
+      layoutButtons: this.layoutButtons,
+      onLayoutSelected: (event) => this.onLayoutSelected(event),
+      onOpenPreferences: () => {
+        this.openPreferences();
+        this.hide();
+      },
+      openPreferencesShortcuts: this.getOpenPreferencesShortcuts(),
+    });
   }
 
   /**

@@ -3,7 +3,7 @@ import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import { DISPLAY_BG_COLOR, DISPLAY_SPACING, DISPLAY_SPACING_HORIZONTAL } from '../constants.js';
 import type { LayoutHistoryRepository } from '../repository/history.js';
-import type { Layout, LayoutGroup, Monitor } from '../types/index.js';
+import type { Layout, LayoutGroup, LayoutSelectedEvent, Monitor } from '../types/index.js';
 import { createLayoutButton } from './layout-button.js';
 
 export interface MiniatureDisplayView {
@@ -29,8 +29,9 @@ export function createMiniatureDisplayView(
   displayWidth: number,
   displayHeight: number,
   window: Meta.Window | null,
-  onLayoutSelected: (layout: Layout) => void,
+  onLayoutSelected: (event: LayoutSelectedEvent) => void,
   monitor: Monitor,
+  monitorKey: string,
   layoutHistoryRepository: LayoutHistoryRepository,
   isLastInRow: boolean = false,
   monitorMargin: number = 0,
@@ -73,19 +74,15 @@ export function createMiniatureDisplayView(
     // Determine if this layout is selected
     const isSelected = selectedLayoutId !== null && layout.id === selectedLayoutId;
 
-    // Create layout button with selection callback
-    const wrappedCallback = (selectedLayout: Layout) => {
-      onLayoutSelected(selectedLayout);
-    };
-
     // Create button using full display size
     const result = createLayoutButton(
       layout,
       displayWidth,
       displayHeight,
       isSelected,
-      wrappedCallback,
-      monitor.index
+      onLayoutSelected,
+      monitor.index,
+      monitorKey
     );
     layoutButtons.set(result.button, layout);
 

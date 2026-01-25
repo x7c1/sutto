@@ -47,16 +47,13 @@ function isValidLayoutConfiguration(data: unknown): data is LayoutConfiguration 
 /**
  * Convert a LayoutSetting to a Layout with generated ID and hash
  */
-function settingToLayout(setting: LayoutSetting, monitorKey: string): Layout {
+function settingToLayout(setting: LayoutSetting): Layout {
   return {
     id: generateUUID(),
     hash: generateLayoutHash(setting.x, setting.y, setting.width, setting.height),
     label: setting.label,
-    monitorKey,
-    x: setting.x,
-    y: setting.y,
-    width: setting.width,
-    height: setting.height,
+    position: { x: setting.x, y: setting.y },
+    size: { width: setting.width, height: setting.height },
   };
 }
 
@@ -81,7 +78,7 @@ function settingToSpace(
 
     const layoutGroup: LayoutGroup = {
       name: layoutGroupSetting.name,
-      layouts: layoutGroupSetting.layouts.map((setting) => settingToLayout(setting, monitorKey)),
+      layouts: layoutGroupSetting.layouts.map((setting) => settingToLayout(setting)),
     };
 
     displays[monitorKey] = layoutGroup;

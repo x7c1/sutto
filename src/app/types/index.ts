@@ -1,5 +1,10 @@
 export type { Position, Size } from './geometry.js';
-export type { Layout } from './layout.js';
+export type {
+  Layout,
+  LayoutPosition,
+  LayoutSelectedEvent,
+  LayoutSize,
+} from './layout.js';
 export type { LayoutGroup } from './layout-group.js';
 export type {
   BoundingBox,
