@@ -32,6 +32,10 @@ export const BUTTON_BORDER_COLOR = 'rgba(255, 255, 255, 0.3)';
 export const BUTTON_BORDER_COLOR_HOVER = 'rgba(255, 255, 255, 0.6)';
 export const FOOTER_TEXT_COLOR = 'rgba(255, 255, 255, 0.5)';
 
+// Fallback monitor dimensions (used when no physical monitor info is available)
+export const DEFAULT_MONITOR_WIDTH = 1920;
+export const DEFAULT_MONITOR_HEIGHT = 1080;
+
 // Multi-monitor panel constants
 export const MAX_MONITOR_DISPLAY_WIDTH = 240; // Maximum width for the widest monitor in miniature display
 export const MAX_MONITOR_DISPLAY_HEIGHT = 100; // Maximum height for the tallest monitor in miniature display

@@ -9,8 +9,7 @@
 import Gio from 'gi://Gio';
 import type Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-
-import { MONITORS_FILE_NAME } from '../constants.js';
+import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH, MONITORS_FILE_NAME } from '../constants.js';
 import { getExtensionDataPath } from '../repository/extension-path.js';
 import type {
   BoundingBox,
@@ -401,10 +400,11 @@ export class MonitorManager {
       return { monitors, inactiveMonitorKeys };
     }
 
-    // Fallback: create default monitors layout
+    // Fallback: create default monitors using current monitor as reference
     const monitors = new Map<string, Monitor>();
-    const defaultWidth = 1920;
-    const defaultHeight = 1080;
+    const referenceMonitor = this.monitors.values().next().value as Monitor | undefined;
+    const defaultWidth = referenceMonitor?.geometry.width ?? DEFAULT_MONITOR_WIDTH;
+    const defaultHeight = referenceMonitor?.geometry.height ?? DEFAULT_MONITOR_HEIGHT;
 
     for (let i = 0; i < displayCount; i++) {
       const key = String(i);
