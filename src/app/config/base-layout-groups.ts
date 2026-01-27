@@ -36,6 +36,14 @@ export const BASE_LAYOUT_GROUPS: LayoutGroupSetting[] = [
     ],
   },
   {
+    name: 'vertical 3-split wide sides',
+    layouts: [
+      { label: 'Left Side', x: '0', y: '0', width: '20%', height: '100%' },
+      { label: 'Center Main', x: '20%', y: '0', width: '60%', height: '100%' },
+      { label: 'Right Side', x: '80%', y: '0', width: '20%', height: '100%' },
+    ],
+  },
+  {
     name: 'grid 3x2',
     layouts: [
       { label: 'Top Left', x: '0', y: '0', width: '1/3', height: '50%' },
@@ -72,9 +80,9 @@ export const BASE_LAYOUT_GROUPS: LayoutGroupSetting[] = [
 export const WIDE_LAYOUT_GROUP_NAMES = [
   'vertical 3-split',
   'vertical 3-split wide center',
+  'vertical 3-split wide sides',
   'vertical 2-split',
   'grid 4x2',
-  'grid 3x2',
   'full screen',
 ];
 
