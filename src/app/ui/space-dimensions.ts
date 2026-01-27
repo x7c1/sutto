@@ -5,7 +5,11 @@
  * Used by both miniature-space.ts (for rendering) and position-manager.ts (for layout).
  */
 
-import { MAX_MONITOR_DISPLAY_WIDTH, MONITOR_MARGIN } from '../constants.js';
+import {
+  MAX_MONITOR_DISPLAY_HEIGHT,
+  MAX_MONITOR_DISPLAY_WIDTH,
+  MONITOR_MARGIN,
+} from '../constants.js';
 import type { Monitor, Space } from '../types/index.js';
 
 export interface SpaceDimensions {
@@ -64,18 +68,23 @@ export function calculateSpaceDimensions(
   space: Space,
   monitors: Map<string, Monitor>
 ): SpaceDimensions {
-  // Find the widest monitor in this Space
+  // Find the largest monitor dimensions in this Space
   let maxMonitorWidth = 0;
-  for (const [monitorKey, _] of Object.entries(space.displays)) {
+  let maxMonitorHeight = 0;
+  for (const [monitorKey] of Object.entries(space.displays)) {
     const monitor = monitors.get(monitorKey);
     if (monitor) {
       maxMonitorWidth = Math.max(maxMonitorWidth, monitor.geometry.width);
+      maxMonitorHeight = Math.max(maxMonitorHeight, monitor.geometry.height);
     }
   }
 
-  // Calculate scale factor based on the widest monitor
-  const scale =
+  // Scale to fit within both width and height limits
+  const scaleByWidth =
     maxMonitorWidth > 0 ? Math.min(MAX_MONITOR_DISPLAY_WIDTH / maxMonitorWidth, 1.0) : 1.0;
+  const scaleByHeight =
+    maxMonitorHeight > 0 ? Math.min(MAX_MONITOR_DISPLAY_HEIGHT / maxMonitorHeight, 1.0) : 1.0;
+  const scale = Math.min(scaleByWidth, scaleByHeight);
 
   // Calculate bounding box for all monitors in this Space
   const bbox = calculateBoundingBoxForSpace(space, monitors);

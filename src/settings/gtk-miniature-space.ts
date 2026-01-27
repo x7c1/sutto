@@ -21,6 +21,7 @@ interface CairoContext {
 }
 
 // Constants matching the Shell version
+const MAX_MONITOR_DISPLAY_WIDTH = 240;
 const MAX_MONITOR_DISPLAY_HEIGHT = 100;
 const MONITOR_MARGIN = 6;
 const MINIATURE_SPACE_BG_COLOR = { r: 0.31, g: 0.31, b: 0.31, a: 0.9 };
@@ -71,14 +72,20 @@ function calculateBoundingBoxForSpace(
  * Calculate scale factor for the space based on height
  */
 function calculateScale(space: Space, monitors: Map<string, Monitor>): number {
+  let maxMonitorWidth = 0;
   let maxMonitorHeight = 0;
   for (const [monitorKey] of Object.entries(space.displays)) {
     const monitor = monitors.get(monitorKey);
     if (monitor) {
+      maxMonitorWidth = Math.max(maxMonitorWidth, monitor.geometry.width);
       maxMonitorHeight = Math.max(maxMonitorHeight, monitor.geometry.height);
     }
   }
-  return maxMonitorHeight > 0 ? Math.min(MAX_MONITOR_DISPLAY_HEIGHT / maxMonitorHeight, 1.0) : 1.0;
+  const scaleByWidth =
+    maxMonitorWidth > 0 ? Math.min(MAX_MONITOR_DISPLAY_WIDTH / maxMonitorWidth, 1.0) : 1.0;
+  const scaleByHeight =
+    maxMonitorHeight > 0 ? Math.min(MAX_MONITOR_DISPLAY_HEIGHT / maxMonitorHeight, 1.0) : 1.0;
+  return Math.min(scaleByWidth, scaleByHeight);
 }
 
 /**
