@@ -4,21 +4,18 @@ import type Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 import type Gio from 'gi://Gio';
 
+import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../app/constants.js';
 import { loadAllCollections } from '../app/repository/space-collection.js';
 import { ensurePresetForCurrentMonitors } from '../app/service/preset-generator.js';
 import { createGeneralPage } from './keyboard-shortcuts.js';
 import { loadMonitors } from './monitors.js';
-import {
-  calculateRequiredHeight,
-  calculateRequiredWidth,
-  createSpacesPage,
-} from './spaces-page.js';
+import { calculateWindowDimensionsForCollection, createSpacesPage } from './spaces-page.js';
 
 // Window size constants
 const MIN_WINDOW_WIDTH = 500;
 const MIN_WINDOW_HEIGHT = 400;
-const DEFAULT_SCREEN_WIDTH = 1920;
-const DEFAULT_SCREEN_HEIGHT = 1080;
+const DEFAULT_SCREEN_WIDTH = DEFAULT_MONITOR_WIDTH;
+const DEFAULT_SCREEN_HEIGHT = DEFAULT_MONITOR_HEIGHT;
 const WINDOW_HORIZONTAL_PADDING = 80;
 const WINDOW_VERTICAL_PADDING = 100;
 const SCREEN_HEIGHT_MARGIN = 100; // Margin for taskbars, panels, etc.
@@ -48,22 +45,22 @@ export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.
     console.log(`[Snappa Prefs] ERROR loading collections: ${e}`);
   }
 
-  // Load monitors using any available rows
+  // Load monitors using any available rows (fallback for createSpacesPage)
   const anyRows = collections.length > 0 ? collections[0].rows : [];
   const monitors = loadMonitors(anyRows);
   console.log(`[Snappa Prefs] Loaded ${monitors.size} monitors`);
 
-  // Calculate required size from ALL collections (use maximum)
-  let maxContentWidth = 0;
-  let maxContentHeight = 0;
-  for (const collection of collections) {
-    const width = calculateRequiredWidth(collection.rows, monitors);
-    const height = calculateRequiredHeight(collection.rows, monitors);
-    maxContentWidth = Math.max(maxContentWidth, width);
-    maxContentHeight = Math.max(maxContentHeight, height);
-  }
-  const contentWidth = maxContentWidth;
-  const contentHeight = maxContentHeight;
+  // Get current active collection ID from settings
+  const activeCollectionId = settings.get_string('active-space-collection-id') ?? '';
+  console.log(`[Snappa Prefs] Active collection ID: "${activeCollectionId}"`);
+
+  // Find the active collection, fallback to first collection
+  const activeCollection = collections.find((c) => c.id === activeCollectionId) || collections[0];
+
+  // Calculate required size based on the ACTIVE collection (not max of all)
+  const { width: contentWidth, height: contentHeight } = activeCollection
+    ? calculateWindowDimensionsForCollection(activeCollection, monitors)
+    : { width: 0, height: 0 };
   const { screenWidth, screenHeight } = getScreenSize();
   const windowWidth = Math.min(contentWidth + WINDOW_HORIZONTAL_PADDING, screenWidth);
   // Clamp height to screen height minus margin for taskbars/panels
@@ -77,10 +74,6 @@ export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.
   // Create General page (existing keyboard shortcut settings)
   const generalPage = createGeneralPage(window, settings);
   window.add(generalPage);
-
-  // Get current active collection ID from settings
-  const activeCollectionId = settings.get_string('active-space-collection-id') ?? '';
-  console.log(`[Snappa Prefs] Active collection ID: "${activeCollectionId}"`);
 
   // Create Spaces page with collection selection
   console.log('[Snappa Prefs] Creating Spaces page...');

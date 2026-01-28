@@ -14,4 +14,5 @@ export interface LayoutButtonWithMetadata extends St.Button {
   _buttonWidth?: number;
   _buttonHeight?: number;
   _monitorKey?: string;
+  _rowIndex?: number;
 }

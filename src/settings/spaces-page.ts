@@ -1,4 +1,5 @@
 import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 
@@ -98,8 +99,9 @@ function getMonitorsForDisplayCount(
     return fallbackMonitors;
   }
 
-  // Create default monitors for this display count
-  return createDefaultMonitors(displayCount);
+  // Create default monitors using current monitor's dimensions as reference
+  const referenceMonitor = fallbackMonitors.values().next().value as Monitor | undefined;
+  return createDefaultMonitors(displayCount, referenceMonitor);
 }
 
 // Opacity values for space visibility
@@ -111,6 +113,10 @@ const HOVER_OPACITY_CHANGE = 0.15;
 
 // List pane width
 const LIST_PANE_WIDTH = 200;
+
+// Window padding (must match preferences.ts)
+const WINDOW_HORIZONTAL_PADDING = 80;
+const WINDOW_VERTICAL_PADDING = 100;
 
 /**
  * Calculate the preview content width for a set of rows (without list pane)
@@ -142,6 +148,21 @@ export function calculateRequiredWidth(rows: SpacesRow[], monitors: Map<string, 
 }
 
 /**
+ * Calculate required window dimensions for a single collection
+ * Uses appropriate monitors for the collection's display count
+ */
+export function calculateWindowDimensionsForCollection(
+  collection: SpaceCollection,
+  fallbackMonitors: Map<string, Monitor>
+): { width: number; height: number } {
+  const monitorStorage = loadMonitorStorage();
+  const collectionMonitors = getMonitorsForCollection(collection, monitorStorage, fallbackMonitors);
+  const width = calculateRequiredWidth(collection.rows, collectionMonitors);
+  const height = calculateRequiredHeight(collection.rows, collectionMonitors);
+  return { width, height };
+}
+
+/**
  * Calculate the required height to display all space rows
  */
 export function calculateRequiredHeight(rows: SpacesRow[], monitors: Map<string, Monitor>): number {
@@ -162,23 +183,24 @@ export function calculateRequiredHeight(rows: SpacesRow[], monitors: Map<string,
   // Add padding for UI chrome:
   // - Adw.PreferencesPage title bar: ~50
   // - Adw.PreferencesGroup header + description: ~100
-  // - Collection name label in preview: ~40
-  // - Margins and spacing: ~60
-  // - Extra buffer for GTK decorations: ~50
-  return totalHeight + 300;
+  return totalHeight + 150;
 }
 
 interface SpacesPageState {
   activeCollectionId: string;
   selectedCollectionId: string;
   previewContainer: Gtk.Box;
+  previewScrolled: Gtk.ScrolledWindow | null; // Reference for updating preview width
+  currentMaxPreviewWidth: number; // Track current max width to expand if needed
+  currentMaxPreviewHeight: number; // Track current max height to expand if needed
   monitors: Map<string, Monitor>; // Current environment monitors (for window sizing)
   monitorStorage: MonitorEnvironmentStorage | null; // Multi-environment storage
   checkButtons: Map<string, Gtk.CheckButton>;
   selectionIndicators: Map<string, Gtk.Image>;
   firstRadioButton: Gtk.CheckButton | null;
-  totalCollectionCount: number;
   onActiveChanged: (collectionId: string) => void;
+  listInnerBox: Gtk.Box | null; // Reference to the inner box for adding new collections
+  customSectionBox: Gtk.Box | null; // Container for custom collection rows
 }
 
 /**
@@ -217,6 +239,7 @@ export function createSpacesPage(
     orientation: Gtk.Orientation.VERTICAL,
     halign: Gtk.Align.CENTER,
     valign: Gtk.Align.START,
+    margin_top: 12,
   });
 
   // Wrap preview in scrolled window to handle many rows
@@ -234,17 +257,22 @@ export function createSpacesPage(
     allCollections.find((c) => c.id === activeCollectionId) || allCollections[0];
   const resolvedActiveId = initialCollection?.id ?? '';
 
-  // Calculate max preview width across all collections to fix the preview pane width
-  let maxPreviewWidth = 0;
-  for (const collection of allCollections) {
-    // Use appropriate monitors for each collection's display count
-    const collectionMonitors = getMonitorsForCollection(collection, monitorStorage, monitors);
-    const width = calculatePreviewWidth(collection.rows, collectionMonitors);
-    maxPreviewWidth = Math.max(maxPreviewWidth, width);
+  // Calculate preview dimensions based on the ACTIVE collection (not max of all)
+  // Dimensions will expand when selecting larger collections via expandSizeIfNeeded
+  let initialPreviewWidth = 0;
+  let initialPreviewHeight = 0;
+  if (initialCollection) {
+    const collectionMonitors = getMonitorsForCollection(
+      initialCollection,
+      monitorStorage,
+      monitors
+    );
+    initialPreviewWidth = calculatePreviewWidth(initialCollection.rows, collectionMonitors);
+    initialPreviewHeight = calculateRequiredHeight(initialCollection.rows, collectionMonitors);
   }
-  // Set fixed width on preview scrolled window to prevent left pane shifting
-  if (maxPreviewWidth > 0) {
-    previewScrolled.set_size_request(maxPreviewWidth + 20, -1); // Add padding
+  // Set initial width on preview scrolled window
+  if (initialPreviewWidth > 0) {
+    previewScrolled.set_size_request(initialPreviewWidth + 20, -1); // Add padding
   }
 
   // Create state object for managing selections
@@ -252,13 +280,17 @@ export function createSpacesPage(
     activeCollectionId: resolvedActiveId,
     selectedCollectionId: resolvedActiveId,
     previewContainer,
+    previewScrolled,
+    currentMaxPreviewWidth: initialPreviewWidth,
+    currentMaxPreviewHeight: initialPreviewHeight,
     monitors,
     monitorStorage,
     checkButtons: new Map(),
     selectionIndicators: new Map(),
     firstRadioButton: null,
-    totalCollectionCount: allCollections.length,
     onActiveChanged,
+    listInnerBox: null,
+    customSectionBox: null,
   };
 
   // Create list pane (left)
@@ -290,6 +322,38 @@ export function createSpacesPage(
 }
 
 /**
+ * Render the custom section contents (collection rows or empty label)
+ */
+function renderCustomSection(state: SpacesPageState): void {
+  const box = state.customSectionBox;
+  if (!box) return;
+
+  // Clear existing children
+  let child = box.get_first_child();
+  while (child) {
+    const next = child.get_next_sibling();
+    box.remove(child);
+    child = next;
+  }
+
+  // Render custom collections or empty label
+  const customs = loadCustomCollections();
+  if (customs.length === 0) {
+    const emptyLabel = new Gtk.Label({
+      label: 'No custom collections',
+      css_classes: ['dim-label'],
+      xalign: 0,
+    });
+    box.append(emptyLabel);
+  } else {
+    for (const collection of customs) {
+      const row = createCollectionRow(state, collection, true, null);
+      box.append(row);
+    }
+  }
+}
+
+/**
  * Create the list pane with preset and custom sections
  */
 function createListPane(state: SpacesPageState): Gtk.Widget {
@@ -310,6 +374,9 @@ function createListPane(state: SpacesPageState): Gtk.Widget {
     orientation: Gtk.Orientation.VERTICAL,
     spacing: 4,
   });
+
+  // Store reference for later use (e.g., adding imported collections)
+  state.listInnerBox = innerBox;
 
   // Preset section
   const presetLabel = new Gtk.Label({
@@ -338,20 +405,14 @@ function createListPane(state: SpacesPageState): Gtk.Widget {
   });
   innerBox.append(customLabel);
 
-  const customs = loadCustomCollections();
-  for (const collection of customs) {
-    const row = createCollectionRow(state, collection, true, radioGroup);
-    innerBox.append(row);
-  }
+  const customSectionBox = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    spacing: 4,
+  });
+  state.customSectionBox = customSectionBox;
+  innerBox.append(customSectionBox);
 
-  if (customs.length === 0) {
-    const emptyLabel = new Gtk.Label({
-      label: 'No custom collections',
-      css_classes: ['dim-label'],
-      xalign: 0,
-    });
-    innerBox.append(emptyLabel);
-  }
+  renderCustomSection(state);
 
   scrolled.set_child(innerBox);
   listBox.append(scrolled);
@@ -362,7 +423,7 @@ function createListPane(state: SpacesPageState): Gtk.Widget {
     margin_top: 8,
   });
   importButton.connect('clicked', () => {
-    showImportDialog(state, listBox);
+    showImportDialog(state);
   });
   listBox.append(importButton);
 
@@ -383,50 +444,47 @@ function createCollectionRow(
     spacing: 8,
   });
 
-  // Only show radio button when there are multiple collections to choose from
-  if (state.totalCollectionCount > 1) {
-    const radio = new Gtk.CheckButton();
-    if (state.firstRadioButton) {
-      radio.set_group(state.firstRadioButton);
-    } else {
-      state.firstRadioButton = radio;
-    }
-    if (collection.id === state.activeCollectionId) {
-      radio.set_active(true);
-    }
-    state.checkButtons.set(collection.id, radio);
-
-    radio.connect('toggled', () => {
-      // Only act when this radio becomes active (ignore deactivation events)
-      if (radio.get_active()) {
-        state.activeCollectionId = collection.id;
-        state.selectedCollectionId = collection.id;
-        state.onActiveChanged(collection.id);
-        updateSelectionIndicators(state);
-        // Reload collection from file to get latest enabled states
-        const freshCollection = findCollectionById(collection.id);
-        if (freshCollection) {
-          updatePreview(state, freshCollection);
-        }
-      }
-    });
-
-    rowBox.append(radio);
+  // Always show radio button for collection selection
+  const radio = new Gtk.CheckButton();
+  if (state.firstRadioButton) {
+    radio.set_group(state.firstRadioButton);
+  } else {
+    state.firstRadioButton = radio;
   }
+  if (collection.id === state.activeCollectionId) {
+    radio.set_active(true);
+  }
+  state.checkButtons.set(collection.id, radio);
+
+  radio.connect('toggled', () => {
+    // Only act when this radio becomes active (ignore deactivation events)
+    if (radio.get_active()) {
+      state.activeCollectionId = collection.id;
+      state.selectedCollectionId = collection.id;
+      state.onActiveChanged(collection.id);
+      updateSelectionIndicators(state);
+      // Reload collection from file to get latest enabled states
+      const freshCollection = findCollectionById(collection.id);
+      if (freshCollection) {
+        updatePreview(state, freshCollection);
+      }
+    }
+  });
+
+  rowBox.append(radio);
 
   // Collection name label (clickable)
-  const nameButton = new Gtk.Button({
+  const nameLabel = new Gtk.Label({
     label: collection.name,
-    has_frame: false,
-    hexpand: true,
-    halign: Gtk.Align.START,
+    xalign: 0,
   });
-  nameButton.connect('clicked', () => {
+  const clickGesture = new Gtk.GestureClick();
+  clickGesture.connect('released', () => {
     // When there's a radio button, activate it (which triggers the selection logic)
     // Otherwise, just select this collection directly
-    const radio = state.checkButtons.get(collection.id);
-    if (radio) {
-      radio.set_active(true);
+    const existingRadio = state.checkButtons.get(collection.id);
+    if (existingRadio) {
+      existingRadio.set_active(true);
     } else {
       state.activeCollectionId = collection.id;
       state.selectedCollectionId = collection.id;
@@ -439,31 +497,50 @@ function createCollectionRow(
       }
     }
   });
-  rowBox.append(nameButton);
+  nameLabel.add_controller(clickGesture);
+
+  // Hover style for clickable label
+  nameLabel.set_cursor_from_name('pointer');
+  const motionController = new Gtk.EventControllerMotion();
+  motionController.connect('enter', () => {
+    nameLabel.set_opacity(0.7);
+  });
+  motionController.connect('leave', () => {
+    nameLabel.set_opacity(1.0);
+  });
+  nameLabel.add_controller(motionController);
+
+  rowBox.append(nameLabel);
+
+  // Spacer to push delete button and indicator to the right
+  const spacer = new Gtk.Box({ hexpand: true });
+  rowBox.append(spacer);
 
   // Selection indicator (">") shown for the active collection
+  // Use opacity instead of visibility to reserve space and prevent layout shifts
   const indicator = new Gtk.Image({
     icon_name: 'go-next-symbolic',
-    visible: collection.id === state.activeCollectionId,
+    opacity: collection.id === state.activeCollectionId ? 1 : 0,
   });
   state.selectionIndicators.set(collection.id, indicator);
   rowBox.append(indicator);
 
-  // Delete button for custom collections
+  // Right-click context menu for custom collections
   if (isCustom) {
-    const deleteButton = new Gtk.Button({
-      icon_name: 'edit-delete-symbolic',
-      has_frame: false,
-      css_classes: ['flat'],
+    const menu = new Gio.Menu();
+    menu.append('Delete', 'collection.delete');
+
+    const popover = new Gtk.PopoverMenu({
+      menu_model: menu,
+      has_arrow: false,
     });
-    deleteButton.connect('clicked', () => {
+    popover.set_parent(rowBox);
+
+    const actionGroup = new Gio.SimpleActionGroup();
+    const deleteAction = new Gio.SimpleAction({ name: 'delete' });
+    deleteAction.connect('activate', () => {
       const deleted = deleteCustomCollection(collection.id);
       if (deleted) {
-        // Remove from UI
-        const parent = rowBox.get_parent() as Gtk.Box | null;
-        if (parent) {
-          parent.remove(rowBox);
-        }
         // If this was the active collection, select first preset
         if (state.activeCollectionId === collection.id) {
           const presets = loadPresetCollections();
@@ -476,9 +553,24 @@ function createCollectionRow(
             }
           }
         }
+        // Re-render the custom section
+        renderCustomSection(state);
       }
     });
-    rowBox.append(deleteButton);
+    actionGroup.add_action(deleteAction);
+    rowBox.insert_action_group('collection', actionGroup);
+
+    const rightClickGesture = new Gtk.GestureClick({ button: 3 });
+    rightClickGesture.connect(
+      'released',
+      (_gesture: Gtk.GestureClick, _n: number, x: number, y: number) => {
+        popover.set_pointing_to(
+          new Gdk.Rectangle({ x: Math.floor(x), y: Math.floor(y), width: 1, height: 1 })
+        );
+        popover.popup();
+      }
+    );
+    rowBox.add_controller(rightClickGesture);
   }
 
   return rowBox;
@@ -489,7 +581,55 @@ function createCollectionRow(
  */
 function updateSelectionIndicators(state: SpacesPageState): void {
   for (const [collectionId, indicator] of state.selectionIndicators) {
-    indicator.set_visible(collectionId === state.activeCollectionId);
+    indicator.set_opacity(collectionId === state.activeCollectionId ? 1 : 0);
+  }
+}
+
+/**
+ * Expand preview and window size if the collection requires more space
+ */
+function expandSizeIfNeeded(state: SpacesPageState, collection: SpaceCollection): void {
+  const collectionMonitors = getMonitorsForCollection(
+    collection,
+    state.monitorStorage,
+    state.monitors
+  );
+  const newWidth = calculatePreviewWidth(collection.rows, collectionMonitors);
+  const newHeight = calculateRequiredHeight(collection.rows, collectionMonitors);
+
+  const widthExpanded = newWidth > state.currentMaxPreviewWidth;
+  const heightExpanded = newHeight > state.currentMaxPreviewHeight;
+
+  if (widthExpanded) {
+    state.currentMaxPreviewWidth = newWidth;
+    // Expand preview pane width
+    if (state.previewScrolled) {
+      state.previewScrolled.set_size_request(newWidth + 20, -1);
+    }
+  }
+
+  if (heightExpanded) {
+    state.currentMaxPreviewHeight = newHeight;
+  }
+
+  // Expand window if needed
+  if (widthExpanded || heightExpanded) {
+    const window = state.previewContainer.get_root() as Gtk.Window | null;
+    if (window) {
+      const currentWidth = window.get_width();
+      const currentHeight = window.get_height();
+
+      const requiredWindowWidth =
+        state.currentMaxPreviewWidth + LIST_PANE_WIDTH + WINDOW_HORIZONTAL_PADDING + 50;
+      const requiredWindowHeight = state.currentMaxPreviewHeight + WINDOW_VERTICAL_PADDING;
+
+      const newWindowWidth = Math.max(currentWidth, requiredWindowWidth);
+      const newWindowHeight = Math.max(currentHeight, requiredWindowHeight);
+
+      if (newWindowWidth > currentWidth || newWindowHeight > currentHeight) {
+        window.set_default_size(newWindowWidth, newWindowHeight);
+      }
+    }
   }
 }
 
@@ -497,6 +637,9 @@ function updateSelectionIndicators(state: SpacesPageState): void {
  * Update the preview pane with the selected collection
  */
 function updatePreview(state: SpacesPageState, collection: SpaceCollection): void {
+  // Expand preview and window width if needed
+  expandSizeIfNeeded(state, collection);
+
   // Clear existing preview
   let child = state.previewContainer.get_first_child();
   while (child) {
@@ -610,7 +753,7 @@ function createClickableSpace(
 /**
  * Show the import dialog
  */
-function showImportDialog(state: SpacesPageState, listPane: Gtk.Widget): void {
+function showImportDialog(state: SpacesPageState): void {
   const dialog = new Gtk.FileDialog({
     title: 'Import Layout Configuration',
     modal: true,
@@ -628,16 +771,21 @@ function showImportDialog(state: SpacesPageState, listPane: Gtk.Widget): void {
   dialog.set_default_filter(filter);
 
   // Get the window from the widget hierarchy
-  const toplevel = listPane.get_root();
+  const toplevel = state.previewContainer.get_root();
   const window = toplevel instanceof Gtk.Window ? toplevel : null;
 
-  // Use async/await pattern with promise wrapper
-  // @ts-expect-error - GTK4 FileDialog.open accepts callback as third argument
-  dialog.open(window, null, (_source: unknown, result: Gio.AsyncResult) => {
+  // @ts-expect-error - GTK4 FileDialog.open_multiple accepts callback as third argument
+  dialog.open_multiple(window, null, (_source: unknown, result: Gio.AsyncResult) => {
     try {
-      const file = dialog.open_finish(result);
-      if (file) {
-        importFile(state, file, listPane);
+      const files = dialog.open_multiple_finish(result);
+      if (files) {
+        const count = files.get_n_items();
+        for (let i = 0; i < count; i++) {
+          const file = files.get_item(i) as Gio.File | null;
+          if (file) {
+            importFile(state, file);
+          }
+        }
       }
     } catch (e) {
       // User cancelled or error
@@ -649,7 +797,7 @@ function showImportDialog(state: SpacesPageState, listPane: Gtk.Widget): void {
 /**
  * Import a file and add it to the custom collections
  */
-function importFile(state: SpacesPageState, file: Gio.File, listPane: Gtk.Widget): void {
+function importFile(state: SpacesPageState, file: Gio.File): void {
   try {
     const [success, contents] = file.load_contents(null);
     if (!success) {
@@ -661,21 +809,8 @@ function importFile(state: SpacesPageState, file: Gio.File, listPane: Gtk.Widget
     const collection = importLayoutConfigurationFromJson(jsonString);
 
     if (collection) {
-      // Refresh the entire page to show the new collection
-      // For now, just log success - a full refresh would require recreating the page
       console.log(`Successfully imported: ${collection.name}`);
-
-      // Find the custom section and add the new row
-      // This is a simplified approach - ideally we'd refresh the whole list
-      const scrolled = listPane.get_first_child() as Gtk.ScrolledWindow | null;
-      if (scrolled) {
-        const innerBox = scrolled.get_child() as Gtk.Box | null;
-        if (innerBox) {
-          const row = createCollectionRow(state, collection, true, null);
-          // Insert before the import button (which is at the end)
-          innerBox.append(row);
-        }
-      }
+      renderCustomSection(state);
     }
   } catch (e) {
     console.log(`Error importing file: ${e}`);

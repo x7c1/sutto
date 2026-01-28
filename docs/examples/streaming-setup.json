@@ -1,0 +1,56 @@
+{
+  "name": "Streaming Setup",
+  "layoutGroups": [
+    {
+      "name": "game + chat overlay",
+      "layouts": [
+        { "label": "Game", "x": "0", "y": "0", "width": "100%", "height": "100%" },
+        { "label": "Chat", "x": "75%", "y": "60%", "width": "25%", "height": "40%" }
+      ]
+    },
+    {
+      "name": "obs + scenes",
+      "layouts": [
+        { "label": "OBS Preview", "x": "0", "y": "0", "width": "65%", "height": "70%" },
+        { "label": "Scenes", "x": "65%", "y": "0", "width": "35%", "height": "70%" },
+        { "label": "Audio Mixer", "x": "0", "y": "70%", "width": "100%", "height": "30%" }
+      ]
+    },
+    {
+      "name": "chat + alerts",
+      "layouts": [
+        { "label": "Chat", "x": "0", "y": "0", "width": "50%", "height": "100%" },
+        { "label": "Alerts", "x": "50%", "y": "0", "width": "50%", "height": "50%" },
+        { "label": "Dashboard", "x": "50%", "y": "50%", "width": "50%", "height": "50%" }
+      ]
+    },
+    {
+      "name": "full",
+      "layouts": [
+        { "label": "Full", "x": "0", "y": "0", "width": "100%", "height": "100%" }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "spaces": [
+        {
+          "displays": {
+            "0": "game + chat overlay",
+            "1": "obs + scenes"
+          }
+        }
+      ]
+    },
+    {
+      "spaces": [
+        {
+          "displays": {
+            "0": "full",
+            "1": "chat + alerts"
+          }
+        }
+      ]
+    }
+  ]
+}

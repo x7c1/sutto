@@ -9,7 +9,13 @@
 import Clutter from 'gi://Clutter';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
-import { MINIATURE_SPACE_BG_COLOR, MONITOR_MARGIN, SPACE_SPACING } from '../constants.js';
+import {
+  DEFAULT_MONITOR_HEIGHT,
+  DEFAULT_MONITOR_WIDTH,
+  MINIATURE_SPACE_BG_COLOR,
+  MONITOR_MARGIN,
+  SPACE_SPACING,
+} from '../constants.js';
 import type { LayoutHistoryRepository } from '../repository/history.js';
 import type { Layout, LayoutSelectedEvent, Monitor, Space } from '../types/index.js';
 import { createMiniatureDisplayView } from './miniature-display.js';
@@ -44,7 +50,7 @@ function calculateBoundingBoxForSpace(
   }
 
   if (relevantMonitors.length === 0) {
-    return { minX: 0, minY: 0, width: 1920, height: 1080 }; // Fallback
+    return { minX: 0, minY: 0, width: DEFAULT_MONITOR_WIDTH, height: DEFAULT_MONITOR_HEIGHT };
   }
 
   let minX = Infinity;

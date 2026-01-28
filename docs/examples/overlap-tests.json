@@ -1,0 +1,88 @@
+{
+  "name": "Overlap Tests",
+  "layoutGroups": [
+    {
+      "name": "corner overlay",
+      "layouts": [
+        { "label": "Main", "x": "0", "y": "0", "width": "100%", "height": "100%" },
+        { "label": "PiP", "x": "70%", "y": "70%", "width": "30%", "height": "30%" }
+      ]
+    },
+    {
+      "name": "center overlay",
+      "layouts": [
+        { "label": "Background", "x": "0", "y": "0", "width": "100%", "height": "100%" },
+        { "label": "Dialog", "x": "25%", "y": "25%", "width": "50%", "height": "50%" }
+      ]
+    },
+    {
+      "name": "triple stack",
+      "layouts": [
+        { "label": "Base", "x": "0", "y": "0", "width": "100%", "height": "100%" },
+        { "label": "Mid", "x": "20%", "y": "20%", "width": "60%", "height": "60%" },
+        { "label": "Top", "x": "35%", "y": "35%", "width": "30%", "height": "30%" }
+      ]
+    },
+    {
+      "name": "sidebar overlap",
+      "layouts": [
+        { "label": "Content", "x": "0", "y": "0", "width": "70%", "height": "100%" },
+        { "label": "Sidebar", "x": "60%", "y": "0", "width": "40%", "height": "100%" }
+      ]
+    },
+    {
+      "name": "multi-pip",
+      "layouts": [
+        { "label": "Main", "x": "0", "y": "0", "width": "100%", "height": "100%" },
+        { "label": "Cam1", "x": "2%", "y": "2%", "width": "20%", "height": "20%" },
+        { "label": "Cam2", "x": "78%", "y": "2%", "width": "20%", "height": "20%" },
+        { "label": "Chat", "x": "78%", "y": "75%", "width": "20%", "height": "23%" }
+      ]
+    },
+    {
+      "name": "cross overlap",
+      "layouts": [
+        { "label": "Horiz", "x": "0", "y": "30%", "width": "100%", "height": "40%" },
+        { "label": "Vert", "x": "30%", "y": "0", "width": "40%", "height": "100%" }
+      ]
+    },
+    {
+      "name": "full",
+      "layouts": [
+        { "label": "Full", "x": "0", "y": "0", "width": "100%", "height": "100%" }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "spaces": [
+        { "displays": { "0": "corner overlay" } }
+      ]
+    },
+    {
+      "spaces": [
+        { "displays": { "0": "center overlay" } }
+      ]
+    },
+    {
+      "spaces": [
+        { "displays": { "0": "triple stack" } }
+      ]
+    },
+    {
+      "spaces": [
+        { "displays": { "0": "sidebar overlap" } }
+      ]
+    },
+    {
+      "spaces": [
+        { "displays": { "0": "multi-pip" } }
+      ]
+    },
+    {
+      "spaces": [
+        { "displays": { "0": "cross overlap" } }
+      ]
+    }
+  ]
+}

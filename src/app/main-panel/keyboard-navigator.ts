@@ -241,6 +241,13 @@ export class MainPanelKeyboardNavigator {
       return true;
     }
 
+    // Tab / Shift+Tab: cycle through buttons in row order
+    if (symbol === Clutter.KEY_Tab || symbol === Clutter.KEY_ISO_Left_Tab) {
+      const reverse = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
+      this.tabFocus(reverse);
+      return true;
+    }
+
     const keyMap: { [key: number]: string } = {
       [Clutter.KEY_Up]: 'up',
       [Clutter.KEY_Down]: 'down',
@@ -385,6 +392,55 @@ export class MainPanelKeyboardNavigator {
     }
 
     return closestButton;
+  }
+
+  /**
+   * Build a flat tab order: buttons sorted by row index, then by position within each row.
+   * Within a row, buttons are sorted left-to-right, top-to-bottom, then larger area first
+   * (so parent layouts come before their overlays).
+   */
+  private buildTabOrder(): St.Button[] {
+    const buttons: Array<{ button: St.Button; rowIndex: number; pos: ButtonPosition }> = [];
+    for (const [button] of this.layoutButtons.entries()) {
+      if (!button.reactive) continue;
+      const meta = button as LayoutButtonWithMetadata;
+      const pos = this.getButtonPosition(button);
+      buttons.push({ button, rowIndex: meta._rowIndex ?? 0, pos });
+    }
+    buttons.sort((a, b) => {
+      if (a.rowIndex !== b.rowIndex) return a.rowIndex - b.rowIndex;
+      if (Math.abs(a.pos.x - b.pos.x) > 5) return a.pos.x - b.pos.x;
+      if (Math.abs(a.pos.y - b.pos.y) > 5) return a.pos.y - b.pos.y;
+      // Larger area first (parent before overlay)
+      return b.pos.width * b.pos.height - a.pos.width * a.pos.height;
+    });
+    return buttons.map((b) => b.button);
+  }
+
+  /**
+   * Move focus using Tab order. Cycles through all buttons across rows.
+   */
+  private tabFocus(reverse: boolean): void {
+    const order = this.buildTabOrder();
+    if (order.length === 0) return;
+
+    if (!this.focusedButton) {
+      const target = reverse ? order[order.length - 1] : order[0];
+      this.focusedButton = target;
+      this.applyFocusStyle(target);
+      return;
+    }
+
+    const currentIndex = order.indexOf(this.focusedButton);
+    if (currentIndex === -1) return;
+
+    const nextIndex = reverse
+      ? (currentIndex - 1 + order.length) % order.length
+      : (currentIndex + 1) % order.length;
+
+    this.removeFocusStyle(this.focusedButton);
+    this.focusedButton = order[nextIndex];
+    this.applyFocusStyle(this.focusedButton);
   }
 
   private applyFocusStyle(button: St.Button): void {

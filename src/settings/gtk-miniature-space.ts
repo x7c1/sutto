@@ -7,6 +7,7 @@
 
 import Gtk from 'gi://Gtk';
 
+import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../app/constants.js';
 import type { Monitor, Space } from '../app/types/index.js';
 import { createGtkMiniatureDisplay } from './gtk-miniature-display.js';
 
@@ -22,6 +23,7 @@ interface CairoContext {
 
 // Constants matching the Shell version
 const MAX_MONITOR_DISPLAY_WIDTH = 240;
+const MAX_MONITOR_DISPLAY_HEIGHT = 100;
 const MONITOR_MARGIN = 6;
 const MINIATURE_SPACE_BG_COLOR = { r: 0.31, g: 0.31, b: 0.31, a: 0.9 };
 
@@ -43,7 +45,7 @@ function calculateBoundingBoxForSpace(
   }
 
   if (relevantMonitors.length === 0) {
-    return { minX: 0, minY: 0, width: 1920, height: 1080 };
+    return { minX: 0, minY: 0, width: DEFAULT_MONITOR_WIDTH, height: DEFAULT_MONITOR_HEIGHT };
   }
 
   let minX = Infinity;
@@ -68,17 +70,23 @@ function calculateBoundingBoxForSpace(
 }
 
 /**
- * Calculate scale factor for the space
+ * Calculate scale factor for the space based on height
  */
 function calculateScale(space: Space, monitors: Map<string, Monitor>): number {
   let maxMonitorWidth = 0;
+  let maxMonitorHeight = 0;
   for (const [monitorKey] of Object.entries(space.displays)) {
     const monitor = monitors.get(monitorKey);
     if (monitor) {
       maxMonitorWidth = Math.max(maxMonitorWidth, monitor.geometry.width);
+      maxMonitorHeight = Math.max(maxMonitorHeight, monitor.geometry.height);
     }
   }
-  return maxMonitorWidth > 0 ? Math.min(MAX_MONITOR_DISPLAY_WIDTH / maxMonitorWidth, 1.0) : 1.0;
+  const scaleByWidth =
+    maxMonitorWidth > 0 ? Math.min(MAX_MONITOR_DISPLAY_WIDTH / maxMonitorWidth, 1.0) : 1.0;
+  const scaleByHeight =
+    maxMonitorHeight > 0 ? Math.min(MAX_MONITOR_DISPLAY_HEIGHT / maxMonitorHeight, 1.0) : 1.0;
+  return Math.min(scaleByWidth, scaleByHeight);
 }
 
 /**

@@ -1,0 +1,58 @@
+{
+  "name": "Ultrawide Productivity",
+  "layoutGroups": [
+    {
+      "name": "thirds",
+      "layouts": [
+        { "label": "Left", "x": "0", "y": "0", "width": "1/3", "height": "100%" },
+        { "label": "Center", "x": "1/3", "y": "0", "width": "1/3", "height": "100%" },
+        { "label": "Right", "x": "2/3", "y": "0", "width": "1/3", "height": "100%" }
+      ]
+    },
+    {
+      "name": "center focus",
+      "layouts": [
+        { "label": "Sidebar", "x": "0", "y": "0", "width": "20%", "height": "100%" },
+        { "label": "Main", "x": "20%", "y": "0", "width": "60%", "height": "100%" },
+        { "label": "Panel", "x": "80%", "y": "0", "width": "20%", "height": "100%" }
+      ]
+    },
+    {
+      "name": "quadrants",
+      "layouts": [
+        { "label": "Top-Left", "x": "0", "y": "0", "width": "50%", "height": "50%" },
+        { "label": "Top-Right", "x": "50%", "y": "0", "width": "50%", "height": "50%" },
+        { "label": "Bottom-Left", "x": "0", "y": "50%", "width": "50%", "height": "50%" },
+        { "label": "Bottom-Right", "x": "50%", "y": "50%", "width": "50%", "height": "50%" }
+      ]
+    },
+    {
+      "name": "wide + narrow",
+      "layouts": [
+        { "label": "Wide", "x": "0", "y": "0", "width": "70%", "height": "100%" },
+        { "label": "Narrow", "x": "70%", "y": "0", "width": "30%", "height": "100%" }
+      ]
+    },
+    {
+      "name": "full",
+      "layouts": [
+        { "label": "Full", "x": "0", "y": "0", "width": "100%", "height": "100%" }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "spaces": [
+        { "displays": { "0": "thirds" } },
+        { "displays": { "0": "center focus" } },
+        { "displays": { "0": "quadrants" } }
+      ]
+    },
+    {
+      "spaces": [
+        { "displays": { "0": "wide + narrow" } },
+        { "displays": { "0": "full" } }
+      ]
+    }
+  ]
+}

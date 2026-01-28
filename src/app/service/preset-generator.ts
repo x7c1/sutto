@@ -1,7 +1,11 @@
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 
-import { BASE_LAYOUT_GROUPS } from '../config/base-layout-groups.js';
+import {
+  BASE_LAYOUT_GROUPS,
+  STANDARD_LAYOUT_GROUP_NAMES,
+  WIDE_LAYOUT_GROUP_NAMES,
+} from '../config/base-layout-groups.js';
 import { MONITORS_FILE_NAME } from '../constants.js';
 import { getExtensionDataPath } from '../repository/extension-path.js';
 import { generateLayoutHash } from '../repository/layout-hash-generator.js';
@@ -13,14 +17,16 @@ import type { LayoutGroupSetting, LayoutSetting } from '../types/layout-setting.
 // Use console.log for compatibility with both extension and preferences contexts
 const log = (message: string): void => console.log(message);
 
+export type MonitorType = 'wide' | 'standard';
+
 /**
- * Get the preset name for a given monitor count
+ * Get the preset name for a given monitor count and type
+ * Examples: "1 Monitor - Standard", "1 Monitor - Wide", "2 Monitors - Standard"
  */
-function getPresetName(monitorCount: number): string {
-  if (monitorCount === 1) {
-    return '1 Monitor';
-  }
-  return `${monitorCount} Monitors`;
+function getPresetName(monitorCount: number, monitorType: MonitorType): string {
+  const suffix = monitorCount === 1 ? 'Monitor' : 'Monitors';
+  const typeLabel = monitorType === 'wide' ? 'Wide' : 'Standard';
+  return `${monitorCount} ${suffix} - ${typeLabel}`;
 }
 
 /**
@@ -68,18 +74,13 @@ function createSpace(layoutGroupName: string, monitorCount: number): Space {
 }
 
 /**
- * Generate rows based on monitor count
+ * Generate rows based on monitor count and type
  * - 1 monitor: 2 spaces per row
  * - 2+ monitors: 1 space per row
  */
-function generateRows(monitorCount: number): SpacesRow[] {
-  const layoutGroupNames = [
-    'vertical 3-split',
-    'vertical 3-split wide center',
-    'vertical 2-split',
-    'grid 4x2',
-    'full screen',
-  ];
+function generateRows(monitorCount: number, monitorType: MonitorType): SpacesRow[] {
+  const layoutGroupNames =
+    monitorType === 'wide' ? WIDE_LAYOUT_GROUP_NAMES : STANDARD_LAYOUT_GROUP_NAMES;
 
   const spacesPerRow = monitorCount === 1 ? 2 : 1;
   const rows: SpacesRow[] = [];
@@ -96,13 +97,13 @@ function generateRows(monitorCount: number): SpacesRow[] {
 }
 
 /**
- * Generate a preset SpaceCollection for the given monitor count
+ * Generate a preset SpaceCollection for the given monitor count and type
  */
-function generatePreset(monitorCount: number): SpaceCollection {
+function generatePreset(monitorCount: number, monitorType: MonitorType): SpaceCollection {
   return {
     id: generateUUID(),
-    name: getPresetName(monitorCount),
-    rows: generateRows(monitorCount),
+    name: getPresetName(monitorCount, monitorType),
+    rows: generateRows(monitorCount, monitorType),
   };
 }
 
@@ -168,52 +169,54 @@ export function loadMonitorCount(): number {
 }
 
 /**
- * Check if a preset exists for the given monitor count
+ * Check if a preset exists for the given monitor count and type
  */
-export function hasPresetForMonitorCount(monitorCount: number): boolean {
+export function hasPresetForMonitorCount(monitorCount: number, monitorType: MonitorType): boolean {
   const presets = loadPresetCollections();
-  const presetName = getPresetName(monitorCount);
+  const presetName = getPresetName(monitorCount, monitorType);
   return presets.some((p) => p.name === presetName);
 }
 
 /**
- * Ensure a preset exists for the current monitor configuration
- * Generates one if it doesn't exist
- * Returns the preset collection (existing or newly generated)
+ * Ensure presets exist for the current monitor configuration
+ * Generates both standard and wide presets if they don't exist
  */
-export function ensurePresetForMonitorCount(monitorCount: number): SpaceCollection | undefined {
+export function ensurePresetForMonitorCount(monitorCount: number): void {
   if (monitorCount <= 0) {
     log('[PresetGenerator] Invalid monitor count, skipping preset generation');
-    return undefined;
+    return;
   }
 
   const presets = loadPresetCollections();
-  const presetName = getPresetName(monitorCount);
-  const existing = presets.find((p) => p.name === presetName);
+  const monitorTypes: MonitorType[] = ['standard', 'wide'];
+  let updated = false;
 
-  if (existing) {
-    log(`[PresetGenerator] Preset "${presetName}" already exists`);
-    return existing;
+  for (const monitorType of monitorTypes) {
+    const presetName = getPresetName(monitorCount, monitorType);
+    const existing = presets.find((p) => p.name === presetName);
+
+    if (!existing) {
+      log(`[PresetGenerator] Generating preset "${presetName}"`);
+      const newPreset = generatePreset(monitorCount, monitorType);
+      presets.push(newPreset);
+      updated = true;
+    }
   }
 
-  log(`[PresetGenerator] Generating preset for ${monitorCount} monitor(s)`);
-  const newPreset = generatePreset(monitorCount);
-  presets.push(newPreset);
-  savePresetCollections(presets);
-
-  log(`[PresetGenerator] Preset "${presetName}" generated and saved`);
-  return newPreset;
+  if (updated) {
+    savePresetCollections(presets);
+  }
 }
 
 /**
- * Ensure preset exists for the current monitor count (from monitors.snappa.json)
+ * Ensure presets exist for the current monitor count (from monitors.snappa.json)
  * Called when main panel or settings screen opens
  */
-export function ensurePresetForCurrentMonitors(): SpaceCollection | undefined {
+export function ensurePresetForCurrentMonitors(): void {
   const monitorCount = loadMonitorCount();
   if (monitorCount === 0) {
     log('[PresetGenerator] No monitor info available, skipping preset generation');
-    return undefined;
+    return;
   }
-  return ensurePresetForMonitorCount(monitorCount);
+  ensurePresetForMonitorCount(monitorCount);
 }

@@ -11,6 +11,7 @@ import {
   SPACE_SPACING,
 } from '../constants.js';
 import type { LayoutHistoryRepository } from '../repository/history.js';
+import type { LayoutButtonWithMetadata } from '../types/button.js';
 import type { Layout, LayoutSelectedEvent, Monitor, SpacesRow } from '../types/index.js';
 import { createMiniatureSpaceView } from '../ui/miniature-space.js';
 
@@ -220,8 +221,9 @@ export function createSpacesRowView(
       );
       rowBox.add_child(view.spaceContainer);
 
-      // Collect layout buttons and events
+      // Collect layout buttons and events with row index
       for (const [button, layout] of view.layoutButtons) {
+        (button as LayoutButtonWithMetadata)._rowIndex = i;
         layoutButtons.set(button, layout);
       }
       buttonEvents.push(...view.buttonEvents);
