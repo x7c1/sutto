@@ -14,27 +14,26 @@ set -euo pipefail
 METADATA_FILE="${1:-dist/metadata.json}"
 
 main() {
-    local pr_number version_info current_version next_version last_tag changelog
+    local pr_number current_version next_version last_tag changelog repo_url
 
     pr_number=$(check_existing_pr)
     read -r current_version next_version <<< "$(get_version_info)"
     last_tag=$(get_last_tag)
     changelog=$(generate_changelog "$last_tag")
+    repo_url=$(gh repo view --json url --jq '.url')
 
     if [ -n "$pr_number" ]; then
-        update_release_pr "$pr_number" "$next_version" "$current_version" "$changelog"
+        update_release_pr "$pr_number" "$next_version" "$current_version" "$changelog" "$last_tag" "$repo_url"
         output "pr_number" "$pr_number"
         output "action" "updated"
     else
         ensure_release_label
-        create_release_pr "$next_version" "$current_version" "$changelog"
+        create_release_pr "$next_version" "$current_version" "$changelog" "$last_tag" "$repo_url"
         pr_number=$(check_existing_pr)
         output "pr_number" "$pr_number"
         output "action" "created"
     fi
 }
-
-# --- Helper functions ---
 
 check_existing_pr() {
     gh pr list --label "release" --state open --json number --jq '.[0].number // empty'
@@ -72,6 +71,8 @@ create_release_pr() {
     local version="$1"
     local current_version="$2"
     local changelog="$3"
+    local last_tag="$4"
+    local repo_url="$5"
     local branch="release/v${version}"
 
     git config user.name "github-actions[bot]"
@@ -92,14 +93,7 @@ create_release_pr() {
     gh pr create \
         --title "Release v${version}" \
         --label "release" \
-        --body "$(cat <<EOF
-## Release v${version}
-
-### Changes since v${current_version}
-
-${changelog}
-EOF
-)"
+        --body "$(generate_pr_body "$version" "$current_version" "$changelog" "$last_tag" "$repo_url")"
 }
 
 update_release_pr() {
@@ -107,16 +101,36 @@ update_release_pr() {
     local version="$2"
     local current_version="$3"
     local changelog="$4"
+    local last_tag="$5"
+    local repo_url="$6"
 
     gh pr edit "$pr_number" \
-        --body "$(cat <<EOF
+        --body "$(generate_pr_body "$version" "$current_version" "$changelog" "$last_tag" "$repo_url")"
+}
+
+generate_pr_body() {
+    local version="$1"
+    local current_version="$2"
+    local changelog="$3"
+    local last_tag="$4"
+    local repo_url="$5"
+    local compare_link=""
+
+    if [ -n "$last_tag" ]; then
+        compare_link="- [Full diff](${repo_url}/compare/${last_tag}...release/v${version})"
+    fi
+
+    cat <<EOF
 ## Release v${version}
 
 ### Changes since v${current_version}
 
 ${changelog}
+
+### Links
+
+${compare_link}
 EOF
-)"
 }
 
 output() {
