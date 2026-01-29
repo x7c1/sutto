@@ -15,6 +15,7 @@ jobs:
 
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -57,3 +58,9 @@ jobs:
           name: Release ${{ steps.version-check.outputs.version }}
           files: ${{ steps.package.outputs.filename }}
           generate_release_notes: true
+
+      - name: Update release PR links
+        if: steps.version-check.outputs.changed == 'true'
+        run: .github/scripts/update-release-pr-links.sh "${{ steps.version-check.outputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
