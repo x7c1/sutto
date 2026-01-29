@@ -70,6 +70,13 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
+      - name: Ensure release label exists
+        if: steps.check-pr.outputs.exists == 'false'
+        run: |
+          gh label create release --description "Release PR" --color 0E8A16 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create release branch and PR
         if: steps.check-pr.outputs.exists == 'false'
         run: |
@@ -77,6 +84,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           branch="release/v${{ steps.version.outputs.next }}"
+
+          # Delete existing branch if it exists (from failed previous run)
+          git push origin --delete "$branch" 2>/dev/null || true
 
           # Create branch
           git checkout -b "$branch"
