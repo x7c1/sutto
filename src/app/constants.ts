@@ -2,7 +2,7 @@
 export const EXTENSION_UUID = 'snappa@x7c1.github.io';
 
 // Data files (snappa-generated, distinct from GNOME Shell required files like metadata.json)
-export const HISTORY_FILE_NAME = 'history.snappa.json';
+export const HISTORY_FILE_NAME = 'history.snappa.jsonl';
 export const MONITORS_FILE_NAME = 'monitors.snappa.json';
 // SpaceCollection files
 export const PRESET_SPACE_COLLECTIONS_FILE_NAME = 'preset-space-collections.snappa.json';

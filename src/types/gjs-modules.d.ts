@@ -97,3 +97,16 @@ interface TextDecoderConstructor {
 }
 
 declare const TextDecoder: TextDecoderConstructor;
+
+// TextEncoder interface (available in GJS)
+interface TextEncoder {
+  readonly encoding: string;
+  encode(input?: string): Uint8Array;
+  encodeInto(source: string, destination: Uint8Array): { read: number; written: number };
+}
+
+interface TextEncoderConstructor {
+  new (): TextEncoder;
+}
+
+declare const TextEncoder: TextEncoderConstructor;

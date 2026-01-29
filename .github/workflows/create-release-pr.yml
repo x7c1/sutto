@@ -1,0 +1,121 @@
+name: Create Release PR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+    # Skip if the push is from merging the release PR itself
+    if: ${{ !startsWith(github.event.head_commit.message, 'Release v') }}
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for existing release PR
+        id: check-pr
+        run: |
+          pr_number=$(gh pr list --label "release" --state open --json number --jq '.[0].number // empty')
+          echo "pr_number=$pr_number" >> $GITHUB_OUTPUT
+          if [ -n "$pr_number" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version info
+        id: version
+        run: |
+          current=$(jq -r '.version' dist/metadata.json)
+          next=$((current + 1))
+          echo "current=$current" >> $GITHUB_OUTPUT
+          echo "next=$next" >> $GITHUB_OUTPUT
+
+      - name: Get last tag
+        id: last-tag
+        run: |
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          if [ -n "${{ steps.last-tag.outputs.tag }}" ]; then
+            log=$(git log ${{ steps.last-tag.outputs.tag }}..HEAD --oneline --no-merges)
+          else
+            log=$(git log --oneline --no-merges -20)
+          fi
+
+          # Format as markdown list
+          changelog=$(echo "$log" | sed 's/^[a-f0-9]* /- /')
+
+          # Save to file for multi-line handling
+          echo "$changelog" > /tmp/changelog.txt
+
+          # Also save as output (escaped for GitHub Actions)
+          {
+            echo "content<<EOF"
+            echo "$changelog"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create release branch and PR
+        if: steps.check-pr.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          branch="release/v${{ steps.version.outputs.next }}"
+
+          # Create branch
+          git checkout -b "$branch"
+
+          # Update version
+          jq '.version = ${{ steps.version.outputs.next }}' dist/metadata.json > dist/metadata.json.tmp
+          mv dist/metadata.json.tmp dist/metadata.json
+
+          # Commit and push
+          git add dist/metadata.json
+          git commit -m "Release v${{ steps.version.outputs.next }}"
+          git push origin "$branch"
+
+          # Create PR
+          gh pr create \
+            --title "Release v${{ steps.version.outputs.next }}" \
+            --label "release" \
+            --body "$(cat <<EOF
+          ## Release v${{ steps.version.outputs.next }}
+
+          ### Changes since v${{ steps.version.outputs.current }}
+
+          ${{ steps.changelog.outputs.content }}
+          EOF
+          )"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update existing PR description
+        if: steps.check-pr.outputs.exists == 'true'
+        run: |
+          gh pr edit ${{ steps.check-pr.outputs.pr_number }} \
+            --body "$(cat <<EOF
+          ## Release v${{ steps.version.outputs.next }}
+
+          ### Changes since v${{ steps.version.outputs.current }}
+
+          ${{ steps.changelog.outputs.content }}
+          EOF
+          )"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

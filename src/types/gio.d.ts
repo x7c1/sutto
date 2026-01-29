@@ -57,6 +57,38 @@ declare namespace Gio {
     make_directory_with_parents(cancellable: Cancellable | null): void;
 
     /**
+     * Opens file for appending
+     * @param flags Flags for file creation
+     * @param cancellable Optional cancellable object, or null
+     */
+    append_to(flags: FileCreateFlags, cancellable: Cancellable | null): FileOutputStream;
+
+    /**
+     * Gets the parent directory
+     */
+    get_parent(): File | null;
+
+    /**
+     * Moves a file
+     * @param destination Destination file
+     * @param flags Copy flags
+     * @param cancellable Optional cancellable object, or null
+     * @param progress_callback Optional progress callback, or null
+     */
+    move(
+      destination: File,
+      flags: FileCopyFlags,
+      cancellable: Cancellable | null,
+      progress_callback: null
+    ): void;
+
+    /**
+     * Deletes the file
+     * @param cancellable Optional cancellable object, or null
+     */
+    delete(cancellable: Cancellable | null): void;
+
+    /**
      * Copies a file
      * @param cancellable Optional cancellable object, or null
      * @param progress_callback Optional progress callback, or null
@@ -77,6 +109,25 @@ declare namespace Gio {
       flags: FileQueryInfoFlags,
       cancellable: Cancellable | null
     ): FileEnumerator;
+  }
+
+  /**
+   * File output stream for writing to files
+   */
+  interface FileOutputStream {
+    /**
+     * Writes all bytes from the buffer
+     * @param buffer Bytes to write
+     * @param cancellable Optional cancellable object, or null
+     * @returns [success, bytes_written] tuple
+     */
+    write_all(buffer: Uint8Array, cancellable: Cancellable | null): [boolean, number];
+
+    /**
+     * Closes the stream
+     * @param cancellable Optional cancellable object, or null
+     */
+    close(cancellable: Cancellable | null): void;
   }
 
   /**
@@ -137,6 +188,7 @@ declare namespace Gio {
    * Flags for file creation
    */
   enum FileCreateFlags {
+    NONE = 0,
     REPLACE_DESTINATION = 4,
   }
 
