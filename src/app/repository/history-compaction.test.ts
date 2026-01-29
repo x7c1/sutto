@@ -6,9 +6,10 @@ function event(
   timestamp: number,
   wmClassHash: string,
   titleHash: string,
-  layoutId: string
+  layoutId: string,
+  collectionId: string = 'default'
 ): LayoutEvent {
-  return { timestamp, wmClassHash, titleHash, layoutId };
+  return { timestamp, collectionId, wmClassHash, titleHash, layoutId };
 }
 
 describe('compactEvents', () => {
@@ -106,5 +107,37 @@ describe('compactEvents', () => {
     const original = [...events];
     compactEvents(events, 5);
     expect(events).toEqual(original);
+  });
+
+  it('handles multiple collections independently', () => {
+    const events = [
+      event(1000, 'wm1', 'title1', 'layout1', 'collection1'),
+      event(2000, 'wm1', 'title1', 'layout2', 'collection2'),
+      event(3000, 'wm1', 'title1', 'layout3', 'collection1'),
+    ];
+    const result = compactEvents(events, 1);
+    // Each collection keeps its own latest event for the title
+    expect(result).toHaveLength(2);
+    expect(result.map((e) => e.collectionId)).toEqual(['collection2', 'collection1']);
+    expect(result.map((e) => e.layoutId)).toEqual(['layout2', 'layout3']);
+  });
+
+  it('counts maxPerWmClass per collection, not globally', () => {
+    // Both collections have 3 layouts each, maxPerWmClass=2
+    // If global: 6 layouts total -> keep only 2
+    // If per-collection: each keeps 2 -> total 4
+    const events = [
+      event(1000, 'wm1', 'titleA', 'layout1', 'collection1'),
+      event(2000, 'wm1', 'titleA', 'layout2', 'collection1'),
+      event(3000, 'wm1', 'titleA', 'layout3', 'collection1'),
+      event(4000, 'wm1', 'titleA', 'layout4', 'collection2'),
+      event(5000, 'wm1', 'titleA', 'layout5', 'collection2'),
+      event(6000, 'wm1', 'titleA', 'layout6', 'collection2'),
+    ];
+    const result = compactEvents(events, 2);
+    // collection1: layout2, layout3 in LRU (layout1 evicted)
+    // collection2: layout5, layout6 in LRU (layout4 evicted)
+    expect(result).toHaveLength(4);
+    expect(result.map((e) => e.layoutId)).toEqual(['layout2', 'layout3', 'layout5', 'layout6']);
   });
 });

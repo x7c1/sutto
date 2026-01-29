@@ -1,5 +1,6 @@
 export interface LayoutEvent {
   timestamp: number;
+  collectionId: string;
   wmClassHash: string;
   titleHash: string;
   layoutId: string;
@@ -12,12 +13,13 @@ export function compactEvents(events: LayoutEvent[], maxPerWmClass: number): Lay
   const titleEntries = new Map<string, LayoutEntry>();
 
   for (const event of sorted) {
-    const { wmClassHash, titleHash, layoutId, timestamp } = event;
+    const { collectionId, wmClassHash, titleHash, layoutId, timestamp } = event;
 
-    let entries = wmClassEntries.get(wmClassHash);
+    const wmClassKey = `${collectionId}:${wmClassHash}`;
+    let entries = wmClassEntries.get(wmClassKey);
     if (!entries) {
       entries = [];
-      wmClassEntries.set(wmClassHash, entries);
+      wmClassEntries.set(wmClassKey, entries);
     }
     const existingIndex = entries.findIndex((e) => e.layoutId === layoutId);
     if (existingIndex !== -1) {
@@ -28,24 +30,24 @@ export function compactEvents(events: LayoutEvent[], maxPerWmClass: number): Lay
       entries.length = maxPerWmClass;
     }
 
-    const titleKey = `${wmClassHash}:${titleHash}`;
+    const titleKey = `${collectionId}:${wmClassHash}:${titleHash}`;
     titleEntries.set(titleKey, { layoutId, lastUsed: timestamp });
   }
 
   const keepLayoutIds = new Map<string, Set<string>>();
-  for (const [wmClassHash, entries] of wmClassEntries) {
-    keepLayoutIds.set(wmClassHash, new Set(entries.map((e) => e.layoutId)));
+  for (const [wmClassKey, entries] of wmClassEntries) {
+    keepLayoutIds.set(wmClassKey, new Set(entries.map((e) => e.layoutId)));
   }
 
   const latestByTitle = new Map<string, LayoutEvent>();
   for (const event of sorted) {
-    const titleKey = `${event.wmClassHash}:${event.titleHash}`;
+    const titleKey = `${event.collectionId}:${event.wmClassHash}:${event.titleHash}`;
     latestByTitle.set(titleKey, event);
   }
 
   const latestByWmClassLayout = new Map<string, LayoutEvent>();
   for (const event of sorted) {
-    const key = `${event.wmClassHash}:${event.layoutId}`;
+    const key = `${event.collectionId}:${event.wmClassHash}:${event.layoutId}`;
     latestByWmClassLayout.set(key, event);
   }
 
@@ -54,7 +56,8 @@ export function compactEvents(events: LayoutEvent[], maxPerWmClass: number): Lay
     keepSet.add(event);
   }
   for (const event of latestByWmClassLayout.values()) {
-    if (keepLayoutIds.get(event.wmClassHash)?.has(event.layoutId)) {
+    const wmClassKey = `${event.collectionId}:${event.wmClassHash}`;
+    if (keepLayoutIds.get(wmClassKey)?.has(event.layoutId)) {
       keepSet.add(event);
     }
   }

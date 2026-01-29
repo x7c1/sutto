@@ -23,9 +23,19 @@ export class LayoutHistoryRepository {
   };
   private events: LayoutEvent[] = [];
   private filePath: string;
+  private activeCollectionId: string = '';
 
   constructor() {
     this.filePath = getExtensionDataPath(HISTORY_FILE_NAME);
+  }
+
+  setActiveCollection(collectionId: string): void {
+    if (this.activeCollectionId !== collectionId) {
+      // Clear volatile byWindowId cache when collection changes
+      // to avoid returning layout IDs from a different collection
+      this.memory.byWindowId.clear();
+      this.activeCollectionId = collectionId;
+    }
   }
 
   load(): void {
@@ -68,10 +78,16 @@ export class LayoutHistoryRepository {
       return;
     }
 
+    if (!this.activeCollectionId) {
+      log('[LayoutHistory] activeCollectionId is not set, skipping history update');
+      return;
+    }
+
     this.memory.byWindowId.set(windowId, layoutId);
 
     const event: LayoutEvent = {
       timestamp: Date.now(),
+      collectionId: this.activeCollectionId,
       wmClassHash: hashString(wmClass),
       titleHash: hashString(title),
       layoutId,
@@ -81,7 +97,7 @@ export class LayoutHistoryRepository {
     this.updateMemoryWithEvent(event);
 
     log(
-      `[LayoutHistory] Recorded: wmClassHash=${event.wmClassHash}, titleHash=${event.titleHash} -> ${layoutId}`
+      `[LayoutHistory] Recorded: collection=${event.collectionId}, wmClassHash=${event.wmClassHash}, titleHash=${event.titleHash} -> ${layoutId}`
     );
   }
 
@@ -95,16 +111,21 @@ export class LayoutHistoryRepository {
       return byWindowId;
     }
 
+    if (!this.activeCollectionId) {
+      return null;
+    }
+
     const wmClassHash = hashString(wmClass);
     const titleHash = hashString(title);
 
-    const titleKey = `${wmClassHash}:${titleHash}`;
+    const titleKey = `${this.activeCollectionId}:${wmClassHash}:${titleHash}`;
     const byTitle = this.memory.byTitleHash.get(titleKey);
     if (byTitle) {
       return byTitle.layoutId;
     }
 
-    const byWmClass = this.memory.byWmClassHash.get(wmClassHash);
+    const wmClassKey = `${this.activeCollectionId}:${wmClassHash}`;
+    const byWmClass = this.memory.byWmClassHash.get(wmClassKey);
     if (byWmClass && byWmClass.length > 0) {
       return byWmClass[0].layoutId;
     }
@@ -211,12 +232,13 @@ export class LayoutHistoryRepository {
   }
 
   private updateMemoryWithEvent(event: LayoutEvent): void {
-    const { wmClassHash, titleHash, layoutId, timestamp } = event;
+    const { collectionId, wmClassHash, titleHash, layoutId, timestamp } = event;
 
-    let entries = this.memory.byWmClassHash.get(wmClassHash);
+    const wmClassKey = `${collectionId}:${wmClassHash}`;
+    let entries = this.memory.byWmClassHash.get(wmClassKey);
     if (!entries) {
       entries = [];
-      this.memory.byWmClassHash.set(wmClassHash, entries);
+      this.memory.byWmClassHash.set(wmClassKey, entries);
     }
 
     const existingIndex = entries.findIndex((e) => e.layoutId === layoutId);
@@ -230,7 +252,7 @@ export class LayoutHistoryRepository {
       entries.length = MAX_LAYOUTS_PER_WM_CLASS;
     }
 
-    const titleKey = `${wmClassHash}:${titleHash}`;
+    const titleKey = `${collectionId}:${wmClassHash}:${titleHash}`;
     this.memory.byTitleHash.set(titleKey, { layoutId, lastUsed: timestamp });
   }
 }

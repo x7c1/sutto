@@ -157,6 +157,7 @@ export class Controller {
       log(`[Controller] Environment changed, activating collection: ${collectionToActivate}`);
       this.settings.setActiveSpaceCollectionId(collectionToActivate);
       this.monitorManager.setActiveCollectionId(collectionToActivate);
+      this.syncActiveCollectionToHistory();
     }
   }
 
@@ -168,6 +169,15 @@ export class Controller {
       this.layoutHistoryRepository.load();
       this.historyLoaded = true;
     }
+    this.syncActiveCollectionToHistory();
+  }
+
+  /**
+   * Sync active collection ID to history repository
+   */
+  private syncActiveCollectionToHistory(): void {
+    const collectionId = this.settings.getActiveSpaceCollectionId();
+    this.layoutHistoryRepository.setActiveCollection(collectionId);
   }
 
   /**
