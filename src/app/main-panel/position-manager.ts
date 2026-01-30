@@ -5,6 +5,7 @@
  * Handles boundary adjustments.
  */
 
+import Clutter from 'gi://Clutter';
 import type St from 'gi://St';
 import {
   FOOTER_MARGIN_TOP,
@@ -139,9 +140,14 @@ export class MainPanelPositionManager {
   }
 
   /**
-   * Update panel container position
+   * Update panel container position with smooth animation
    */
   updatePanelPosition(container: St.BoxLayout, position: Position): void {
-    container.set_position(position.x, position.y);
+    container.ease({
+      x: position.x,
+      y: position.y,
+      duration: 50,
+      mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+    });
   }
 }
