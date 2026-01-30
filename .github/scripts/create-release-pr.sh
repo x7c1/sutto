@@ -19,8 +19,8 @@ main() {
     pr_number=$(check_existing_pr)
     read -r current_version next_version <<< "$(get_version_info)"
     last_tag=$(get_last_tag)
-    changelog=$(generate_changelog "$last_tag")
     repo_url=$(gh repo view --json url --jq '.url')
+    changelog=$(generate_changelog "$last_tag" "$repo_url")
 
     if [ -n "$pr_number" ]; then
         update_release_pr "$pr_number" "$next_version" "$current_version" "$changelog" "$last_tag" "$repo_url"
@@ -52,6 +52,7 @@ get_last_tag() {
 
 generate_changelog() {
     local last_tag="$1"
+    local repo_url="$2"
     local log
 
     if [ -n "$last_tag" ]; then
@@ -60,7 +61,7 @@ generate_changelog() {
         log=$(git log --oneline --no-merges -20)
     fi
 
-    echo "$log" | sed 's/^[a-f0-9]* /- /'
+    echo "$log" | sed 's/^[a-f0-9]* /- /' | sed "s|#\([0-9]\+\)|[#\1](${repo_url}/pull/\1)|g"
 }
 
 ensure_release_label() {
