@@ -28,6 +28,7 @@ When writing a Concept Doc, consider the following:
 
 - **Consistency with product requirements**: Ensure concepts align with and do not contradict product requirements
 - **No implementation details**: Focus on what the concept means, not how it is implemented in code
+- **Technical constraints**: If technical limitations affect the concept's design or scope, document them in a separate "Technical Constraints" section
 - **Future assumptions**: If a concept includes future considerations, clearly mark them as such
 - **One word per concept**: Do not use the same word for different concepts
 - **One concept per word**: Do not use different words for the same concept
@@ -92,6 +93,10 @@ Concrete examples that illustrate the concept.
 Verbs that are used with this Domain Model:
 - apply (a Layout Group to a Display)
 - switch (between Spaces)
+
+## Technical Constraints (optional)
+
+If technical limitations affect this concept's design or scope, explain them here.
 
 ## Related Concepts
 
