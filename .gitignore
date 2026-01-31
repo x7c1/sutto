@@ -25,6 +25,8 @@ target
 
 # Local files
 *.local
+*.tmp
+*.bak
 .envrc
 .claude/settings.local.json
 
