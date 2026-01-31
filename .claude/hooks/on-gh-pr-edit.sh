@@ -25,8 +25,20 @@ main() {
 }
 
 print_update_rules() {
-    echo "## PR Update Rules"
-    echo ""
+    cat << 'EOF'
+## PR Update Rules
+
+### IMPORTANT: Preserve Existing Content
+Before updating, ALWAYS read the current PR description first:
+```
+gh pr view <number> --json body -q '.body'
+```
+
+- Preserve checkbox states (checked/unchecked)
+- Only modify or append what's necessary
+- Do NOT overwrite the entire body
+
+EOF
     print_full_template
     echo ""
     print_labels_rules
