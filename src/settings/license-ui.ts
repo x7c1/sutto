@@ -9,9 +9,6 @@ import {
   TrialManager,
 } from '../app/service/license/index.js';
 
-const PURCHASE_URL = 'https://snappa.example.com/pricing';
-const API_BASE_URL = 'https://api.snappa.example.com';
-
 /**
  * Create the License preferences group
  */
@@ -24,7 +21,7 @@ export function createLicenseGroup(
   });
 
   const storage = new LicenseStorage(settings);
-  const client = new LicenseClient(API_BASE_URL);
+  const client = new LicenseClient(__LICENSE_API_BASE_URL__);
   const trialManager = new TrialManager(storage);
   const licenseManager = new LicenseManager(storage, client, trialManager);
 
@@ -77,7 +74,7 @@ function updateStatusRow(row: Adw.ActionRow, state: LicenseState): void {
     });
     purchaseButton.add_css_class('suggested-action');
     purchaseButton.connect('clicked', () => {
-      Gtk.show_uri(null, PURCHASE_URL, 0);
+      Gtk.show_uri(null, __LICENSE_PURCHASE_URL__, 0);
     });
     row.add_suffix(purchaseButton);
   }

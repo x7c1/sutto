@@ -38,7 +38,6 @@ declare function log(message: string): void;
 const EDGE_THRESHOLD = 10; // pixels from screen edge to trigger panel
 const EDGE_DELAY = 200; // milliseconds to wait before showing panel
 const MONITOR_INTERVAL = 50; // milliseconds between cursor position checks
-const API_BASE_URL = 'https://api.snappa.example.com';
 
 export class Controller {
   private currentWindow: Meta.Window | null = null;
@@ -85,7 +84,7 @@ export class Controller {
 
     // Initialize license management
     const licenseStorage = new LicenseStorage(settings.getGSettings());
-    const licenseClient = new LicenseClient(API_BASE_URL);
+    const licenseClient = new LicenseClient(__LICENSE_API_BASE_URL__);
     const trialManager = new TrialManager(licenseStorage);
     this.licenseManager = new LicenseManager(licenseStorage, licenseClient, trialManager);
     this.licenseManager.onStateChange(() => {

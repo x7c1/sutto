@@ -6,6 +6,10 @@ import { execSync } from 'child_process';
 const isDev = process.env.BUILD_MODE !== 'release';
 const buildMode = isDev ? 'development' : 'release';
 
+// License API URLs from environment variables
+const licenseApiBaseUrl = process.env.LICENSE_API_BASE_URL || 'https://api.snappa.example.com';
+const licensePurchaseUrl = process.env.LICENSE_PURCHASE_URL || 'https://snappa.example.com/pricing';
+
 console.log(`Building in ${buildMode} mode...`);
 
 async function build() {
@@ -31,6 +35,7 @@ async function build() {
             logLevel: 'info',
             define: {
                 '__DEV__': JSON.stringify(isDev),
+                '__LICENSE_API_BASE_URL__': JSON.stringify(licenseApiBaseUrl),
             },
         });
 
@@ -50,6 +55,8 @@ async function build() {
             logLevel: 'info',
             define: {
                 '__DEV__': JSON.stringify(isDev),
+                '__LICENSE_API_BASE_URL__': JSON.stringify(licenseApiBaseUrl),
+                '__LICENSE_PURCHASE_URL__': JSON.stringify(licensePurchaseUrl),
             },
         });
 
