@@ -167,6 +167,13 @@ Error types for validation:
 | `LICENSE_CANCELLED` | 403 | Subscription was cancelled and expired |
 | `DEVICE_DEACTIVATED` | 403 | This device was deactivated (by last-wins or manual) |
 
+**Error Priority**: When multiple error conditions apply, return the highest priority error:
+1. `INVALID_LICENSE_KEY` - license doesn't exist
+2. `LICENSE_EXPIRED` - subscription expired (renew needed)
+3. `LICENSE_CANCELLED` - subscription cancelled (repurchase needed)
+4. `DEVICE_DEACTIVATED` - device removed (re-activation possible)
+5. `INVALID_ACTIVATION` - activation ID invalid (re-activation possible)
+
 #### Backend → Billing Provider (server-side only)
 
 The backend communicates with the billing provider using server-stored credentials. The specific API calls depend on the chosen provider (see [ADR](./adr.md)).
@@ -298,7 +305,7 @@ Activation request for Device D:
 When an old device validates its license, the backend checks its storage and returns `DEVICE_DEACTIVATED` if the device is no longer associated.
 
 **Notes**:
-- **Implementation Detail**: When the snappa backend deactivates an old device from its own storage, it must also call the billing provider's API (e.g., Lemon Squeezy `deactivate`) to ensure consistency.
+- **Implementation Detail**: When the snappa backend deactivates an old device from its own storage, it must also call the billing provider's API (e.g., Lemon Squeezy `deactivate`) to ensure consistency. If the deactivate API call fails, the backend should handle this gracefully (e.g., retry, log for manual review, or accept minor inconsistency). This is out of scope for this plan and will be addressed during backend implementation.
 - Due to client-side caching (24-hour validation interval), the deactivated device may continue working until its next validation check. This is acceptable as a trade-off for simplicity.
 - If the user re-enters the license key on a deactivated device, it will be re-activated (triggering last-wins again if at limit). This is intentional - the system is designed to support willing users, not to prevent determined circumvention.
 
@@ -379,7 +386,7 @@ Total estimated effort: 35 points
 - **Fail-open on backend unreachable**: Extension works normally when backend is down; ensures users aren't locked out if backend is discontinued; usage days do NOT count
 - **Offline usage**: Extension works for up to 7 days since last successful validation; usage days count; after 7 days, requires online validation
 - **Device identifier**: Use `/etc/machine-id` (read at runtime, no storage needed)
-- **Device label**: Use pretty hostname from `/etc/machine-info` (`PRETTY_HOSTNAME`), fallback to `GLib.get_host_name()`
+- **Device label**: Use pretty hostname from `/etc/machine-info` (`PRETTY_HOSTNAME`), fallback to `GLib.get_host_name()`. Truncate to 64 characters max to handle arbitrarily long hostnames.
 - **Validation frequency**: On extension startup + once per 24 hours while running
 
 ## Open Questions
