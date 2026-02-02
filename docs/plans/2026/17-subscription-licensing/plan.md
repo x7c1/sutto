@@ -6,7 +6,7 @@ Implement a subscription-based licensing system for snappa. Users will have a 30
 
 ## Background
 
-snappa is currently a free, open-source GNOME Shell extension. To sustain ongoing development, a monetization strategy is needed. A low-cost subscription model (~$3/month) with a generous trial period balances accessibility with revenue generation.
+snappa is currently a free, open-source GNOME Shell extension. To sustain ongoing development, a monetization strategy is needed. A low-cost subscription model (e.g., ~$3/month, pricing TBD) with a generous trial period balances accessibility with revenue generation.
 
 ## Requirements
 
@@ -130,7 +130,7 @@ Error types for activation:
 |------|-------------|-------------|
 | `INVALID_LICENSE_KEY` | 404 | License key not found |
 | `LICENSE_EXPIRED` | 403 | Subscription has expired |
-| `LICENSE_CANCELLED` | 403 | Subscription was cancelled |
+| `LICENSE_CANCELLED` | 403 | Subscription was cancelled and expired |
 
 **Validation** (subsequent uses):
 ```
@@ -150,6 +150,14 @@ Response (200 OK):
 }
 ```
 
+(Example for cancelled but still valid subscription):
+```json
+{
+  "valid_until": "2026-02-28T00:00:00Z",
+  "subscription_status": "cancelled_pending_expiry"
+}
+```
+
 Response (4xx error):
 ```json
 {
@@ -164,7 +172,7 @@ Error types for validation:
 | `INVALID_LICENSE_KEY` | 404 | License key not found |
 | `INVALID_ACTIVATION` | 404 | Activation ID not valid for this license |
 | `LICENSE_EXPIRED` | 403 | Subscription has expired |
-| `LICENSE_CANCELLED` | 403 | Subscription was cancelled |
+| `LICENSE_CANCELLED` | 403 | Subscription was cancelled and expired |
 | `DEVICE_DEACTIVATED` | 403 | This device was deactivated (by last-wins or manual) |
 
 #### Backend → Billing Provider (server-side only)
@@ -240,10 +248,11 @@ Online:
   → Increment usage days if in trial mode
 
 Offline (user has no network):
-  → If last successful validation < 7 days ago:
-      → Allow usage
+  → Calculate time since last validation: `now - license-last-validated`
+  → If diff < 7 days:
+      → Allow usage (ignore `valid_until` to accommodate clock skew)
       → Increment usage days
-  → If last successful validation >= 7 days ago:
+  → If diff >= 7 days:
       → Disable extension ("Please connect to internet to verify license")
 
 Backend Unreachable (network available, backend down):
@@ -297,6 +306,7 @@ Activation request for Device D:
 When an old device validates its license, the backend checks its storage and returns `DEVICE_DEACTIVATED` if the device is no longer associated.
 
 **Notes**:
+- **Implementation Detail**: When the snappa backend deactivates an old device from its own storage, it must also call the billing provider's API (e.g., Lemon Squeezy `deactivate`) to ensure consistency.
 - Due to client-side caching (24-hour validation interval), the deactivated device may continue working until its next validation check. This is acceptable as a trade-off for simplicity.
 - If the user re-enters the license key on a deactivated device, it will be re-activated (triggering last-wins again if at limit). This is intentional - the system is designed to support willing users, not to prevent determined circumvention.
 
