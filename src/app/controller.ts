@@ -23,6 +23,12 @@ import { MotionMonitor } from './drag/motion-monitor.js';
 import { MainPanel } from './main-panel/index.js';
 import { MonitorManager } from './monitor/manager.js';
 import { LayoutHistoryRepository } from './repository/history.js';
+import {
+  LicenseClient,
+  LicenseManager,
+  LicenseStorage,
+  TrialManager,
+} from './service/license/index.js';
 import { KeyboardShortcutManager } from './shortcuts/keyboard-shortcut-manager.js';
 import type { LayoutSelectedEvent, Position } from './types/index.js';
 import { LayoutApplicator } from './window/layout-applicator.js';
@@ -49,6 +55,8 @@ export class Controller {
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
   private settings: ExtensionSettings;
+  private licenseManager: LicenseManager;
+  private isLicenseValid: boolean = true;
 
   constructor(settings: ExtensionSettings, metadata: ExtensionMetadata) {
     this.settings = settings;
@@ -74,6 +82,19 @@ export class Controller {
 
     this.keyboardShortcutManager = new KeyboardShortcutManager(settings);
 
+    // Initialize license management
+    const licenseStorage = new LicenseStorage(settings.getGSettings());
+    const licenseClient = new LicenseClient(__LICENSE_API_BASE_URL__);
+    const trialManager = new TrialManager(licenseStorage);
+    this.licenseManager = new LicenseManager(licenseStorage, licenseClient, trialManager);
+    this.licenseManager.onStateChange(() => {
+      this.isLicenseValid = this.licenseManager.shouldExtensionBeEnabled();
+      if (!this.isLicenseValid) {
+        log('[Controller] License invalid, hiding panel');
+        this.mainPanel.hide();
+      }
+    });
+
     this.mainPanel = new MainPanel(metadata, this.monitorManager, this.layoutHistoryRepository);
     this.mainPanel.setOnLayoutSelected((event) => {
       this.applyLayoutToCurrentWindow(event);
@@ -95,6 +116,14 @@ export class Controller {
    * Enable the controller
    */
   enable(): void {
+    // Initialize license checking
+    this.licenseManager.initialize().then(() => {
+      this.isLicenseValid = this.licenseManager.shouldExtensionBeEnabled();
+      if (!this.isLicenseValid) {
+        log('[Controller] License invalid on startup, extension disabled');
+      }
+    });
+
     this.monitorManager.detectMonitors();
 
     // Sync current active collection from settings to MonitorManager
@@ -132,6 +161,7 @@ export class Controller {
    * Disable the controller
    */
   disable(): void {
+    this.licenseManager.destroy();
     this.motionMonitor.stop();
     this.dragSignalHandler.disconnect();
     this.keyboardShortcutManager.unregisterAll();
@@ -264,6 +294,11 @@ export class Controller {
    * Show main panel at cursor position
    */
   private showMainPanel(): void {
+    if (!this.isLicenseValid) {
+      log('[Controller] Cannot show panel: license invalid');
+      return;
+    }
+
     if (this.mainPanel.isVisible()) {
       return;
     }
@@ -294,6 +329,11 @@ export class Controller {
    */
   private onShowPanelShortcut(): void {
     log('[Controller] ===== KEYBOARD SHORTCUT TRIGGERED =====');
+
+    if (!this.isLicenseValid) {
+      log('[Controller] License invalid, ignoring shortcut');
+      return;
+    }
 
     if (this.mainPanel.isVisible()) {
       log('[Controller] Panel is already visible, hiding it');

@@ -26,7 +26,9 @@ jobs:
         run: npm run check
 
       - name: Build
-        run: npm run build
+        run: |
+          source .envrc.example
+          npm run build
 
       - name: Run tests
         run: npm run test:run

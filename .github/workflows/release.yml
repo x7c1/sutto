@@ -41,6 +41,9 @@ jobs:
       - name: Build Extension
         if: steps.version-check.outputs.changed == 'true'
         run: npm run build:release
+        env:
+          LICENSE_API_BASE_URL: ${{ secrets.LICENSE_API_BASE_URL }}
+          LICENSE_PURCHASE_URL: ${{ secrets.LICENSE_PURCHASE_URL }}
 
       - name: Package Extension
         if: steps.version-check.outputs.changed == 'true'

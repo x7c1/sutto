@@ -1,0 +1,2 @@
+export LICENSE_API_BASE_URL=https://api.snappa.example.com
+export LICENSE_PURCHASE_URL=https://snappa.example.com/pricing
