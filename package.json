@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "build": "LICENSE_API_BASE_URL=https://api.snappa.example.com LICENSE_PURCHASE_URL=https://snappa.example.com/pricing tsc --noEmit && LICENSE_API_BASE_URL=https://api.snappa.example.com LICENSE_PURCHASE_URL=https://snappa.example.com/pricing node esbuild.config.js",
+    "build": "tsc --noEmit && node esbuild.config.js",
     "build:release": "BUILD_MODE=release tsc --noEmit && BUILD_MODE=release node esbuild.config.js",
     "watch": "tsc --watch --noEmit",
     "clean": "rm -f dist/*.js dist/*.js.map",
