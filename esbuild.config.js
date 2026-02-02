@@ -6,9 +6,18 @@ import { execSync } from 'child_process';
 const isDev = process.env.BUILD_MODE !== 'release';
 const buildMode = isDev ? 'development' : 'release';
 
-// License API URLs from environment variables
-const licenseApiBaseUrl = process.env.LICENSE_API_BASE_URL || 'https://api.snappa.example.com';
-const licensePurchaseUrl = process.env.LICENSE_PURCHASE_URL || 'https://snappa.example.com/pricing';
+// License API URLs from environment variables (required)
+const licenseApiBaseUrl = process.env.LICENSE_API_BASE_URL;
+const licensePurchaseUrl = process.env.LICENSE_PURCHASE_URL;
+
+if (!licenseApiBaseUrl) {
+    console.error('✗ Build failed: LICENSE_API_BASE_URL environment variable is required');
+    process.exit(1);
+}
+if (!licensePurchaseUrl) {
+    console.error('✗ Build failed: LICENSE_PURCHASE_URL environment variable is required');
+    process.exit(1);
+}
 
 console.log(`Building in ${buildMode} mode...`);
 
