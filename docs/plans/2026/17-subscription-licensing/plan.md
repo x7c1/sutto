@@ -319,6 +319,16 @@ For future scaling considerations, see [Backend Rate Limiting Strategy](./backen
 
 Not implemented in initial release. See [ADR](./adr.md) for details on detection approach when user base grows.
 
+### Device Management UI (Future)
+
+Not implemented in initial release. In future versions, the Preferences UI could display a list of activated devices:
+
+- Show device label, activation date, and last validation time
+- Allow users to deactivate devices directly from snappa (requires new backend endpoint)
+- This would use the `device_label` field to identify devices in the list
+
+For initial release, users can manage devices via the billing provider's customer portal or by re-entering their license key (triggering last-wins).
+
 ## Implementation Tasks
 
 ### Phase 1: Backend API (10 points)
