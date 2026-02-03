@@ -16,14 +16,6 @@ export interface LayoutEventProps {
   layoutId: LayoutId;
 }
 
-export interface LayoutEventRaw {
-  timestamp: number;
-  collectionId: string;
-  wmClassHash: string;
-  titleHash: string;
-  layoutId: string;
-}
-
 /**
  * Domain object representing a layout selection event
  */
@@ -93,15 +85,5 @@ export class LayoutEvent {
     } catch {
       return null;
     }
-  }
-
-  toRaw(): LayoutEventRaw {
-    return {
-      timestamp: this.timestamp,
-      collectionId: this.collectionId.toString(),
-      wmClassHash: this.wmClassHash,
-      titleHash: this.titleHash,
-      layoutId: this.layoutId.toString(),
-    };
   }
 }

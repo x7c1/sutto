@@ -3,6 +3,7 @@ import GLib from 'gi://GLib';
 import { LayoutEvent } from '../../domain/history/index.js';
 import { type CollectionId, LayoutId } from '../../domain/layout/index.js';
 import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
+import { toLayoutEventRaw } from './layout-event-serializer.js';
 
 declare function log(message: string): void;
 
@@ -192,7 +193,7 @@ export class FileLayoutHistoryRepository implements LayoutHistoryRepository {
         parent.make_directory_with_parents(null);
       }
 
-      const content = `${events.map((e) => JSON.stringify(e.toRaw())).join('\n')}\n`;
+      const content = `${events.map((e) => JSON.stringify(toLayoutEventRaw(e))).join('\n')}\n`;
       tempFile.replace_contents(
         new TextEncoder().encode(content),
         null,
@@ -223,7 +224,7 @@ export class FileLayoutHistoryRepository implements LayoutHistoryRepository {
         parent.make_directory_with_parents(null);
       }
 
-      const line = `${JSON.stringify(event.toRaw())}\n`;
+      const line = `${JSON.stringify(toLayoutEventRaw(event))}\n`;
       const outputStream = file.append_to(Gio.FileCreateFlags.NONE, null);
       outputStream.write_all(new TextEncoder().encode(line), null);
       outputStream.close(null);
