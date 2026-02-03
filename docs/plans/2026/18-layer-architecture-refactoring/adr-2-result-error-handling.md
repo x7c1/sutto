@@ -1,45 +1,50 @@
-# ADR-2: Error Handling Strategy with Result Types
+# ADR-2: Error Handling Strategy
 
 ## Status
 
-Accepted
+Revised (originally accepted Result types, changed to exceptions)
 
 ## Context
 
-TypeScript exceptions are untyped and invisible in function signatures. Callers can easily forget to handle errors. We want a safer approach without abandoning the exception-based ecosystem entirely.
+TypeScript exceptions are untyped and invisible in function signatures. Callers can easily forget to handle errors. We considered using Rust-style `Result<T, E>` types for safer error handling.
 
-Rust uses `Result<T, E>` types that force callers to handle errors explicitly. We want similar guarantees at the UI boundary.
+However, a conflict emerged with ADR-1 (nominal typing):
+
+- Result types at UseCase boundary require primitive parameters (for error conversion)
+- Primitive parameters lose the type safety benefit of nominal typing (ADR-1)
+- Using domain types at the boundary while returning Result requires complex patterns
 
 ## Options Considered
 
-### Option 1: Exceptions Everywhere
+### Option 1: Exceptions with Domain Types at Boundary
 
 ```typescript
-class LicenseKey {
-  constructor(readonly value: string) {
-    if (!/.../test(value)) throw new ValidationError('...');
-  }
-}
-
+// UseCase: receives domain types, throws exceptions
 class ActivateLicense {
-  async execute(rawKey: string): Promise<License> {
-    const key = new LicenseKey(rawKey);  // may throw
-    // ...
+  async execute(key: LicenseKey, deviceId: DeviceId): Promise<License> {
+    const response = await this.apiClient.activate(key, deviceId);
+    return new License(...);
   }
 }
 
-// UI
+// UI: creates domain types, uses try-catch
 try {
-  const license = await activateLicense.execute(rawKey);
+  const key = new LicenseKey(rawKey);
+  const deviceId = new DeviceId(rawDeviceId);
+  const license = await activateLicense.execute(key, deviceId);
   showSuccess(license);
 } catch (e) {
-  showError(e);  // easy to forget
+  showError(e);
 }
 ```
 
+**Pros:**
+- Domain types at UseCase boundary (type safety from ADR-1)
+- Simple, conventional pattern
+- Ecosystem compatible
+
 **Cons:**
 - Caller can forget `try/catch`
-- No compile-time enforcement
 - Error types not visible in signature
 
 ### Option 2: Result Types Everywhere
@@ -49,7 +54,7 @@ class LicenseKey {
   private constructor(readonly value: string) {}
 
   static create(value: string): Result<LicenseKey, ValidationError> {
-    if (!/.../test(value)) {
+    if (!/.../.test(value)) {
       return { ok: false, error: new ValidationError('...') };
     }
     return { ok: true, value: new LicenseKey(value) };
@@ -65,101 +70,94 @@ class LicenseKey {
 ### Option 3: Exceptions in Domain, Result at UseCase Boundary
 
 ```typescript
-// Domain layer: throw exceptions (simple, conventional)
-class LicenseKey {
-  #brand: void;
-  constructor(readonly value: string) {
-    if (!/.../test(value)) throw new ValidationError('...');
-  }
-}
-
-// UseCase layer: catch and convert to Result
 class ActivateLicense {
-  async execute(rawKey: string): Promise<Result<License, ActivationError>> {
+  async execute(rawKey: string, rawDeviceId: string): Promise<Result<License, ActivationError>> {
     try {
       const key = new LicenseKey(rawKey);
-      const response = await this.apiClient.activate(key, deviceId);
-      const license = new License(...);
-      await this.repository.save(license);
+      const deviceId = new DeviceId(rawDeviceId);
+      // ...
       return { ok: true, value: license };
     } catch (e) {
       return { ok: false, error: toActivationError(e) };
     }
   }
 }
-
-// UI layer: always receives Result
-const result = await activateLicense.execute(rawKey);
-if (!result.ok) {
-  showError(result.error.message);  // must handle
-  return;
-}
-showSuccess(result.value);
 ```
+
+**Cons:**
+- UseCase receives primitives, losing nominal typing benefits
+- Conflicting arguments can't be detected at compile time:
+  ```typescript
+  // Compiles but wrong - arguments swapped!
+  activateLicense.execute(rawDeviceId, rawKey);
+  ```
 
 ## Decision
 
-Use **Option 3: Exceptions in Domain, Result at UseCase Boundary**.
+Use **Option 1: Exceptions with Domain Types at Boundary**.
 
 ## Rationale
 
-- **Domain stays simple**: Conventional exception-based validation
-- **UseCase encapsulates errors**: Converts exceptions to typed Result
-- **UI gets compile-time safety**: Cannot access `value` without checking `ok`
-- **Gradual adoption**: Can be introduced incrementally per UseCase
-- **Ecosystem compatible**: Works with exception-throwing libraries (Soup, GLib, etc.)
-
-## Result Type Definition
-
-```typescript
-type Result<T, E> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
-
-// Helper functions (optional)
-function ok<T>(value: T): Result<T, never> {
-  return { ok: true, value };
-}
-
-function err<E>(error: E): Result<never, E> {
-  return { ok: false, error };
-}
-```
-
-## Error Type Guidelines
-
-Each UseCase defines its own error type:
-
-```typescript
-type ActivationError =
-  | { type: 'INVALID_KEY'; message: string }
-  | { type: 'NETWORK_ERROR'; message: string }
-  | { type: 'ALREADY_ACTIVATED'; message: string };
-
-type LoadCollectionError =
-  | { type: 'NOT_FOUND'; message: string }
-  | { type: 'CORRUPTED'; message: string };
-```
-
-This makes error handling explicit and exhaustive:
-
-```typescript
-switch (result.error.type) {
-  case 'INVALID_KEY':
-    // ...
-  case 'NETWORK_ERROR':
-    // ...
-  case 'ALREADY_ACTIVATED':
-    // ...
-  // TypeScript warns if a case is missing
-}
-```
+- **Preserves ADR-1 benefits**: Domain types at UseCase boundary prevent argument mix-ups
+- **Simple**: Standard try-catch pattern, no new abstractions
+- **Ecosystem compatible**: Works naturally with exception-throwing libraries (Soup, GLib, etc.)
+- **Pragmatic trade-off**: The risk of forgetting try-catch is mitigated by:
+  - Async operations naturally remind developers to handle errors
+  - Code review catches missing error handling
+  - Consistent patterns across the codebase
 
 ## Layer Responsibilities
 
 | Layer | Error Handling |
 |-------|----------------|
 | Domain | Throw exceptions for invariant violations |
-| UseCase | Catch exceptions, return `Result<T, E>` |
+| UseCase | Throw exceptions (or let them propagate) |
 | Infrastructure | Throw exceptions (wrapped if needed) |
-| UI | Receive `Result<T, E>`, handle both cases |
+| UI | Always use try-catch when calling UseCase |
+
+## Example
+
+```typescript
+// Domain layer
+class LicenseKey {
+  #brand: void;
+  constructor(readonly value: string) {
+    if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(value)) {
+      throw new ValidationError('Invalid license key format');
+    }
+  }
+}
+
+// UseCase layer
+class ActivateLicense {
+  constructor(
+    private repository: LicenseRepository,
+    private apiClient: LicenseApiClient,
+  ) {}
+
+  async execute(key: LicenseKey, deviceId: DeviceId): Promise<License> {
+    const response = await this.apiClient.activate(key, deviceId);
+    const license = new License(key, response.status, response.validUntil);
+    await this.repository.save(license);
+    return license;
+  }
+}
+
+// UI layer
+async function onActivateClicked() {
+  try {
+    const key = new LicenseKey(rawKeyInput.value);
+    const deviceId = new DeviceId(rawDeviceIdInput.value);
+    const license = await activateLicense.execute(key, deviceId);
+    showSuccess(`Activated until ${license.validUntil}`);
+  } catch (e) {
+    if (e instanceof ValidationError) {
+      showError('Invalid input format');
+    } else if (e instanceof NetworkError) {
+      showError('Network error. Please try again.');
+    } else {
+      showError('Unknown error occurred');
+    }
+  }
+}
+```

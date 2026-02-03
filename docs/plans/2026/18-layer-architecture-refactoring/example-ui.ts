@@ -1,26 +1,55 @@
 // ===== Example: UI Layer =====
 // This file demonstrates how UI interacts with UseCase layer
+// Error handling uses try-catch (not Result types)
 
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 
 // --- Types from other layers (imported) ---
 
-type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
+// Domain types
+class LicenseKey {
+  #brand: void;
+  constructor(readonly value: string) {
+    if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(value)) {
+      throw new ValidationError('Invalid license key format');
+    }
+  }
+}
 
-type ActivationError =
-  | { type: 'INVALID_KEY'; message: string }
-  | { type: 'NETWORK_ERROR'; message: string }
-  | { type: 'LICENSE_EXPIRED'; message: string };
+class DeviceId {
+  #brand: void;
+  constructor(readonly value: string) {
+    if (!value) {
+      throw new ValidationError('Device ID is required');
+    }
+  }
+}
 
 interface License {
-  key: { value: string };
+  key: LicenseKey;
   status: string;
   validUntil: Date;
 }
 
+// Error types
+class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+class NetworkError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NetworkError';
+  }
+}
+
+// UseCase interface
 interface ActivateLicense {
-  execute(rawKey: string): Promise<Result<License, ActivationError>>;
+  execute(key: LicenseKey, deviceId: DeviceId): Promise<License>;
 }
 
 // --- UI Implementation ---
@@ -47,36 +76,33 @@ export class LicenseSettingsPage {
 
   async #onActivateClicked(): Promise<void> {
     const rawKey = this.#entryRow.get_text();
+    const rawDeviceId = 'device-123'; // Would come from system
 
     this.#setLoading(true);
 
-    // UseCase returns Result - must handle both cases
-    const result = await this.#activateLicense.execute(rawKey);
+    try {
+      // Create domain objects (may throw ValidationError)
+      const key = new LicenseKey(rawKey);
+      const deviceId = new DeviceId(rawDeviceId);
 
-    this.#setLoading(false);
+      // Execute use case (may throw NetworkError, etc.)
+      const license = await this.#activateLicense.execute(key, deviceId);
 
-    if (!result.ok) {
-      // Compiler ensures error handling
-      this.#showError(result.error);
-      return;
+      this.#showSuccess(license);
+    } catch (e) {
+      this.#showError(e);
+    } finally {
+      this.#setLoading(false);
     }
-
-    // Compiler ensures value is available here
-    this.#showSuccess(result.value);
   }
 
-  #showError(error: ActivationError): void {
-    // Exhaustive handling - TypeScript warns if case is missing
-    switch (error.type) {
-      case 'INVALID_KEY':
-        this.#statusLabel.set_label('Invalid license key format');
-        break;
-      case 'NETWORK_ERROR':
-        this.#statusLabel.set_label('Network error. Please try again.');
-        break;
-      case 'LICENSE_EXPIRED':
-        this.#statusLabel.set_label('This license has expired');
-        break;
+  #showError(error: unknown): void {
+    if (error instanceof ValidationError) {
+      this.#statusLabel.set_label('Invalid license key format');
+    } else if (error instanceof NetworkError) {
+      this.#statusLabel.set_label('Network error. Please try again.');
+    } else {
+      this.#statusLabel.set_label('An unexpected error occurred');
     }
   }
 
@@ -94,8 +120,8 @@ export class LicenseSettingsPage {
 // --- Wiring (in extension entry point or prefs.ts) ---
 
 // import { ActivateLicense } from '../usecase/licensing/activate-license';
-// import { HttpLicenseApiClient } from '../infra/api/license-api-client';
-// import { GSettingsLicenseRepository } from '../infra/gsettings/license-settings';
+// import { HttpLicenseApiClient } from '../infra/api/http-license-api-client';
+// import { GSettingsLicenseRepository } from '../infra/gsettings/gsettings-license-repository';
 //
 // const activateLicense = new ActivateLicense(
 //   new GSettingsLicenseRepository(settings),

@@ -5,7 +5,7 @@
 import Gio from 'gi://Gio';
 
 // --- Domain Layer (no instantiation needed, just types) ---
-// import { License, LicenseKey } from './domain/licensing/...';
+// import { License, LicenseKey, DeviceId } from './domain/licensing/...';
 
 // --- UseCase Layer ---
 // import { ActivateLicense } from './usecase/licensing/activate-license';
@@ -13,10 +13,10 @@ import Gio from 'gi://Gio';
 // import { LoadSpaceCollection } from './usecase/layout/load-space-collection';
 
 // --- Infrastructure Layer ---
-// import { HttpLicenseApiClient } from './infra/api/license-api-client';
-// import { GSettingsLicenseRepository } from './infra/gsettings/license-settings';
-// import { FileSpaceCollectionRepository } from './infra/file/space-collection-file';
-// import { GnomeMonitorDetector } from './infra/monitor/monitor-detector';
+// import { HttpLicenseApiClient } from './infra/api/http-license-api-client';
+// import { GSettingsLicenseRepository } from './infra/gsettings/gsettings-license-repository';
+// import { FileSpaceCollectionRepository } from './infra/file/file-space-collection-repository';
+// import { GnomeMonitorDetector } from './infra/monitor/gnome-monitor-detector';
 
 // --- UI Layer ---
 // import { LicenseSettingsPage } from './ui/settings/license-settings-page';
@@ -33,12 +33,12 @@ interface LicenseRepository {
 }
 
 interface LicenseApiClient {
-  activate(key: unknown, deviceId: string): Promise<unknown>;
+  activate(key: unknown, deviceId: unknown): Promise<unknown>;
 }
 
 class HttpLicenseApiClient implements LicenseApiClient {
   constructor(private baseUrl: string) {}
-  async activate(key: unknown, deviceId: string) {
+  async activate(key: unknown, deviceId: unknown) {
     return {};
   }
 }
@@ -56,8 +56,12 @@ class ActivateLicense {
     private repository: LicenseRepository,
     private apiClient: LicenseApiClient,
   ) {}
-  async execute(rawKey: string) {
-    return { ok: true as const, value: {} };
+  // Receives domain types, throws exceptions
+  async execute(key: unknown, deviceId: unknown): Promise<unknown> {
+    const response = await this.apiClient.activate(key, deviceId);
+    // Convert to domain object and save
+    await this.repository.save(response);
+    return response;
   }
 }
 
@@ -66,8 +70,8 @@ class ValidateLicense {
     private repository: LicenseRepository,
     private apiClient: LicenseApiClient,
   ) {}
-  async execute() {
-    return { ok: true as const, value: {} };
+  async execute(): Promise<unknown> {
+    return {};
   }
 }
 

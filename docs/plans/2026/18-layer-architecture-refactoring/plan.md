@@ -94,14 +94,18 @@ Composition Root is the only layer that knows about all other layers. It instant
 src/
 ├── domain/                     # Domain Layer
 │   ├── licensing/
-│   │   ├── license.ts
-│   │   ├── license-key.ts
-│   │   ├── activation-id.ts
-│   │   └── trial.ts
+│   │   ├── license.ts          # License entity
+│   │   ├── license-key.ts      # LicenseKey value object
+│   │   ├── device-id.ts        # DeviceId value object
+│   │   ├── activation-id.ts    # ActivationId value object
+│   │   ├── trial.ts            # Trial entity
+│   │   └── trial-days.ts       # TrialDays value object (0-30 range)
 │   ├── layout/
 │   │   ├── space-collection.ts
+│   │   ├── collection-id.ts    # CollectionId value object (UUID)
 │   │   ├── space.ts
 │   │   ├── layout.ts
+│   │   ├── layout-id.ts        # LayoutId value object (UUID)
 │   │   └── layout-group.ts
 │   ├── history/
 │   │   └── layout-event.ts
@@ -111,33 +115,40 @@ src/
 │
 ├── usecase/                    # UseCase Layer
 │   ├── licensing/
-│   │   ├── activate-license.ts
-│   │   └── validate-license.ts
+│   │   ├── activate-license.ts      # ActivateLicense usecase
+│   │   ├── validate-license.ts      # ValidateLicense usecase
+│   │   ├── license-repository.ts    # LicenseRepository interface
+│   │   └── license-api-client.ts    # LicenseApiClient interface
 │   ├── layout/
 │   │   ├── load-space-collection.ts
-│   │   └── save-space-collection.ts
+│   │   ├── save-space-collection.ts
+│   │   └── space-collection-repository.ts  # SpaceCollectionRepository interface
 │   └── monitor/
-│       └── switch-environment.ts
+│       ├── switch-environment.ts
+│       └── monitor-detector.ts      # MonitorDetector interface
 │
 ├── infra/                      # Infrastructure Layer
 │   ├── api/
-│   │   └── license-api-client.ts
+│   │   └── http-license-api-client.ts      # implements LicenseApiClient
 │   ├── gsettings/
-│   │   ├── license-settings.ts
-│   │   └── extension-settings.ts
+│   │   ├── gsettings-license-repository.ts # implements LicenseRepository
+│   │   └── gsettings-extension-settings.ts
 │   ├── file/
-│   │   ├── space-collection-file.ts
-│   │   └── history-file.ts
+│   │   ├── file-space-collection-repository.ts  # implements SpaceCollectionRepository
+│   │   └── file-history-repository.ts
 │   └── monitor/
-│       └── monitor-detector.ts
+│       └── gnome-monitor-detector.ts  # implements MonitorDetector
 │
 ├── ui/                         # UI Layer
 │   ├── main-panel/
+│   │   └── main-panel.ts
 │   ├── settings/
+│   │   └── license-settings-page.ts
 │   └── controller.ts
 │
-├── app/                        # (existing, migrate gradually)
-└── types/                      # TypeScript type definitions
+├── extension.ts                # Composition Root (extension entry)
+├── prefs.ts                    # Composition Root (preferences entry)
+└── app/                        # (existing, migrate gradually)
 ```
 
 ### Domain Context Dependencies
@@ -157,7 +168,7 @@ licensing     layout
 
 - **Domain**: Nouns (`License`, `SpaceCollection`, `LayoutEvent`)
 - **UseCase**: Verb + Noun (`ActivateLicense`, `LoadSpaceCollection`)
-- **Infrastructure**: Technology + Role (`LicenseApiClient`, `MonitorDetector`)
+- **Infrastructure**: Technology + Role (`HttpLicenseApiClient`, `GnomeMonitorDetector`)
 
 ### Import Rules
 
@@ -166,6 +177,7 @@ licensing     layout
 - `usecase/` may only import from `domain/`
 - `infra/` may import from `domain/` and `usecase/` (for interfaces)
 - `ui/` may import from `usecase/` and `domain/`
+- `libs/` may be imported from any layer (layer-independent utilities)
 
 ## Implementation Plan
 
@@ -198,7 +210,6 @@ Create domain layer with validated types and domain models.
 - Define domain models:
   - `License` (aggregates license state with validation)
   - `Trial` (trial period logic)
-  - `ActivationResult` (API response converted to domain)
 
 **Estimated effort**: 3 points
 
@@ -208,7 +219,7 @@ Refactor the license module as a reference implementation.
 
 - Extract `LicenseApiClient` (HTTP only, returns raw responses)
 - Create `LicenseRepository` (converts API responses to domain objects)
-- Refactor `LicenseStorage` to `LicenseSettingsRepository`
+- Refactor `LicenseStorage` to `GSettingsLicenseRepository`
 - Update `LicenseManager` to use domain objects
 - Add validation in infrastructure layer
 
@@ -276,6 +287,7 @@ Add tests for new domain objects and repositories.
 - **GObject integration complexity**: Signal handlers and property bindings may require careful handling
 - **Incremental migration**: Some transitional states may have mixed patterns
 - **Hidden dependencies**: Services may have undocumented dependencies on current data shapes
+- **Entity identity**: Need to define how entities are compared (by ID vs structural equality)
 
 ## Success Criteria
 
