@@ -38,10 +38,10 @@ export class LayoutEvent {
     if (props.timestamp < 0) {
       throw new InvalidLayoutEventError('Timestamp must be non-negative');
     }
-    if (typeof props.wmClassHash !== 'string' || props.wmClassHash.length === 0) {
+    if (props.wmClassHash.length === 0) {
       throw new InvalidLayoutEventError('wmClassHash must be a non-empty string');
     }
-    if (typeof props.titleHash !== 'string' || props.titleHash.length === 0) {
+    if (props.titleHash.length === 0) {
       throw new InvalidLayoutEventError('titleHash must be a non-empty string');
     }
     return new LayoutEvent(props);
