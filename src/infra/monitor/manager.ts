@@ -9,17 +9,14 @@
 import Gio from 'gi://Gio';
 import type Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {
-  DEFAULT_MONITOR_HEIGHT,
-  DEFAULT_MONITOR_WIDTH,
-  MONITORS_FILE_NAME,
-} from '../../app/constants.js';
 import type {
   BoundingBox,
   Monitor,
   MonitorEnvironment,
   MonitorEnvironmentStorage,
-} from '../../app/types/monitor-config.js';
+} from '../../domain/types/index.js';
+import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../../domain/types/index.js';
+import { MONITORS_FILE_NAME } from '../constants.js';
 import { getExtensionDataPath } from '../file/index.js';
 
 declare function log(message: string): void;

@@ -30,7 +30,6 @@
     { "path": "./src/infra" },
     { "path": "./src/ui" },
     { "path": "./src/prefs" },
-    { "path": "./src/composition" },
-    { "path": "./src/app" }
+    { "path": "./src/composition" }
   ]
 }

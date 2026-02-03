@@ -7,8 +7,12 @@
 
 import Gtk from 'gi://Gtk';
 
-import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../app/constants.js';
-import type { Monitor, Space } from '../app/types/index.js';
+import {
+  DEFAULT_MONITOR_HEIGHT,
+  DEFAULT_MONITOR_WIDTH,
+  type Monitor,
+  type Space,
+} from '../domain/types/index.js';
 import { createGtkMiniatureDisplay } from './gtk-miniature-display.js';
 
 // Cairo Context interface for drawing operations

@@ -24,7 +24,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["./**/*", "../types/**/*", "../app/**/*", "../prefs/**/*", "../ui/**/*", "../composition/**/*"],
+  "include": ["./**/*", "../types/**/*", "../prefs/**/*", "../ui/**/*", "../composition/**/*"],
   "exclude": ["**/*.test.ts"],
   "references": [
     { "path": "../domain" },

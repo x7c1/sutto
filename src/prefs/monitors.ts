@@ -2,18 +2,14 @@ import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-import {
-  DEFAULT_MONITOR_HEIGHT,
-  DEFAULT_MONITOR_WIDTH,
-  EXTENSION_UUID,
-  MONITORS_FILE_NAME,
-} from '../app/constants.js';
 import type {
   Monitor,
   MonitorEnvironment,
   MonitorEnvironmentStorage,
   SpacesRow,
-} from '../app/types/index.js';
+} from '../domain/types/index.js';
+import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../domain/types/index.js';
+import { EXTENSION_UUID, MONITORS_FILE_NAME } from '../infra/constants.js';
 
 /**
  * Get extension data directory path

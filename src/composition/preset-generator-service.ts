@@ -6,14 +6,20 @@
 
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
-import type { Layout, LayoutGroup, Space, SpacesRow } from '../app/types/index.js';
-import type { LayoutGroupSetting, LayoutSetting } from '../app/types/layout-setting.js';
 import { generateLayoutHash } from '../domain/layout/index.js';
 import {
   BASE_LAYOUT_GROUPS,
   STANDARD_LAYOUT_GROUP_NAMES,
   WIDE_LAYOUT_GROUP_NAMES,
 } from '../domain/layout/preset-config.js';
+import type {
+  Layout,
+  LayoutGroup,
+  LayoutGroupSetting,
+  LayoutSetting,
+  Space,
+  SpacesRow,
+} from '../domain/types/index.js';
 import { MONITORS_FILE_NAME } from '../infra/constants.js';
 import { getExtensionDataPath } from '../infra/file/index.js';
 import { generateUUID } from '../libs/uuid/index.js';

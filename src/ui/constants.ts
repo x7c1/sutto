@@ -1,9 +1,7 @@
-// Re-export infrastructure constants for backward compatibility during migration
-// TODO: Update consumers to import directly from infra/constants
-
-// Re-export domain constants for backward compatibility during migration
-// TODO: Update consumers to import directly from domain/types
+// Re-export domain constants for convenience
 export { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../domain/types/index.js';
+
+// Re-export infra constants for convenience
 export {
   CUSTOM_SPACE_COLLECTIONS_FILE_NAME,
   EXTENSION_UUID,

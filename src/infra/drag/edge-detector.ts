@@ -5,7 +5,7 @@
  * Handles edge threshold calculation for all four edges.
  */
 
-import type { Monitor, Position } from '../../app/types/index.js';
+import type { Monitor, Position } from '../../domain/types/index.js';
 
 export class EdgeDetector {
   constructor(private readonly edgeThreshold: number) {}

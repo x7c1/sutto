@@ -4,15 +4,18 @@
  * Services for importing and deleting custom layout configurations.
  */
 
-import type { Layout, LayoutGroup, Space, SpacesRow } from '../app/types/index.js';
+import { generateLayoutHash } from '../domain/layout/index.js';
 import type {
+  Layout,
   LayoutConfiguration,
+  LayoutGroup,
   LayoutGroupSetting,
   LayoutSetting,
+  Space,
   SpaceSetting,
+  SpacesRow,
   SpacesRowSetting,
-} from '../app/types/layout-setting.js';
-import { generateLayoutHash } from '../domain/layout/index.js';
+} from '../domain/types/index.js';
 import { generateUUID } from '../libs/uuid/index.js';
 import type { SpaceCollectionData } from '../usecase/layout/index.js';
 import {

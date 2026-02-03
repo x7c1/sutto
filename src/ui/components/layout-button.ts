@@ -1,6 +1,8 @@
 import Meta from 'gi://Meta';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { evaluate, parse } from '../../domain/layout-expression/index.js';
+import type { Layout, LayoutSelectedEvent } from '../../domain/types/index.js';
 import {
   BUTTON_BG_COLOR,
   BUTTON_BG_COLOR_HOVER,
@@ -8,10 +10,8 @@ import {
   BUTTON_BORDER_COLOR,
   BUTTON_BORDER_COLOR_HOVER,
   BUTTON_BORDER_WIDTH,
-} from '../../app/constants.js';
-import type { LayoutButtonWithMetadata } from '../../app/types/button.js';
-import type { Layout, LayoutSelectedEvent } from '../../app/types/index.js';
-import { evaluate, parse } from '../../domain/layout-expression/index.js';
+} from '../constants.js';
+import type { LayoutButtonWithMetadata } from '../types/button.js';
 
 declare function log(message: string): void;
 

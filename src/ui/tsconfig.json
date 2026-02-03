@@ -31,6 +31,6 @@
     { "path": "../domain" },
     { "path": "../usecase" },
     { "path": "../infra" },
-    { "path": "../app" }
+    { "path": "../composition" }
   ]
 }

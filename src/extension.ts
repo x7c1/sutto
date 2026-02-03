@@ -1,8 +1,8 @@
 /// <reference path="./types/build-mode.d.ts" />
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
-import { EXTENSION_UUID } from './app/constants.js';
-import { Controller } from './app/controller.js';
+import { Controller } from './composition/controller.js';
+import { EXTENSION_UUID } from './infra/constants.js';
 import { DBusReloader } from './infra/reloader/index.js';
 import { ExtensionSettings } from './prefs/extension-settings.js';
 

@@ -1,9 +1,9 @@
 import Clutter from 'gi://Clutter';
 import type St from 'gi://St';
 
-import type { LayoutButtonWithMetadata } from '../../app/types/button.js';
-import type { Layout, LayoutSelectedEvent } from '../../app/types/layout.js';
+import type { Layout, LayoutSelectedEvent } from '../../domain/types/index.js';
 import { getButtonStyle } from '../components/layout-button.js';
+import type { LayoutButtonWithMetadata } from '../types/button.js';
 
 declare function log(message: string): void;
 

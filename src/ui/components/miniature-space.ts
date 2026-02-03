@@ -9,15 +9,15 @@
 import Clutter from 'gi://Clutter';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
+import type { Layout, LayoutSelectedEvent, Monitor, Space } from '../../domain/types/index.js';
+import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
 import {
   DEFAULT_MONITOR_HEIGHT,
   DEFAULT_MONITOR_WIDTH,
   MINIATURE_SPACE_BG_COLOR,
   MONITOR_MARGIN,
   SPACE_SPACING,
-} from '../../app/constants.js';
-import type { Layout, LayoutSelectedEvent, Monitor, Space } from '../../app/types/index.js';
-import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
+} from '../constants.js';
 import { createMiniatureDisplayView } from './miniature-display.js';
 import { calculateSpaceDimensions } from './space-dimensions.js';
 

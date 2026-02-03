@@ -6,7 +6,7 @@
  */
 
 import type Meta from 'gi://Meta';
-import type { Position, Size, SpacesRow } from '../../app/types/index.js';
+import type { Position, Size, SpacesRow } from '../../domain/types/index.js';
 
 declare function log(message: string): void;
 
