@@ -11,8 +11,8 @@
  * - Other layers should depend on interfaces, not concrete implementations
  */
 
+import type { SpaceCollectionData } from '../domain/layout/index.js';
 import type { MonitorType } from '../domain/layout/preset-generator.js';
-import type { SpaceCollectionData } from '../usecase/layout/index.js';
 import {
   getPresetGeneratorUseCase,
   getSpaceCollectionUseCase,

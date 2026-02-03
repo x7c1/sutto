@@ -7,14 +7,14 @@ export {
   WIDE_LAYOUT_GROUP_NAMES,
 } from './preset-config.js';
 export type {
-  LayoutData as PresetLayoutData,
-  LayoutGroupData as PresetLayoutGroupData,
+  LayoutData,
+  LayoutGroupData,
   LayoutGroupSetting,
   LayoutSetting,
   MonitorType,
-  SpaceCollectionData as PresetSpaceCollectionData,
-  SpaceData as PresetSpaceData,
-  SpacesRowData as PresetSpacesRowData,
+  SpaceCollectionData,
+  SpaceData,
+  SpacesRowData,
   UUIDGenerator,
 } from './preset-generator.js';
 export { generatePreset, getPresetName } from './preset-generator.js';

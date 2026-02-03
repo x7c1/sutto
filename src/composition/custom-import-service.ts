@@ -4,6 +4,7 @@
  * Services for importing and deleting custom layout configurations.
  */
 
+import type { SpaceCollectionData } from '../domain/layout/index.js';
 import { generateLayoutHash } from '../domain/layout/index.js';
 import type {
   Layout,
@@ -17,7 +18,6 @@ import type {
   SpacesRowSetting,
 } from '../domain/types/index.js';
 import { generateUUID } from '../libs/uuid/index.js';
-import type { SpaceCollectionData } from '../usecase/layout/index.js';
 import { getSpaceCollectionUseCase } from './use-case-factory.js';
 
 declare function log(message: string): void;

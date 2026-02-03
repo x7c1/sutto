@@ -7,13 +7,11 @@ import {
   generatePreset,
   getPresetName,
   type MonitorType,
+  type SpaceCollectionData,
   type UUIDGenerator,
 } from '../../domain/layout/preset-generator.js';
 import type { MonitorCountProvider } from './monitor-count-provider.js';
-import type {
-  SpaceCollectionData,
-  SpaceCollectionRepository,
-} from './space-collection-repository.js';
+import type { SpaceCollectionRepository } from './space-collection-repository.js';
 
 declare function log(message: string): void;
 

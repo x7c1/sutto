@@ -1,8 +1,5 @@
-import { CollectionId, SpaceId } from '../../domain/layout/index.js';
-import type {
-  SpaceCollectionData,
-  SpaceCollectionRepository,
-} from './space-collection-repository.js';
+import { CollectionId, type SpaceCollectionData, SpaceId } from '../../domain/layout/index.js';
+import type { SpaceCollectionRepository } from './space-collection-repository.js';
 
 /**
  * Use case for managing space collections.

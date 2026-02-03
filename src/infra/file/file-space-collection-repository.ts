@@ -1,7 +1,7 @@
 import Gio from 'gi://Gio';
 
-import type { CollectionId, SpaceId } from '../../domain/layout/index.js';
-import type { SpaceCollectionData, SpaceCollectionRepository } from '../../usecase/layout/index.js';
+import type { CollectionId, SpaceCollectionData, SpaceId } from '../../domain/layout/index.js';
+import type { SpaceCollectionRepository } from '../../usecase/layout/space-collection-repository.js';
 
 const log = (message: string): void => console.log(message);
 

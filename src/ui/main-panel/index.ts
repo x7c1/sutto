@@ -10,6 +10,7 @@ import Meta from 'gi://Meta';
 import St from 'gi://St';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import type { SpaceCollectionData } from '../../domain/layout/index.js';
 import type {
   Layout,
   LayoutSelectedEvent,
@@ -19,7 +20,6 @@ import type {
 } from '../../domain/types/index.js';
 import type { MonitorManager } from '../../infra/monitor/manager.js';
 import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
-import type { SpaceCollectionData } from '../../usecase/layout/index.js';
 import { AUTO_HIDE_DELAY_MS } from '../constants.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';

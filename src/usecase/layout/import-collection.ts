@@ -1,13 +1,14 @@
-import { CollectionId, generateLayoutHash } from '../../domain/layout/index.js';
+import {
+  CollectionId,
+  generateLayoutHash,
+  type LayoutData,
+  type LayoutGroupData,
+  type SpaceCollectionData,
+  type SpaceData,
+  type SpacesRowData,
+} from '../../domain/layout/index.js';
 import { generateUUID } from '../../libs/uuid/index.js';
-import type {
-  LayoutData,
-  LayoutGroupData,
-  SpaceCollectionData,
-  SpaceCollectionRepository,
-  SpaceData,
-  SpacesRowData,
-} from './space-collection-repository.js';
+import type { SpaceCollectionRepository } from './space-collection-repository.js';
 
 declare function log(message: string): void;
 

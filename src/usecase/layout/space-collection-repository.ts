@@ -1,39 +1,4 @@
-import type { CollectionId, SpaceId } from '../../domain/layout/index.js';
-
-/**
- * Raw space collection data structure
- * Used for persistence and transfer between layers
- */
-export interface SpaceCollectionData {
-  id: string;
-  name: string;
-  rows: SpacesRowData[];
-}
-
-export interface SpacesRowData {
-  spaces: SpaceData[];
-}
-
-export interface SpaceData {
-  id: string;
-  enabled: boolean;
-  displays: {
-    [monitorKey: string]: LayoutGroupData;
-  };
-}
-
-export interface LayoutGroupData {
-  name: string;
-  layouts: LayoutData[];
-}
-
-export interface LayoutData {
-  id: string;
-  hash: string;
-  label: string;
-  position: { x: string; y: string };
-  size: { width: string; height: string };
-}
+import type { CollectionId, SpaceCollectionData, SpaceId } from '../../domain/layout/index.js';
 
 /**
  * Interface for space collection persistence
