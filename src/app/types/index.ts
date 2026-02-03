@@ -1,17 +1,26 @@
-export type { Position, Size } from './geometry.js';
-export type {
-  Layout,
-  LayoutPosition,
-  LayoutSelectedEvent,
-  LayoutSize,
-} from './layout.js';
-export type { LayoutGroup } from './layout-group.js';
+// Re-export domain types for backwards compatibility during migration
+// TODO: Eventually remove this file and import directly from domain/types
 export type {
   BoundingBox,
+  Layout,
+  LayoutConfiguration,
+  LayoutGroup,
+  LayoutGroupSetting,
+  LayoutPosition,
+  LayoutSelectedEvent,
+  LayoutSetting,
+  LayoutSize,
   Monitor,
   MonitorEnvironment,
   MonitorEnvironmentStorage,
-} from './monitor-config.js';
-export type { Space } from './space.js';
-export type { SpaceCollection } from './space-collection.js';
-export type { SpacesRow } from './spaces-row.js';
+  Position,
+  Size,
+  Space,
+  SpaceCollection,
+  SpaceSetting,
+  SpacesRow,
+  SpacesRowSetting,
+} from '../../domain/types/index.js';
+
+// UI-specific types stay in app layer
+export type { LayoutButtonWithMetadata } from './button.js';

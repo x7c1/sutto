@@ -1,6 +1,3 @@
-import type { Layout } from './layout.js';
-
-export interface LayoutGroup {
-  name: string;
-  layouts: Layout[];
-}
+// Re-export domain types for backwards compatibility during migration
+// TODO: Eventually remove this file and import directly from domain/types
+export type { LayoutGroup } from '../../domain/types/layout-group.js';

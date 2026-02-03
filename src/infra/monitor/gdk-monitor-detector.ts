@@ -1,9 +1,8 @@
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 
+import { MONITORS_FILE_NAME } from '../constants.js';
 import { getExtensionDataPath } from '../file/extension-path.js';
-
-const MONITORS_FILE_NAME = 'monitors.snappa.json';
 
 const log = (message: string): void => console.log(message);
 

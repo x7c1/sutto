@@ -24,12 +24,14 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["./**/*", "../types/**/*", "../settings/**/*"],
+  "include": ["./**/*", "../types/**/*", "../prefs/**/*"],
   "exclude": ["**/*.test.ts"],
   "references": [
     { "path": "../libs" },
     { "path": "../domain" },
     { "path": "../usecase" },
-    { "path": "../infra" }
+    { "path": "../infra" },
+    { "path": "../prefs" },
+    { "path": "../composition" }
   ]
 }

@@ -7,6 +7,8 @@
 
 import Clutter from 'gi://Clutter';
 import type St from 'gi://St';
+import { adjustMainPanelPosition } from '../../domain/positioning/index.js';
+import type { ScreenBoundaries } from '../../domain/positioning/types.js';
 import {
   FOOTER_MARGIN_TOP,
   PANEL_EDGE_PADDING,
@@ -15,8 +17,6 @@ import {
   SPACE_SPACING,
 } from '../constants.js';
 import type { MonitorManager } from '../monitor/manager.js';
-import { adjustMainPanelPosition } from '../positioning/index.js';
-import type { ScreenBoundaries } from '../positioning/types.js';
 import type { Position, Size, SpacesRow } from '../types/index.js';
 import { calculateSpaceDimensions } from '../ui/space-dimensions.js';
 

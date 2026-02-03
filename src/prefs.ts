@@ -4,7 +4,7 @@ import type Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
-import { buildPreferencesUI } from './settings/preferences.js';
+import { buildPreferencesUI } from './prefs/preferences.js';
 
 const SCHEMA_ID = 'org.gnome.shell.extensions.snappa';
 

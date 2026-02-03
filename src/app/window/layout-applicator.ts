@@ -9,8 +9,8 @@ import type Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { LayoutId } from '../../domain/layout/index.js';
+import { evaluate, parse } from '../../domain/layout-expression/index.js';
 import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
-import { evaluate, parse } from '../layout-expression/index.js';
 import type { MonitorManager } from '../monitor/manager.js';
 import type { LayoutSelectedEvent } from '../types/index.js';
 

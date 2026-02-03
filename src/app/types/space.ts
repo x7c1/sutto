@@ -1,10 +1,3 @@
-import type { LayoutGroup } from './layout-group.js';
-
-// Space: Runtime type (WITH id/hash in all layouts)
-export interface Space {
-  id: string; // Unique ID for this Space
-  enabled: boolean; // Whether this Space is visible in the main panel
-  displays: {
-    [monitorKey: string]: LayoutGroup; // "0" -> LayoutGroup object (with id and layouts with id/hash)
-  };
-}
+// Re-export domain types for backwards compatibility during migration
+// TODO: Eventually remove this file and import directly from domain/types
+export type { Space } from '../../domain/types/space.js';

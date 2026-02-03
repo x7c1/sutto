@@ -17,7 +17,7 @@ import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/e
 
 import { CollectionId } from '../domain/layout/index.js';
 import { FileLayoutHistoryRepository, getExtensionDataPath } from '../infra/file/index.js';
-import type { ExtensionSettings } from '../settings/extension-settings.js';
+import type { ExtensionSettings } from '../prefs/extension-settings.js';
 import type { LayoutHistoryRepository } from '../usecase/history/index.js';
 import { HISTORY_FILE_NAME } from './constants.js';
 import { DragSignalHandler } from './drag/drag-signal-handler.js';

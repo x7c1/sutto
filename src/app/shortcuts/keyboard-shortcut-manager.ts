@@ -9,7 +9,7 @@ import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import type { ExtensionSettings } from '../../settings/extension-settings.js';
+import type { ExtensionSettings } from '../../prefs/extension-settings.js';
 
 declare function log(message: string): void;
 

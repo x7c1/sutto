@@ -1,10 +1,3 @@
-import type { SpacesRow } from './spaces-row.js';
-
-// SpaceCollection: A container holding multiple SpacesRows
-// Users can maintain multiple collections (e.g., "Work", "Home", "Single Monitor")
-// and switch between them. Only one collection is active at a time.
-export interface SpaceCollection {
-  id: string;
-  name: string;
-  rows: SpacesRow[];
-}
+// Re-export domain types for backwards compatibility during migration
+// TODO: Eventually remove this file and import directly from domain/types
+export type { SpaceCollection } from '../../domain/types/space-collection.js';

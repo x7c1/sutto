@@ -1,6 +1,7 @@
 import Meta from 'gi://Meta';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { evaluate, parse } from '../../domain/layout-expression/index.js';
 import {
   BUTTON_BG_COLOR,
   BUTTON_BG_COLOR_HOVER,
@@ -9,7 +10,6 @@ import {
   BUTTON_BORDER_COLOR_HOVER,
   BUTTON_BORDER_WIDTH,
 } from '../constants.js';
-import { evaluate, parse } from '../layout-expression/index.js';
 import type { LayoutButtonWithMetadata } from '../types/button.js';
 import type { Layout, LayoutSelectedEvent } from '../types/index.js';
 

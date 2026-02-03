@@ -1,24 +1,11 @@
+import { getSpaceCollectionRepository } from '../../composition/index.js';
 import { CollectionId, SpaceId } from '../../domain/layout/index.js';
-import { FileSpaceCollectionRepository, getExtensionDataPath } from '../../infra/file/index.js';
-import { generateUUID } from '../../libs/uuid/index.js';
 import type { SpaceCollectionData } from '../../usecase/layout/index.js';
-import {
-  CUSTOM_SPACE_COLLECTIONS_FILE_NAME,
-  PRESET_SPACE_COLLECTIONS_FILE_NAME,
-} from '../constants.js';
 import type { SpaceCollection } from '../types/index.js';
 
-let repositoryInstance: FileSpaceCollectionRepository | null = null;
-
-function getRepository(): FileSpaceCollectionRepository {
-  if (!repositoryInstance) {
-    repositoryInstance = new FileSpaceCollectionRepository(
-      getExtensionDataPath(PRESET_SPACE_COLLECTIONS_FILE_NAME),
-      getExtensionDataPath(CUSTOM_SPACE_COLLECTIONS_FILE_NAME),
-      generateUUID
-    );
-  }
-  return repositoryInstance;
+// Use composition layer's shared repository
+function getRepository() {
+  return getSpaceCollectionRepository();
 }
 
 export function loadPresetCollections(): SpaceCollection[] {

@@ -1,18 +1,6 @@
-/**
- * Position coordinates
- */
-export interface Position {
-  x: number;
-  y: number;
-}
-
-/**
- * Element dimensions
- */
-export interface Dimensions {
-  width: number;
-  height: number;
-}
+// Re-export from canonical source
+// Alias for Size with different name (legacy compatibility)
+export type { Position, Size as Dimensions } from '../types/geometry.js';
 
 /**
  * Screen boundaries configuration

@@ -1,12 +1,16 @@
-// Extension
-export const EXTENSION_UUID = 'snappa@x7c1.github.io';
+// Re-export infrastructure constants for backward compatibility during migration
+// TODO: Update consumers to import directly from infra/constants
 
-// Data files (snappa-generated, distinct from GNOME Shell required files like metadata.json)
-export const HISTORY_FILE_NAME = 'history.snappa.jsonl';
-export const MONITORS_FILE_NAME = 'monitors.snappa.json';
-// SpaceCollection files
-export const PRESET_SPACE_COLLECTIONS_FILE_NAME = 'preset-space-collections.snappa.json';
-export const CUSTOM_SPACE_COLLECTIONS_FILE_NAME = 'custom-space-collections.snappa.json';
+// Re-export domain constants for backward compatibility during migration
+// TODO: Update consumers to import directly from domain/types
+export { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../domain/types/index.js';
+export {
+  CUSTOM_SPACE_COLLECTIONS_FILE_NAME,
+  EXTENSION_UUID,
+  HISTORY_FILE_NAME,
+  MONITORS_FILE_NAME,
+  PRESET_SPACE_COLLECTIONS_FILE_NAME,
+} from '../infra/constants.js';
 
 // Timing
 export const AUTO_HIDE_DELAY_MS = 500; // Time to wait before hiding panel when cursor leaves
@@ -31,10 +35,6 @@ export const BUTTON_BG_COLOR_SELECTED = 'rgba(100, 150, 250, 0.7)'; // Blue high
 export const BUTTON_BORDER_COLOR = 'rgba(255, 255, 255, 0.3)';
 export const BUTTON_BORDER_COLOR_HOVER = 'rgba(255, 255, 255, 0.6)';
 export const FOOTER_TEXT_COLOR = 'rgba(255, 255, 255, 0.5)';
-
-// Fallback monitor dimensions (used when no physical monitor info is available)
-export const DEFAULT_MONITOR_WIDTH = 1920;
-export const DEFAULT_MONITOR_HEIGHT = 1080;
 
 // Multi-monitor panel constants
 export const MAX_MONITOR_DISPLAY_WIDTH = 240; // Maximum width for the widest monitor in miniature display
