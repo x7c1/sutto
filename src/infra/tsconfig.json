@@ -5,7 +5,7 @@
     "module": "ES2022",
     "moduleResolution": "node",
     "outDir": "../../dist/infra",
-    "rootDir": "..",
+    "rootDir": ".",
     "composite": true,
     "declaration": true,
     "declarationMap": true,
@@ -24,7 +24,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["./**/*", "../libs/gnome-types/**/*", "../prefs/**/*", "../ui/**/*", "../composition/**/*"],
+  "include": ["./**/*", "../libs/gnome-types/**/*"],
   "exclude": ["**/*.test.ts"],
   "references": [
     { "path": "../domain" },

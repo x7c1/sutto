@@ -1,10 +1,3 @@
-export { getActiveSpaceCollection, resolveActiveSpaceCollectionId } from './active-collection.js';
-export type { LayoutGroupConfig, MonitorCountProvider } from './ensure-preset.js';
-export {
-  ensurePresetForCurrentMonitors,
-  ensurePresetForMonitorCount,
-  hasPresetForMonitorCount,
-} from './ensure-preset.js';
 export type {
   LayoutConfiguration,
   LayoutGroupSetting as ImportLayoutGroupSetting,
@@ -17,6 +10,8 @@ export {
   importLayoutConfiguration,
   importLayoutConfigurationFromJson,
 } from './import-collection.js';
+export type { MonitorCountProvider } from './monitor-count-provider.js';
+export { PresetGeneratorUseCase } from './preset-generator-use-case.js';
 export type {
   LayoutData,
   LayoutGroupData,
@@ -25,3 +20,4 @@ export type {
   SpaceData,
   SpacesRowData,
 } from './space-collection-repository.js';
+export { SpaceCollectionUseCase } from './space-collection-use-case.js';

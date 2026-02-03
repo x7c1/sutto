@@ -5,7 +5,7 @@
     "module": "ES2022",
     "moduleResolution": "node",
     "outDir": "../../dist/composition",
-    "rootDir": "..",
+    "rootDir": ".",
     "composite": true,
     "declaration": true,
     "declarationMap": true,
@@ -30,6 +30,7 @@
     { "path": "../libs" },
     { "path": "../domain" },
     { "path": "../usecase" },
-    { "path": "../infra" }
+    { "path": "../infra" },
+    { "path": "../ui" }
   ]
 }

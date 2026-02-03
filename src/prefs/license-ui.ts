@@ -1,13 +1,15 @@
 import Adw from 'gi://Adw';
 import type Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
+import { LicenseKey, type LicenseState } from '../domain/licensing/index.js';
+import { HttpLicenseApiClient } from '../infra/api/index.js';
 import {
-  LicenseClient,
-  LicenseManager,
-  type LicenseState,
-  LicenseStorage,
-  TrialManager,
-} from '../composition/license/index.js';
+  GioNetworkStateProvider,
+  GLibDateProvider,
+  GSettingsLicenseRepository,
+  SystemDeviceInfoProvider,
+} from '../infra/gsettings/index.js';
+import { LicenseService } from '../usecase/licensing/index.js';
 
 /**
  * Create the License preferences group
@@ -20,25 +22,30 @@ export function createLicenseGroup(
     title: 'License',
   });
 
-  const storage = new LicenseStorage(settings);
-  const client = new LicenseClient(__LICENSE_API_BASE_URL__);
-  const trialManager = new TrialManager(storage);
-  const licenseManager = new LicenseManager(storage, client, trialManager);
+  const repository = new GSettingsLicenseRepository(settings);
+  const apiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
+  const licenseService = new LicenseService(
+    repository,
+    apiClient,
+    new GLibDateProvider(),
+    new GioNetworkStateProvider(),
+    new SystemDeviceInfoProvider()
+  );
 
-  const statusRow = createStatusRow(licenseManager.getState());
+  const statusRow = createStatusRow(licenseService.getState());
   group.add(statusRow);
 
-  const { row: keyRow } = createLicenseKeyRow(licenseManager, () =>
-    updateStatusRow(statusRow, licenseManager.getState())
+  const { row: keyRow } = createLicenseKeyRow(licenseService, () =>
+    updateStatusRow(statusRow, licenseService.getState())
   );
   group.add(keyRow);
 
-  licenseManager.onStateChange((state) => {
+  licenseService.onStateChange((state: LicenseState) => {
     updateStatusRow(statusRow, state);
   });
 
   window.connect('close-request', () => {
-    licenseManager.destroy();
+    licenseService.clearCallbacks();
     return false;
   });
 
@@ -164,7 +171,7 @@ interface LicenseKeyRowResult {
 }
 
 function createLicenseKeyRow(
-  licenseManager: LicenseManager,
+  licenseService: LicenseService,
   onUpdate: () => void
 ): LicenseKeyRowResult {
   const row = new Adw.EntryRow({
@@ -202,15 +209,16 @@ function createLicenseKeyRow(
   };
 
   activateButton.connect('clicked', async () => {
-    const licenseKey = row.get_text().trim();
-    if (!licenseKey) {
+    const licenseKeyText = row.get_text().trim();
+    if (!licenseKeyText) {
       return;
     }
 
     setLoading(true);
 
     try {
-      const result = await licenseManager.activate(licenseKey);
+      const licenseKey = LicenseKey.create(licenseKeyText);
+      const result = await licenseService.activate(licenseKey);
 
       if (result.success) {
         row.set_text('');

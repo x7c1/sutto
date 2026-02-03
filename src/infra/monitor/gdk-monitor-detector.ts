@@ -1,6 +1,6 @@
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
-
+import type { MonitorCountProvider } from '../../usecase/layout/index.js';
 import { MONITORS_FILE_NAME } from '../constants.js';
 import { getExtensionDataPath } from '../file/extension-path.js';
 
@@ -64,5 +64,14 @@ export function loadMonitorCount(): number {
   } catch (e) {
     log(`[MonitorDetector] Error loading monitor count: ${e}`);
     return getMonitorCountFromGdk();
+  }
+}
+
+/**
+ * Implementation of MonitorCountProvider using file-based and Gdk detection.
+ */
+export class FileMonitorCountProvider implements MonitorCountProvider {
+  getMonitorCount(): number {
+    return loadMonitorCount();
   }
 }

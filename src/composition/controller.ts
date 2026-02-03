@@ -16,8 +16,15 @@ import Meta from 'gi://Meta';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { CollectionId } from '../domain/layout/index.js';
 import type { LayoutSelectedEvent, Position } from '../domain/types/index.js';
+import { HttpLicenseApiClient } from '../infra/api/index.js';
 import { HISTORY_FILE_NAME } from '../infra/constants.js';
 import { FileLayoutHistoryRepository, getExtensionDataPath } from '../infra/file/index.js';
+import {
+  GioNetworkStateProvider,
+  GLibDateProvider,
+  GSettingsLicenseRepository,
+  SystemDeviceInfoProvider,
+} from '../infra/gsettings/index.js';
 import {
   DragSignalHandler,
   EdgeDetector,
@@ -27,11 +34,15 @@ import {
   MonitorManager,
   MotionMonitor,
 } from '../infra/index.js';
-import type { ExtensionSettings } from '../prefs/extension-settings.js';
+import type { ExtensionSettings } from '../infra/settings/extension-settings.js';
 import { MainPanel } from '../ui/main-panel/index.js';
 import type { LayoutHistoryRepository } from '../usecase/history/index.js';
-import { loadAllCollections } from './index.js';
-import { LicenseClient, LicenseManager, LicenseStorage, TrialManager } from './license/index.js';
+import { LicenseService } from '../usecase/licensing/index.js';
+import {
+  getPresetGeneratorUseCase,
+  getSpaceCollectionUseCase,
+  loadAllCollections,
+} from './index.js';
 
 declare function log(message: string): void;
 
@@ -55,7 +66,7 @@ export class Controller {
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
   private settings: ExtensionSettings;
-  private licenseManager: LicenseManager;
+  private licenseService: LicenseService;
   private isLicenseValid: boolean = true;
 
   constructor(settings: ExtensionSettings, metadata: ExtensionMetadata) {
@@ -86,12 +97,17 @@ export class Controller {
     this.keyboardShortcutManager = new KeyboardShortcutManager(settings);
 
     // Initialize license management
-    const licenseStorage = new LicenseStorage(settings.getGSettings());
-    const licenseClient = new LicenseClient(__LICENSE_API_BASE_URL__);
-    const trialManager = new TrialManager(licenseStorage);
-    this.licenseManager = new LicenseManager(licenseStorage, licenseClient, trialManager);
-    this.licenseManager.onStateChange(() => {
-      this.isLicenseValid = this.licenseManager.shouldExtensionBeEnabled();
+    const licenseRepository = new GSettingsLicenseRepository(settings.getGSettings());
+    const licenseApiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
+    this.licenseService = new LicenseService(
+      licenseRepository,
+      licenseApiClient,
+      new GLibDateProvider(),
+      new GioNetworkStateProvider(),
+      new SystemDeviceInfoProvider()
+    );
+    this.licenseService.onStateChange(() => {
+      this.isLicenseValid = this.licenseService.shouldExtensionBeEnabled();
       if (!this.isLicenseValid) {
         log('[Controller] License invalid, hiding panel');
         this.mainPanel.hide();
@@ -106,6 +122,13 @@ export class Controller {
     this.mainPanel.setOpenPreferencesShortcutsGetter(() => settings.getOpenPreferencesShortcut());
     // Pass getter for active SpaceCollection ID
     this.mainPanel.setActiveSpaceCollectionIdGetter(() => settings.getActiveSpaceCollectionId());
+    // Inject UseCase callbacks
+    this.mainPanel.setEnsurePresetForCurrentMonitors(() =>
+      getPresetGeneratorUseCase().ensurePresetForCurrentMonitors()
+    );
+    this.mainPanel.setGetActiveSpaceCollection((activeId) =>
+      getSpaceCollectionUseCase().getActiveSpaceCollection(activeId)
+    );
     // Dynamic registration prevents shortcut conflicts when panel is hidden
     this.mainPanel.setOnPanelShown(() => {
       this.keyboardShortcutManager.registerHidePanelShortcut(() => this.onHidePanelShortcut());
@@ -120,8 +143,8 @@ export class Controller {
    */
   enable(): void {
     // Initialize license checking
-    this.licenseManager.initialize().then(() => {
-      this.isLicenseValid = this.licenseManager.shouldExtensionBeEnabled();
+    this.licenseService.initialize().then(() => {
+      this.isLicenseValid = this.licenseService.shouldExtensionBeEnabled();
       if (!this.isLicenseValid) {
         log('[Controller] License invalid on startup, extension disabled');
       }
@@ -164,7 +187,7 @@ export class Controller {
    * Disable the controller
    */
   disable(): void {
-    this.licenseManager.destroy();
+    this.licenseService.clearCallbacks();
     this.motionMonitor.stop();
     this.dragSignalHandler.disconnect();
     this.keyboardShortcutManager.unregisterAll();

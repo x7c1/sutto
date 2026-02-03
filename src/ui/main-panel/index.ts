@@ -10,10 +10,6 @@ import Meta from 'gi://Meta';
 import St from 'gi://St';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {
-  ensurePresetForCurrentMonitors,
-  getActiveSpaceCollection,
-} from '../../composition/index.js';
 import type {
   Layout,
   LayoutSelectedEvent,
@@ -23,6 +19,7 @@ import type {
 } from '../../domain/types/index.js';
 import type { MonitorManager } from '../../infra/monitor/manager.js';
 import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
+import type { SpaceCollectionData } from '../../usecase/layout/index.js';
 import { AUTO_HIDE_DELAY_MS } from '../constants.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
@@ -52,6 +49,9 @@ export class MainPanel {
   private getOpenPreferencesShortcuts: () => string[] = () => [];
   private getActiveSpaceCollectionId: () => string = () => '';
   private onLayoutSelected!: (event: LayoutSelectedEvent) => void;
+  private ensurePresetForCurrentMonitors: () => void = () => {};
+  private getActiveSpaceCollection: (activeId: string) => SpaceCollectionData | undefined = () =>
+    undefined;
 
   // Component instances
   private state: MainPanelState = new MainPanelState();
@@ -99,6 +99,22 @@ export class MainPanel {
   }
 
   /**
+   * Set callback for ensuring presets exist for current monitors
+   */
+  setEnsurePresetForCurrentMonitors(callback: () => void): void {
+    this.ensurePresetForCurrentMonitors = callback;
+  }
+
+  /**
+   * Set callback for getting active space collection
+   */
+  setGetActiveSpaceCollection(
+    callback: (activeId: string) => SpaceCollectionData | undefined
+  ): void {
+    this.getActiveSpaceCollection = callback;
+  }
+
+  /**
    * Show panel at window center position
    * Calculates the center position of the given window and shows the panel there
    */
@@ -140,11 +156,11 @@ export class MainPanel {
     this.autoHide.resetHoverStates();
 
     // Ensure preset exists for current monitor count
-    ensurePresetForCurrentMonitors();
+    this.ensurePresetForCurrentMonitors();
 
     // Load active SpaceCollection and filter disabled Spaces
     const activeId = this.getActiveSpaceCollectionId();
-    const activeCollection = getActiveSpaceCollection(activeId);
+    const activeCollection = this.getActiveSpaceCollection(activeId);
     const allRows = activeCollection?.rows ?? [];
     const rows = this.filterEnabledSpaces(allRows);
     this.state.setSpacesRows(rows);

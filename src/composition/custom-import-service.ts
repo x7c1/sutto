@@ -18,10 +18,7 @@ import type {
 } from '../domain/types/index.js';
 import { generateUUID } from '../libs/uuid/index.js';
 import type { SpaceCollectionData } from '../usecase/layout/index.js';
-import {
-  addCustomCollection,
-  deleteCustomCollection as deleteById,
-} from './space-collection-service.js';
+import { getSpaceCollectionUseCase } from './use-case-factory.js';
 
 declare function log(message: string): void;
 
@@ -131,7 +128,7 @@ export function importLayoutConfiguration(data: unknown): SpaceCollectionData | 
 
   try {
     const rows = configurationToSpacesRows(data);
-    const collection = addCustomCollection({
+    const collection = getSpaceCollectionUseCase().addCustomCollection({
       name: data.name,
       rows,
     });
@@ -162,4 +159,6 @@ export function importLayoutConfigurationFromJson(jsonString: string): SpaceColl
  * Delete a custom SpaceCollection by ID
  * Returns true if deleted, false if not found or is a preset
  */
-export { deleteById as deleteCustomCollection };
+export function deleteCustomCollection(collectionId: string): boolean {
+  return getSpaceCollectionUseCase().deleteCustomCollection(collectionId);
+}

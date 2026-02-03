@@ -4,7 +4,7 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { Controller } from './composition/controller.js';
 import { EXTENSION_UUID } from './infra/constants.js';
 import { DBusReloader } from './infra/reloader/index.js';
-import { ExtensionSettings } from './prefs/extension-settings.js';
+import { ExtensionSettings } from './infra/settings/extension-settings.js';
 
 export default class SnappaExtension extends Extension {
   private dbusReloader: DBusReloader | null = null;
