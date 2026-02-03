@@ -4,8 +4,11 @@
     "lib": ["ES2022"],
     "module": "ES2022",
     "moduleResolution": "node",
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "outDir": "../../dist/ui",
+    "rootDir": ".",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "strict": true,
     "noImplicitAny": true,
@@ -21,19 +24,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "src/extension.ts",
-    "src/prefs.ts",
-    "src/reloader/**/*",
-    "src/settings/**/*",
-    "src/types/**/*"
-  ],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "include": ["./**/*"],
+  "exclude": ["**/*.test.ts"],
   "references": [
-    { "path": "./src/domain" },
-    { "path": "./src/usecase" },
-    { "path": "./src/infra" },
-    { "path": "./src/ui" },
-    { "path": "./src/app" }
+    { "path": "../domain" },
+    { "path": "../usecase" }
   ]
 }

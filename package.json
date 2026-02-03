@@ -7,9 +7,9 @@
     "doc": "docs"
   },
   "scripts": {
-    "build": "tsc --noEmit && node esbuild.config.js",
-    "build:release": "BUILD_MODE=release tsc --noEmit && BUILD_MODE=release node esbuild.config.js",
-    "watch": "tsc --watch --noEmit",
+    "build": "tsc --build && node esbuild.config.js",
+    "build:release": "BUILD_MODE=release tsc --build && BUILD_MODE=release node esbuild.config.js",
+    "watch": "tsc --build --watch",
     "clean": "rm -f dist/*.js dist/*.js.map",
     "copy-files": "./scripts/copy-files.sh",
     "reload": "gdbus call --session --dest org.gnome.Shell --object-path /io/github/x7c1/Snappa --method io.github.x7c1.Snappa.Reload",
