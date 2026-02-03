@@ -10,9 +10,10 @@ TypeScript exceptions are untyped and invisible in function signatures. Callers 
 
 However, a conflict emerged with ADR-1 (nominal typing):
 
-- Result types at UseCase boundary require primitive parameters (for error conversion)
-- Primitive parameters lose the type safety benefit of nominal typing (ADR-1)
-- Using domain types at the boundary while returning Result requires complex patterns
+To return `Result<T, E>` from UseCase (i.e., catch all errors internally), the UseCase must handle validation errors that occur when creating domain objects. This leads to a dilemma:
+
+- **Option A**: UseCase receives primitives, creates domain objects internally → Can catch all errors, but loses nominal typing benefits (ADR-1). Arguments become interchangeable strings.
+- **Option B**: UseCase receives domain types, returns Result → Validation errors occur *before* UseCase is called (in UI when creating domain objects), so UI still needs try-catch for that step. This creates inconsistent error handling.
 
 ## Options Considered
 
@@ -91,6 +92,40 @@ class ActivateLicense {
   // Compiles but wrong - arguments swapped!
   activateLicense.execute(rawDeviceId, rawKey);
   ```
+
+### Option 4: Domain Types at Boundary with Result Return
+
+```typescript
+class ActivateLicense {
+  async execute(key: LicenseKey, deviceId: DeviceId): Promise<Result<License, ActivationError>> {
+    try {
+      const response = await this.apiClient.activate(key, deviceId);
+      return { ok: true, value: new License(...) };
+    } catch (e) {
+      return { ok: false, error: toActivationError(e) };
+    }
+  }
+}
+
+// UI must use BOTH try-catch AND Result handling
+try {
+  const key = new LicenseKey(rawKey);  // May throw ValidationError
+  const deviceId = new DeviceId(rawDeviceId);
+  const result = await activateLicense.execute(key, deviceId);
+  if (result.ok) {
+    showSuccess(result.value);
+  } else {
+    showError(result.error);
+  }
+} catch (e) {
+  showError(e);  // ValidationError from domain object creation
+}
+```
+
+**Cons:**
+- UI requires two different error handling mechanisms (try-catch + Result)
+- Inconsistent: some errors are exceptions, others are Result
+- More complex than pure exception approach with no additional safety
 
 ## Decision
 

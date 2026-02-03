@@ -57,11 +57,11 @@ class ActivateLicense {
     private apiClient: LicenseApiClient,
   ) {}
   // Receives domain types, throws exceptions
+  // Note: apiClient.activate() returns domain objects (conversion happens in Infrastructure)
   async execute(key: unknown, deviceId: unknown): Promise<unknown> {
-    const response = await this.apiClient.activate(key, deviceId);
-    // Convert to domain object and save
-    await this.repository.save(response);
-    return response;
+    const license = await this.apiClient.activate(key, deviceId);
+    await this.repository.save(license);
+    return license;
   }
 }
 

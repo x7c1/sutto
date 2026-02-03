@@ -17,6 +17,8 @@ This plan addresses the lack of clear layer separation in the snappa codebase. C
 - **Mixed concerns in Service layer**: Services handle orchestration, business logic, and data access
 - **Scattered validation**: Some files have good predicates (`isValidSpaceCollectionArray`), others have none
 - **Unclear data flow**: API response models, storage models, and domain models are not distinguished
+- **Hard to test**: Business logic is tightly coupled with I/O (GSettings, file system, HTTP), making unit tests difficult without mocking external dependencies
+- **Desktop freeze risk**: When backward compatibility of stored data is unintentionally broken, invalid data can cause the entire GNOME Shell to freeze (not just snappa). This is arguably a GNOME Shell design issue, but we must handle it defensively by validating all external data at boundaries
 
 ### Files with Unsafe Type Assertions
 
@@ -38,7 +40,8 @@ This plan addresses the lack of clear layer separation in the snappa codebase. C
 - Create domain objects with constructor-based validation
 - Define types that represent validated IDs and constrained values
 - Keep UI layer thin (signal handlers delegate to UseCase layer)
-- Maintain or improve test coverage
+- Enable unit testing of business logic without I/O mocking (domain layer is pure)
+- Prevent desktop freezes by catching invalid data at infrastructure boundaries before it propagates
 
 ## Non-Goals
 
@@ -186,6 +189,17 @@ These rules are **enforced by TypeScript Project References** (compile error on 
 - `ui/` may import from `usecase/` and `domain/`
 - `libs/` may be imported from any layer (layer-independent utilities)
 
+### Layer Responsibilities
+
+| Layer | Responsibility |
+|-------|----------------|
+| Domain | Define validation rules in constructors. Pure business logic, no I/O. |
+| UseCase | Orchestrate domain objects. Receive and return domain types only. |
+| Infrastructure | Convert external data (JSON, GSettings, API responses) to domain objects by invoking domain constructors. This is where domain validation is **applied**. |
+| UI | Create domain objects from user input (invoking validation), call UseCase methods, handle exceptions with try-catch. |
+
+**Key principle**: UseCase layer never sees raw external data formats. Infrastructure implementations (repositories, API clients) are responsible for all data conversion.
+
 ## Implementation Plan
 
 ### Phase 0: Project References Setup
@@ -236,11 +250,11 @@ Create domain layer with validated types and domain models.
 
 Refactor the license module as a reference implementation.
 
-- Extract `LicenseApiClient` (HTTP only, returns raw responses)
-- Create `LicenseRepository` (converts API responses to domain objects)
-- Refactor `LicenseStorage` to `GSettingsLicenseRepository`
+- Extract `LicenseApiClient` interface in UseCase layer (returns domain objects)
+- Implement `HttpLicenseApiClient` in Infrastructure layer (converts HTTP responses to domain objects by invoking domain constructors)
+- Refactor `LicenseStorage` to `GSettingsLicenseRepository` (converts stored data to domain objects)
 - Update `LicenseManager` to use domain objects
-- Add validation in infrastructure layer
+- Establish GObject property synchronization pattern (how/when to sync mutable GObject properties with immutable domain objects)
 
 **Estimated effort**: 5 points
 
@@ -271,6 +285,7 @@ Ensure UI layer only delegates to UseCase layer.
 - Review Controller for business logic leakage
 - Extract any domain logic to appropriate services
 - Ensure signal handlers are thin (delegate only)
+- Apply GObject synchronization pattern established in Phase 2 to other UI components
 
 **Estimated effort**: 3 points
 
