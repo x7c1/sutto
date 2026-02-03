@@ -2,6 +2,7 @@ import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 import type Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
+import { createLicenseGroup } from './license-ui.js';
 
 const SETTINGS_KEY_SHOW_PANEL = 'show-panel-shortcut';
 const SETTINGS_KEY_OPEN_PREFERENCES = 'open-preferences-shortcut';
@@ -43,6 +44,10 @@ export function createGeneralPage(
   group.add(openPrefsRow);
 
   page.add(group);
+
+  // Add License group
+  const licenseGroup = createLicenseGroup(window, settings);
+  page.add(licenseGroup);
 
   return page;
 }

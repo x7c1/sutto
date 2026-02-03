@@ -63,6 +63,33 @@ declare module 'gi://Gdk' {
   export { default } from '@girs/gdk-4.0/gdk-4.0';
 }
 
+declare module 'gi://Soup' {
+  export default Soup;
+}
+
+declare module 'gi://Soup?version=3.0' {
+  export default Soup;
+}
+
+declare namespace Soup {
+  class Session {
+    timeout: number;
+    send_and_read_async(
+      message: Message,
+      priority: number,
+      cancellable: import('gi://Gio').Cancellable | null,
+      callback: (session: Session, result: import('gi://Gio').AsyncResult) => void
+    ): void;
+    send_and_read_finish(result: import('gi://Gio').AsyncResult): import('gi://GLib').Bytes;
+  }
+
+  class Message {
+    static new(method: string, uri: string): Message | null;
+    set_request_body_from_bytes(content_type: string, bytes: import('gi://GLib').Bytes): void;
+    get_status(): number;
+  }
+}
+
 // GNOME Shell resource imports
 declare module 'resource:///org/gnome/shell/extensions/extension.js' {
   export * from '@girs/gnome-shell/dist/extensions/extension';
