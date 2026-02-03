@@ -18,6 +18,12 @@ import { CollectionId } from '../domain/layout/index.js';
 import type { LayoutSelectedEvent, Position } from '../domain/types/index.js';
 import { HttpLicenseApiClient } from '../infra/api/index.js';
 import { HISTORY_FILE_NAME } from '../infra/constants.js';
+import {
+  DragSignalHandler,
+  EdgeDetector,
+  EdgeTimerManager,
+  MotionMonitor,
+} from '../infra/drag/index.js';
 import { FileLayoutHistoryRepository, getExtensionDataPath } from '../infra/file/index.js';
 import {
   GioNetworkStateProvider,
@@ -25,16 +31,10 @@ import {
   GSettingsLicenseRepository,
   SystemDeviceInfoProvider,
 } from '../infra/gsettings/index.js';
-import {
-  DragSignalHandler,
-  EdgeDetector,
-  EdgeTimerManager,
-  KeyboardShortcutManager,
-  LayoutApplicator,
-  MonitorManager,
-  MotionMonitor,
-} from '../infra/index.js';
+import { MonitorManager } from '../infra/monitor/manager.js';
 import type { ExtensionSettings } from '../infra/settings/extension-settings.js';
+import { KeyboardShortcutManager } from '../infra/shortcuts/index.js';
+import { LayoutApplicator } from '../infra/window/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';
 import type { LayoutHistoryRepository } from '../usecase/history/index.js';
 import { LicenseService } from '../usecase/licensing/index.js';
