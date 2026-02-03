@@ -4,7 +4,7 @@
     "lib": ["ES2022"],
     "module": "ES2022",
     "moduleResolution": "node",
-    "outDir": "../../dist/prefs",
+    "outDir": "../../.tsc/prefs",
     "rootDir": ".",
     "composite": true,
     "declaration": true,

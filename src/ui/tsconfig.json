@@ -4,7 +4,7 @@
     "lib": ["ES2022"],
     "module": "ES2022",
     "moduleResolution": "node",
-    "outDir": "../../dist/ui",
+    "outDir": "../../.tsc/ui",
     "rootDir": ".",
     "composite": true,
     "declaration": true,
