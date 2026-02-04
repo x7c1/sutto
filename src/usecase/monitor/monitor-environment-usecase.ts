@@ -10,22 +10,6 @@ import type { MonitorEnvironmentRepository } from './monitor-environment-reposit
 declare function log(message: string): void;
 
 /**
- * Generate a hash ID from monitor geometries
- */
-function generateEnvironmentId(monitors: Monitor[]): string {
-  const sorted = [...monitors].sort((a, b) => a.index - b.index);
-  const geometryString = sorted
-    .map((m) => `${m.geometry.x},${m.geometry.y},${m.geometry.width},${m.geometry.height}`)
-    .join('|');
-
-  let hash = 5381;
-  for (let i = 0; i < geometryString.length; i++) {
-    hash = (hash * 33) ^ geometryString.charCodeAt(i);
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0');
-}
-
-/**
  * Provider interface for monitor detection (infra layer).
  */
 export interface MonitorDetectionProvider {
@@ -228,4 +212,20 @@ export class MonitorEnvironmentUsecase {
     }
     return null;
   }
+}
+
+/**
+ * Generate a hash ID from monitor geometries.
+ */
+function generateEnvironmentId(monitors: Monitor[]): string {
+  const sorted = [...monitors].sort((a, b) => a.index - b.index);
+  const geometryString = sorted
+    .map((m) => `${m.geometry.x},${m.geometry.y},${m.geometry.width},${m.geometry.height}`)
+    .join('|');
+
+  let hash = 5381;
+  for (let i = 0; i < geometryString.length; i++) {
+    hash = (hash * 33) ^ geometryString.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
 }
