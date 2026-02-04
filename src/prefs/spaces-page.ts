@@ -5,7 +5,7 @@ import Gtk from 'gi://Gtk';
 import {
   resolvePresetGeneratorUsecase,
   resolveSpaceCollectionUsecase,
-} from '../composition/usecase-factory.js';
+} from '../composition/factory/index.js';
 import type { Space, SpaceCollection, SpacesRow } from '../domain/layout/index.js';
 import type { Monitor, MonitorEnvironmentStorage } from '../domain/monitor/index.js';
 import { calculateSpaceDimensions, createGtkMiniatureSpace } from './gtk-miniature-space.js';

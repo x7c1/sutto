@@ -14,17 +14,11 @@
 
 import Meta from 'gi://Meta';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
-import type { Position } from '../domain/geometry/index.js';
+import { EdgeDetector, type Position } from '../domain/geometry/index.js';
 import type { LayoutSelectedEvent } from '../domain/layout/index.js';
 import { CollectionId, extractLayoutIds } from '../domain/layout/index.js';
 import { HttpLicenseApiClient } from '../infra/api/index.js';
 import { HISTORY_FILE_NAME } from '../infra/constants.js';
-import {
-  DragSignalHandler,
-  EdgeDetector,
-  EdgeTimerManager,
-  MotionMonitor,
-} from '../infra/drag/index.js';
 import { FileLayoutHistoryRepository, getExtensionDataPath } from '../infra/file/index.js';
 import {
   type ExtensionSettings,
@@ -34,12 +28,13 @@ import {
   SystemDeviceInfoProvider,
 } from '../infra/gsettings/index.js';
 import { GnomeShellMonitorProvider } from '../infra/monitor/gnome-shell-monitor-provider.js';
-import { KeyboardShortcutManager } from '../infra/shortcuts/index.js';
-import { LayoutApplicator } from '../infra/window/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';
 import type { LayoutHistoryRepository } from '../usecase/history/index.js';
 import { LicenseUsecase } from '../usecase/licensing/index.js';
-import { resolvePresetGeneratorUsecase, resolveSpaceCollectionUsecase } from './usecase-factory.js';
+import { DragSignalHandler, EdgeTimerManager, MotionMonitor } from './drag/index.js';
+import { resolvePresetGeneratorUsecase, resolveSpaceCollectionUsecase } from './factory/index.js';
+import { KeyboardShortcutManager } from './shortcuts/index.js';
+import { LayoutApplicator } from './window/index.js';
 
 declare function log(message: string): void;
 
@@ -279,7 +274,7 @@ export class Controller {
   private onMotion(): void {
     const cursor = this.getCursorPosition();
     const monitor = this.monitorManager.getCurrentMonitor();
-    const atEdge = this.edgeDetector.isAtScreenEdge(cursor, monitor);
+    const atEdge = monitor ? this.edgeDetector.isAtEdge(cursor, monitor.geometry) : false;
 
     if (atEdge && !this.isAtEdge) {
       this.isAtEdge = true;

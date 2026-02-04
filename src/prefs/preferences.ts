@@ -6,7 +6,7 @@ import type Gio from 'gi://Gio';
 import {
   resolvePresetGeneratorUsecase,
   resolveSpaceCollectionUsecase,
-} from '../composition/usecase-factory.js';
+} from '../composition/factory/index.js';
 import type { SpaceCollection } from '../domain/layout/index.js';
 import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../domain/monitor/index.js';
 import { createGeneralPage } from './keyboard-shortcuts.js';

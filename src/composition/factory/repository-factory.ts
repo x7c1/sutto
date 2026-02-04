@@ -8,10 +8,10 @@
 import {
   CUSTOM_SPACE_COLLECTIONS_FILE_NAME,
   PRESET_SPACE_COLLECTIONS_FILE_NAME,
-} from '../infra/constants.js';
-import { FileSpaceCollectionRepository, getExtensionDataPath } from '../infra/file/index.js';
-import { uuidGenerator } from '../libs/uuid/index.js';
-import type { SpaceCollectionRepository } from '../usecase/layout/index.js';
+} from '../../infra/constants.js';
+import { FileSpaceCollectionRepository, getExtensionDataPath } from '../../infra/file/index.js';
+import { uuidGenerator } from '../../libs/uuid/index.js';
+import type { SpaceCollectionRepository } from '../../usecase/layout/index.js';
 
 let repositoryInstance: SpaceCollectionRepository | null = null;
 
