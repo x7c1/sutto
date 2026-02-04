@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { LayoutEvent } from '../../domain/history/index.js';
 import { CollectionId } from '../../domain/layout/collection-id.js';
 import { LayoutId } from '../../domain/layout/layout-id.js';
-import { toLayoutEventRaw } from './layout-event-serializer.js';
+import { toRawLayoutEvent } from './layout-event-serializer.js';
 
-describe('toLayoutEventRaw', () => {
+describe('toRawLayoutEvent', () => {
   it('converts LayoutEvent to raw object', () => {
     const collectionId = new CollectionId('550e8400-e29b-41d4-a716-446655440000');
     const layoutId = new LayoutId('660e8400-e29b-41d4-a716-446655440000');
@@ -17,7 +17,7 @@ describe('toLayoutEventRaw', () => {
       layoutId,
     });
 
-    const raw = toLayoutEventRaw(event);
+    const raw = toRawLayoutEvent(event);
 
     expect(raw.timestamp).toBe(1234567890);
     expect(raw.collectionId).toBe('550e8400-e29b-41d4-a716-446655440000');

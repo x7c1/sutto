@@ -9,7 +9,7 @@ import type { LayoutEvent } from '../../domain/history/index.js';
 /**
  * Raw JSON format for LayoutEvent persistence
  */
-export interface LayoutEventRaw {
+export interface RawLayoutEvent {
   timestamp: number;
   collectionId: string;
   wmClassHash: string;
@@ -20,7 +20,7 @@ export interface LayoutEventRaw {
 /**
  * Convert LayoutEvent domain object to raw JSON format
  */
-export function toLayoutEventRaw(event: LayoutEvent): LayoutEventRaw {
+export function toRawLayoutEvent(event: LayoutEvent): RawLayoutEvent {
   return {
     timestamp: event.timestamp,
     collectionId: event.collectionId.toString(),
