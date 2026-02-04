@@ -35,22 +35,34 @@ import { MainPanelState } from './state.js';
 
 declare function log(message: string): void;
 
+export interface MainPanelOptions {
+  metadata: ExtensionMetadata;
+  monitorManager: MonitorProvider;
+  layoutHistoryRepository: LayoutHistoryRepository;
+  getActiveSpaceCollectionId: () => string;
+  onLayoutSelected: (event: LayoutSelectedEvent) => void;
+  getOpenPreferencesShortcuts: () => string[];
+  ensurePresetForCurrentMonitors: () => void;
+  getActiveSpaceCollection: (activeId: string) => SpaceCollection | undefined;
+  onPanelShown: () => void;
+  onPanelHidden: () => void;
+}
+
 export class MainPanel {
   private container: St.BoxLayout | null = null;
   private background: St.BoxLayout | null = null;
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private rendererEventIds: PanelEventIds | null = null;
-  private metadata: ExtensionMetadata;
-  private onPanelShownCallback: (() => void) | null = null;
-  private onPanelHiddenCallback: (() => void) | null = null;
-  private monitorManager: MonitorProvider; // Always required
-  private layoutHistoryRepository: LayoutHistoryRepository;
-  private getOpenPreferencesShortcuts: () => string[] = () => [];
-  private getActiveSpaceCollectionId: () => string = () => '';
-  private onLayoutSelected!: (event: LayoutSelectedEvent) => void;
-  private ensurePresetForCurrentMonitors: () => void = () => {};
-  private getActiveSpaceCollection: (activeId: string) => SpaceCollection | undefined = () =>
-    undefined;
+  private readonly metadata: ExtensionMetadata;
+  private readonly monitorManager: MonitorProvider;
+  private readonly layoutHistoryRepository: LayoutHistoryRepository;
+  private readonly getActiveSpaceCollectionId: () => string;
+  private readonly onLayoutSelected: (event: LayoutSelectedEvent) => void;
+  private readonly getOpenPreferencesShortcuts: () => string[];
+  private readonly ensurePresetForCurrentMonitors: () => void;
+  private readonly getActiveSpaceCollection: (activeId: string) => SpaceCollection | undefined;
+  private readonly onPanelShownCallback: () => void;
+  private readonly onPanelHiddenCallback: () => void;
 
   // Component instances
   private state: MainPanelState = new MainPanelState();
@@ -59,56 +71,22 @@ export class MainPanel {
   private autoHide: MainPanelAutoHide = new MainPanelAutoHide();
   private keyboardNavigator: MainPanelKeyboardNavigator = new MainPanelKeyboardNavigator();
 
-  constructor(
-    metadata: ExtensionMetadata,
-    monitorManager: MonitorProvider,
-    layoutHistoryRepository: LayoutHistoryRepository
-  ) {
-    this.metadata = metadata;
-    this.monitorManager = monitorManager;
-    this.layoutHistoryRepository = layoutHistoryRepository;
-    this.positionManager = new MainPanelPositionManager(monitorManager);
-    // Setup auto-hide callback
+  constructor(options: MainPanelOptions) {
+    this.metadata = options.metadata;
+    this.monitorManager = options.monitorManager;
+    this.layoutHistoryRepository = options.layoutHistoryRepository;
+    this.getActiveSpaceCollectionId = options.getActiveSpaceCollectionId;
+    this.onLayoutSelected = options.onLayoutSelected;
+    this.getOpenPreferencesShortcuts = options.getOpenPreferencesShortcuts;
+    this.ensurePresetForCurrentMonitors = options.ensurePresetForCurrentMonitors;
+    this.getActiveSpaceCollection = options.getActiveSpaceCollection;
+    this.onPanelShownCallback = options.onPanelShown;
+    this.onPanelHiddenCallback = options.onPanelHidden;
+
+    this.positionManager = new MainPanelPositionManager(this.monitorManager);
     this.autoHide.setOnHide(() => {
       this.hide();
     });
-  }
-
-  /**
-   * Set getter function for active SpaceCollection ID
-   * Using a getter ensures fresh values are read from settings each time
-   */
-  setActiveSpaceCollectionIdGetter(getter: () => string): void {
-    this.getActiveSpaceCollectionId = getter;
-  }
-
-  /**
-   * Set callback for when a layout is selected
-   */
-  setOnLayoutSelected(callback: (event: LayoutSelectedEvent) => void): void {
-    this.onLayoutSelected = callback;
-  }
-
-  /**
-   * Set getter function for keyboard shortcuts for opening preferences
-   * Using a getter ensures fresh values are read from settings each time
-   */
-  setOpenPreferencesShortcutsGetter(getter: () => string[]): void {
-    this.getOpenPreferencesShortcuts = getter;
-  }
-
-  /**
-   * Set callback for ensuring presets exist for current monitors
-   */
-  setEnsurePresetForCurrentMonitors(callback: () => void): void {
-    this.ensurePresetForCurrentMonitors = callback;
-  }
-
-  /**
-   * Set callback for getting active space collection
-   */
-  setGetActiveSpaceCollection(callback: (activeId: string) => SpaceCollection | undefined): void {
-    this.getActiveSpaceCollection = callback;
   }
 
   /**
@@ -125,20 +103,6 @@ export class MainPanel {
 
     // Show main panel at window center position with vertical centering
     this.show(windowCenter, window, true);
-  }
-
-  /**
-   * Set callback for when panel is shown
-   */
-  setOnPanelShown(callback: () => void): void {
-    this.onPanelShownCallback = callback;
-  }
-
-  /**
-   * Set callback for when panel is hidden
-   */
-  setOnPanelHidden(callback: () => void): void {
-    this.onPanelHiddenCallback = callback;
   }
 
   /**
@@ -204,9 +168,7 @@ export class MainPanel {
     this.setupPanelInteractions(container, clickOutsideId, buttonEvents);
 
     // Notify
-    if (this.onPanelShownCallback) {
-      this.onPanelShownCallback();
-    }
+    this.onPanelShownCallback();
   }
 
   /**
@@ -259,9 +221,7 @@ export class MainPanel {
       this.state.reset();
 
       // Notify that panel is hidden
-      if (this.onPanelHiddenCallback) {
-        this.onPanelHiddenCallback();
-      }
+      this.onPanelHiddenCallback();
     }
   }
 

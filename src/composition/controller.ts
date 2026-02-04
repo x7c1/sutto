@@ -111,27 +111,20 @@ export class Controller {
       }
     });
 
-    this.mainPanel = new MainPanel(metadata, this.monitorManager, this.layoutHistoryRepository);
-    this.mainPanel.setOnLayoutSelected((event) => {
-      this.applyLayoutToCurrentWindow(event);
-    });
-    // Pass getter function so shortcuts are read fresh from settings each time panel is shown
-    this.mainPanel.setOpenPreferencesShortcutsGetter(() => settings.getOpenPreferencesShortcut());
-    // Pass getter for active SpaceCollection ID
-    this.mainPanel.setActiveSpaceCollectionIdGetter(() => settings.getActiveSpaceCollectionId());
-    // Inject Usecase callbacks
-    this.mainPanel.setEnsurePresetForCurrentMonitors(() =>
-      resolvePresetGeneratorUsecase().ensurePresetForCurrentMonitors()
-    );
-    this.mainPanel.setGetActiveSpaceCollection((activeId) =>
-      resolveSpaceCollectionUsecase().getActiveSpaceCollection(activeId)
-    );
-    // Dynamic registration prevents shortcut conflicts when panel is hidden
-    this.mainPanel.setOnPanelShown(() => {
-      this.keyboardShortcutManager.registerHidePanelShortcut(() => this.onHidePanelShortcut());
-    });
-    this.mainPanel.setOnPanelHidden(() => {
-      this.keyboardShortcutManager.unregisterHidePanelShortcut();
+    this.mainPanel = new MainPanel({
+      metadata,
+      monitorManager: this.monitorManager,
+      layoutHistoryRepository: this.layoutHistoryRepository,
+      onLayoutSelected: (event) => this.applyLayoutToCurrentWindow(event),
+      getOpenPreferencesShortcuts: () => settings.getOpenPreferencesShortcut(),
+      getActiveSpaceCollectionId: () => settings.getActiveSpaceCollectionId(),
+      ensurePresetForCurrentMonitors: () =>
+        resolvePresetGeneratorUsecase().ensurePresetForCurrentMonitors(),
+      getActiveSpaceCollection: (activeId) =>
+        resolveSpaceCollectionUsecase().getActiveSpaceCollection(activeId),
+      onPanelShown: () =>
+        this.keyboardShortcutManager.registerHidePanelShortcut(() => this.onHidePanelShortcut()),
+      onPanelHidden: () => this.keyboardShortcutManager.unregisterHidePanelShortcut(),
     });
   }
 
