@@ -1,9 +1,9 @@
+import type { SpaceCollection } from '../../../domain/layout/types.js';
 import {
   BASE_LAYOUT_GROUPS,
   STANDARD_LAYOUT_GROUP_NAMES,
   WIDE_LAYOUT_GROUP_NAMES,
-} from '../../../domain/layout/preset-config.js';
-import type { SpaceCollection } from '../../../domain/layout/types.js';
+} from '../../../domain/settings/index.js';
 import type { UUIDGenerator } from '../../../libs/uuid/index.js';
 import type { MonitorCountRepository, MonitorDetector } from '../../monitor/index.js';
 import type { SpaceCollectionRepository } from '../space-collection-repository.js';
