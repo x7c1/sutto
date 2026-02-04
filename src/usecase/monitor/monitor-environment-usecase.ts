@@ -12,7 +12,7 @@ declare function log(message: string): void;
 /**
  * Provider interface for monitor detection (infra layer).
  */
-export interface MonitorDetectionProvider {
+export interface MonitorProvider {
   detectMonitors(): Map<string, Monitor>;
   getMonitors(): Map<string, Monitor>;
   getMonitorAtPosition(x: number, y: number): Monitor | null;
@@ -28,7 +28,7 @@ export class MonitorEnvironmentUsecase {
   private initialized: boolean = false;
 
   constructor(
-    private readonly provider: MonitorDetectionProvider,
+    private readonly monitorProvider: MonitorProvider,
     private readonly repository: MonitorEnvironmentRepository
   ) {}
 
@@ -54,9 +54,9 @@ export class MonitorEnvironmentUsecase {
    */
   detectAndSaveMonitors(): string | null {
     this.initialize();
-    this.provider.detectMonitors();
+    this.monitorProvider.detectMonitors();
 
-    const monitors = this.provider.getMonitors();
+    const monitors = this.monitorProvider.getMonitors();
     const monitorsArray = Array.from(monitors.values());
     const envId = generateEnvironmentId(monitorsArray);
     const now = Date.now();
@@ -137,18 +137,18 @@ export class MonitorEnvironmentUsecase {
   }
 
   getMonitors(): Map<string, Monitor> {
-    return this.provider.getMonitors();
+    return this.monitorProvider.getMonitors();
   }
 
   getMonitorAtPosition(x: number, y: number): Monitor | null {
-    return this.provider.getMonitorAtPosition(x, y);
+    return this.monitorProvider.getMonitorAtPosition(x, y);
   }
 
   getMonitorsForRendering(displayCount: number): {
     monitors: Map<string, Monitor>;
     inactiveMonitorKeys: Set<string>;
   } {
-    const currentMonitors = this.provider.getMonitors();
+    const currentMonitors = this.monitorProvider.getMonitors();
     const currentMonitorCount = currentMonitors.size;
     const inactiveMonitorKeys = new Set<string>();
 
