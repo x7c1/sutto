@@ -21,10 +21,10 @@ import { HttpLicenseApiClient } from '../infra/api/index.js';
 import { HISTORY_FILE_NAME } from '../infra/constants.js';
 import { FileLayoutHistoryRepository, getExtensionDataPath } from '../infra/file/index.js';
 import {
-  type ExtensionSettings,
   GioNetworkStateProvider,
   GLibDateProvider,
   GSettingsLicenseRepository,
+  type GSettingsPreferencesRepository,
   SystemDeviceInfoProvider,
 } from '../infra/glib/index.js';
 import { GnomeShellMonitorProvider } from '../infra/monitor/gnome-shell-monitor-provider.js';
@@ -57,12 +57,12 @@ export class Controller {
   private dragSignalHandler: DragSignalHandler;
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
-  private settings: ExtensionSettings;
+  private preferencesRepository: GSettingsPreferencesRepository;
   private licenseUsecase: LicenseUsecase;
   private isLicenseValid: boolean = true;
 
-  constructor(settings: ExtensionSettings, metadata: ExtensionMetadata) {
-    this.settings = settings;
+  constructor(preferencesRepository: GSettingsPreferencesRepository, metadata: ExtensionMetadata) {
+    this.preferencesRepository = preferencesRepository;
     this.monitorManager = new GnomeShellMonitorProvider();
 
     // Lazy load to avoid I/O until panel is actually displayed
@@ -86,10 +86,10 @@ export class Controller {
       }
     );
 
-    this.keyboardShortcutManager = new KeyboardShortcutManager(settings);
+    this.keyboardShortcutManager = new KeyboardShortcutManager(preferencesRepository);
 
     // Initialize license management
-    const licenseRepository = new GSettingsLicenseRepository(settings.getGSettings());
+    const licenseRepository = new GSettingsLicenseRepository(preferencesRepository.getGSettings());
     const licenseApiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
     this.licenseUsecase = new LicenseUsecase(
       licenseRepository,
@@ -111,8 +111,8 @@ export class Controller {
       monitorManager: this.monitorManager,
       layoutHistoryRepository: this.layoutHistoryRepository,
       onLayoutSelected: (event) => this.applyLayoutToCurrentWindow(event),
-      getOpenPreferencesShortcuts: () => settings.getOpenPreferencesShortcut(),
-      getActiveSpaceCollectionId: () => settings.getActiveSpaceCollectionId(),
+      getOpenPreferencesShortcuts: () => preferencesRepository.getOpenPreferencesShortcut(),
+      getActiveSpaceCollectionId: () => preferencesRepository.getActiveSpaceCollectionId(),
       ensurePresetForCurrentMonitors: () =>
         resolvePresetGeneratorUsecase().ensurePresetForCurrentMonitors(),
       getActiveSpaceCollection: (activeId) =>
@@ -138,7 +138,7 @@ export class Controller {
     this.monitorManager.detectMonitors();
 
     // Sync current active collection from settings to GnomeShellMonitorProvider
-    const currentCollectionId = this.settings.getActiveSpaceCollectionId();
+    const currentCollectionId = this.preferencesRepository.getActiveSpaceCollectionId();
     if (currentCollectionId) {
       this.monitorManager.setActiveCollectionId(currentCollectionId);
     }
@@ -196,7 +196,7 @@ export class Controller {
   private handleMonitorsSaveResult(collectionToActivate: string | null): void {
     if (collectionToActivate) {
       log(`[Controller] Environment changed, activating collection: ${collectionToActivate}`);
-      this.settings.setActiveSpaceCollectionId(collectionToActivate);
+      this.preferencesRepository.setActiveSpaceCollectionId(collectionToActivate);
       this.monitorManager.setActiveCollectionId(collectionToActivate);
       this.syncActiveCollectionToHistory();
     }
@@ -214,7 +214,7 @@ export class Controller {
   }
 
   private syncActiveCollectionToHistory(): void {
-    const collectionIdStr = this.settings.getActiveSpaceCollectionId();
+    const collectionIdStr = this.preferencesRepository.getActiveSpaceCollectionId();
     if (collectionIdStr) {
       const collectionId = new CollectionId(collectionIdStr);
       this.layoutHistoryRepository.setActiveCollection(collectionId);

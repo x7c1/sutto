@@ -1,5 +1,5 @@
-export { ExtensionSettings } from './extension-settings.js';
-export { GSettingsLicenseRepository } from './gsettings-license-repository.js';
+export { GSettingsLicenseRepository } from './license-repository.js';
+export { GSettingsPreferencesRepository } from './preferences-repository.js';
 export {
   GioNetworkStateProvider,
   GLibDateProvider,

@@ -1,12 +1,12 @@
 /**
- * Extension settings manager
- * Provides access to GSettings schema for keyboard shortcuts
+ * GSettings-based repository for user preferences
+ * (keyboard shortcuts, active collection, etc.)
  */
 
 import Gio from 'gi://Gio';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 
-export class ExtensionSettings {
+export class GSettingsPreferencesRepository {
   private settings: Gio.Settings;
 
   constructor(metadata: ExtensionMetadata) {

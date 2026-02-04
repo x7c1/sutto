@@ -9,31 +9,31 @@ import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import type { ExtensionSettings } from '../../infra/glib/index.js';
+import type { GSettingsPreferencesRepository } from '../../infra/glib/index.js';
 
 declare function log(message: string): void;
 
 export class KeyboardShortcutManager {
   private hideShortcutRegistered: boolean = false;
 
-  constructor(private readonly settings: ExtensionSettings) {}
+  constructor(private readonly preferencesRepository: GSettingsPreferencesRepository) {}
 
   /**
    * Register show panel keyboard shortcut
    */
   registerShowPanelShortcut(onShowPanel: () => void): void {
-    if (!this.settings) {
+    if (!this.preferencesRepository) {
       log('[KeyboardShortcutManager] Settings not available');
       return;
     }
 
     try {
-      const shortcuts = this.settings.getShowPanelShortcut();
+      const shortcuts = this.preferencesRepository.getShowPanelShortcut();
       log(`[KeyboardShortcutManager] Registering show shortcut: ${JSON.stringify(shortcuts)}`);
 
       Main.wm.addKeybinding(
         'show-panel-shortcut',
-        this.settings.getGSettings(),
+        this.preferencesRepository.getGSettings(),
         Meta.KeyBindingFlags.NONE,
         Shell.ActionMode.NORMAL,
         onShowPanel
@@ -48,15 +48,15 @@ export class KeyboardShortcutManager {
    * Register hide panel keyboard shortcut (called when panel is shown)
    */
   registerHidePanelShortcut(onHidePanel: () => void): void {
-    if (!this.settings) return;
+    if (!this.preferencesRepository) return;
     if (this.hideShortcutRegistered) return; // Already registered
 
-    const hideShortcuts = this.settings.getHidePanelShortcut();
+    const hideShortcuts = this.preferencesRepository.getHidePanelShortcut();
     log(`[KeyboardShortcutManager] Registering hide shortcut: ${JSON.stringify(hideShortcuts)}`);
 
     Main.wm.addKeybinding(
       'hide-panel-shortcut',
-      this.settings.getGSettings(),
+      this.preferencesRepository.getGSettings(),
       Meta.KeyBindingFlags.NONE,
       Shell.ActionMode.NORMAL,
       onHidePanel
@@ -69,7 +69,7 @@ export class KeyboardShortcutManager {
    * Unregister hide panel keyboard shortcut (called when panel is hidden)
    */
   unregisterHidePanelShortcut(): void {
-    if (!this.settings) return;
+    if (!this.preferencesRepository) return;
     if (!this.hideShortcutRegistered) return; // Not registered
 
     try {
@@ -85,7 +85,7 @@ export class KeyboardShortcutManager {
    * Unregister all keyboard shortcuts
    */
   unregisterAll(): void {
-    if (!this.settings) return;
+    if (!this.preferencesRepository) return;
 
     try {
       Main.wm.removeKeybinding('show-panel-shortcut');
