@@ -1,6 +1,6 @@
 /**
  * Interface for providing monitor count information.
- * Infrastructure layer implements this with file-based or system-based detection.
+ * MonitorUsecase implements this interface.
  */
 export interface MonitorCountProvider {
   /**

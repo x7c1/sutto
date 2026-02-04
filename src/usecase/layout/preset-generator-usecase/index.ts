@@ -4,7 +4,7 @@ import {
   WIDE_LAYOUT_GROUP_NAMES,
 } from '../../../domain/layout/preset-config.js';
 import type { SpaceCollection } from '../../../domain/layout/types.js';
-import type { MonitorCountProvider } from '../monitor-count-provider.js';
+import type { MonitorCountProvider } from '../../monitor/index.js';
 import type { SpaceCollectionRepository } from '../space-collection-repository.js';
 import {
   generatePreset,

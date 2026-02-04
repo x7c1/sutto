@@ -5,17 +5,35 @@
  * Provides singleton access to Usecase instances.
  */
 
-import { FileMonitorCountProvider } from '../infra/monitor/gdk-monitor-detector.js';
+import { MONITORS_FILE_NAME } from '../infra/constants.js';
+import { FileMonitorCountRepository, getExtensionDataPath } from '../infra/file/index.js';
+import { GdkMonitorDetector } from '../infra/monitor/index.js';
 import { generateUUID } from '../libs/uuid/index.js';
 import { PresetGeneratorUsecase, SpaceCollectionUsecase } from '../usecase/layout/index.js';
+import { MonitorUsecase } from '../usecase/monitor/index.js';
 import { resolveSpaceCollectionRepository } from './repository-factory.js';
 
 let spaceCollectionUsecase: SpaceCollectionUsecase | null = null;
 let presetGeneratorUsecase: PresetGeneratorUsecase | null = null;
+let monitorUsecase: MonitorUsecase | null = null;
 
 const uuidGenerator = {
   generate: generateUUID,
 };
+
+/**
+ * Resolve the shared MonitorUsecase instance.
+ */
+export function resolveMonitorUsecase(): MonitorUsecase {
+  if (!monitorUsecase) {
+    const filePath = getExtensionDataPath(MONITORS_FILE_NAME);
+    monitorUsecase = new MonitorUsecase(
+      new FileMonitorCountRepository(filePath),
+      new GdkMonitorDetector()
+    );
+  }
+  return monitorUsecase;
+}
 
 /**
  * Resolve the shared SpaceCollectionUsecase instance.
@@ -34,7 +52,7 @@ export function resolvePresetGeneratorUsecase(): PresetGeneratorUsecase {
   if (!presetGeneratorUsecase) {
     presetGeneratorUsecase = new PresetGeneratorUsecase(
       resolveSpaceCollectionRepository(),
-      new FileMonitorCountProvider(),
+      resolveMonitorUsecase(),
       uuidGenerator
     );
   }
@@ -47,4 +65,5 @@ export function resolvePresetGeneratorUsecase(): PresetGeneratorUsecase {
 export function resetUsecases(): void {
   spaceCollectionUsecase = null;
   presetGeneratorUsecase = null;
+  monitorUsecase = null;
 }
