@@ -16,10 +16,10 @@ import type { SpaceCollectionRepository } from '../usecase/layout/index.js';
 let repositoryInstance: SpaceCollectionRepository | null = null;
 
 /**
- * Get the shared SpaceCollectionRepository instance.
+ * Resolve the shared SpaceCollectionRepository instance.
  * Creates the instance on first call (lazy initialization).
  */
-export function getSpaceCollectionRepository(): SpaceCollectionRepository {
+export function resolveSpaceCollectionRepository(): SpaceCollectionRepository {
   if (!repositoryInstance) {
     repositoryInstance = new FileSpaceCollectionRepository(
       getExtensionDataPath(PRESET_SPACE_COLLECTIONS_FILE_NAME),

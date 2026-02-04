@@ -3,8 +3,8 @@ import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 import {
-  getPresetGeneratorUseCase,
-  getSpaceCollectionUseCase,
+  resolvePresetGeneratorUseCase,
+  resolveSpaceCollectionUseCase,
 } from '../composition/usecase-factory.js';
 import type {
   Monitor,
@@ -203,7 +203,7 @@ export function createSpacesPage(
   onActiveChanged: (collectionId: string) => void
 ): Adw.PreferencesPage {
   // Ensure presets exist for current monitor count
-  getPresetGeneratorUseCase().ensurePresetForCurrentMonitors();
+  resolvePresetGeneratorUseCase().ensurePresetForCurrentMonitors();
 
   // Load monitor storage for multi-environment support
   const monitorStorage = loadMonitorStorage();
@@ -243,7 +243,7 @@ export function createSpacesPage(
   previewScrolled.set_child(previewContainer);
 
   // Determine initial active collection before creating UI
-  const allCollections = getSpaceCollectionUseCase().loadAllCollections();
+  const allCollections = resolveSpaceCollectionUseCase().loadAllCollections();
   const initialCollection =
     allCollections.find((c) => c.id === activeCollectionId) || allCollections[0];
   const resolvedActiveId = initialCollection?.id ?? '';
@@ -328,7 +328,7 @@ function renderCustomSection(state: SpacesPageState): void {
   }
 
   // Render custom collections or empty label
-  const customs = getSpaceCollectionUseCase().loadCustomCollections();
+  const customs = resolveSpaceCollectionUseCase().loadCustomCollections();
   if (customs.length === 0) {
     const emptyLabel = new Gtk.Label({
       label: 'No custom collections',
@@ -378,7 +378,7 @@ function createListPane(state: SpacesPageState): Gtk.Widget {
   });
   innerBox.append(presetLabel);
 
-  const presets = getSpaceCollectionUseCase().loadPresetCollections();
+  const presets = resolveSpaceCollectionUseCase().loadPresetCollections();
   const radioGroup: Gtk.CheckButton | null = null;
 
   for (const collection of presets) {
@@ -455,7 +455,7 @@ function createCollectionRow(
       state.onActiveChanged(collection.id);
       updateSelectionIndicators(state);
       // Reload collection from file to get latest enabled states
-      const freshCollection = getSpaceCollectionUseCase().findCollectionById(collection.id);
+      const freshCollection = resolveSpaceCollectionUseCase().findCollectionById(collection.id);
       if (freshCollection) {
         updatePreview(state, freshCollection);
       }
@@ -482,7 +482,7 @@ function createCollectionRow(
       state.onActiveChanged(collection.id);
       updateSelectionIndicators(state);
       // Reload collection from file to get latest enabled states
-      const freshCollection = getSpaceCollectionUseCase().findCollectionById(collection.id);
+      const freshCollection = resolveSpaceCollectionUseCase().findCollectionById(collection.id);
       if (freshCollection) {
         updatePreview(state, freshCollection);
       }
@@ -530,11 +530,11 @@ function createCollectionRow(
     const actionGroup = new Gio.SimpleActionGroup();
     const deleteAction = new Gio.SimpleAction({ name: 'delete' });
     deleteAction.connect('activate', () => {
-      const deleted = getSpaceCollectionUseCase().deleteCustomCollection(collection.id);
+      const deleted = resolveSpaceCollectionUseCase().deleteCustomCollection(collection.id);
       if (deleted) {
         // If this was the active collection, select first preset
         if (state.activeCollectionId === collection.id) {
-          const presets = getSpaceCollectionUseCase().loadPresetCollections();
+          const presets = resolveSpaceCollectionUseCase().loadPresetCollections();
           if (presets.length > 0) {
             state.activeCollectionId = presets[0].id;
             state.onActiveChanged(presets[0].id);
@@ -734,7 +734,7 @@ function createClickableSpace(
 
   button.connect('clicked', () => {
     enabled = !enabled;
-    getSpaceCollectionUseCase().updateSpaceEnabled(collectionId, space.id, enabled);
+    resolveSpaceCollectionUseCase().updateSpaceEnabled(collectionId, space.id, enabled);
     miniatureWidget.set_opacity(getBaseOpacity());
   });
 
@@ -797,7 +797,7 @@ function importFile(state: SpacesPageState, file: Gio.File): void {
     }
 
     const jsonString = new TextDecoder('utf-8').decode(contents);
-    const collection = getSpaceCollectionUseCase().importFromJson(jsonString);
+    const collection = resolveSpaceCollectionUseCase().importFromJson(jsonString);
 
     if (collection) {
       console.log(`Successfully imported: ${collection.name}`);

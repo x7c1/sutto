@@ -38,7 +38,7 @@ import { LayoutApplicator } from '../infra/window/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';
 import type { LayoutHistoryRepository } from '../usecase/history/index.js';
 import { LicenseService } from '../usecase/licensing/index.js';
-import { getPresetGeneratorUseCase, getSpaceCollectionUseCase } from './usecase-factory.js';
+import { resolvePresetGeneratorUseCase, resolveSpaceCollectionUseCase } from './usecase-factory.js';
 
 declare function log(message: string): void;
 
@@ -120,10 +120,10 @@ export class Controller {
     this.mainPanel.setActiveSpaceCollectionIdGetter(() => settings.getActiveSpaceCollectionId());
     // Inject UseCase callbacks
     this.mainPanel.setEnsurePresetForCurrentMonitors(() =>
-      getPresetGeneratorUseCase().ensurePresetForCurrentMonitors()
+      resolvePresetGeneratorUseCase().ensurePresetForCurrentMonitors()
     );
     this.mainPanel.setGetActiveSpaceCollection((activeId) =>
-      getSpaceCollectionUseCase().getActiveSpaceCollection(activeId)
+      resolveSpaceCollectionUseCase().getActiveSpaceCollection(activeId)
     );
     // Dynamic registration prevents shortcut conflicts when panel is hidden
     this.mainPanel.setOnPanelShown(() => {
@@ -237,7 +237,7 @@ export class Controller {
    */
   private getAllValidLayoutIds(): Set<string> {
     const ids = new Set<string>();
-    const collections = getSpaceCollectionUseCase().loadAllCollections();
+    const collections = resolveSpaceCollectionUseCase().loadAllCollections();
 
     for (const collection of collections) {
       for (const row of collection.rows) {

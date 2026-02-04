@@ -8,7 +8,7 @@
 import { FileMonitorCountProvider } from '../infra/monitor/gdk-monitor-detector.js';
 import { generateUUID } from '../libs/uuid/index.js';
 import { PresetGeneratorUseCase, SpaceCollectionUseCase } from '../usecase/layout/index.js';
-import { getSpaceCollectionRepository } from './repository-factory.js';
+import { resolveSpaceCollectionRepository } from './repository-factory.js';
 
 let spaceCollectionUseCase: SpaceCollectionUseCase | null = null;
 let presetGeneratorUseCase: PresetGeneratorUseCase | null = null;
@@ -18,22 +18,22 @@ const uuidGenerator = {
 };
 
 /**
- * Get the shared SpaceCollectionUseCase instance.
+ * Resolve the shared SpaceCollectionUseCase instance.
  */
-export function getSpaceCollectionUseCase(): SpaceCollectionUseCase {
+export function resolveSpaceCollectionUseCase(): SpaceCollectionUseCase {
   if (!spaceCollectionUseCase) {
-    spaceCollectionUseCase = new SpaceCollectionUseCase(getSpaceCollectionRepository());
+    spaceCollectionUseCase = new SpaceCollectionUseCase(resolveSpaceCollectionRepository());
   }
   return spaceCollectionUseCase;
 }
 
 /**
- * Get the shared PresetGeneratorUseCase instance.
+ * Resolve the shared PresetGeneratorUseCase instance.
  */
-export function getPresetGeneratorUseCase(): PresetGeneratorUseCase {
+export function resolvePresetGeneratorUseCase(): PresetGeneratorUseCase {
   if (!presetGeneratorUseCase) {
     presetGeneratorUseCase = new PresetGeneratorUseCase(
-      getSpaceCollectionRepository(),
+      resolveSpaceCollectionRepository(),
       new FileMonitorCountProvider(),
       uuidGenerator
     );
