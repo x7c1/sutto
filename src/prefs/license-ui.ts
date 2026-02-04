@@ -32,16 +32,16 @@ export function createLicenseGroup(
     new SystemDeviceInfoProvider()
   );
 
-  const statusRow = createStatusRow(licenseUsecase.getState());
+  const { row: statusRow, update: updateStatus } = createStatusRow(licenseUsecase.getState());
   group.add(statusRow);
 
   const { row: keyRow } = createLicenseKeyRow(licenseUsecase, () =>
-    updateStatusRow(statusRow, licenseUsecase.getState())
+    updateStatus(licenseUsecase.getState())
   );
   group.add(keyRow);
 
   licenseUsecase.onStateChange((state: LicenseState) => {
-    updateStatusRow(statusRow, state);
+    updateStatus(state);
   });
 
   window.connect('close-request', () => {
@@ -52,39 +52,43 @@ export function createLicenseGroup(
   return group;
 }
 
-function createStatusRow(state: LicenseState): Adw.ActionRow {
-  const row = new Adw.ActionRow();
-  updateStatusRow(row, state);
-  return row;
+interface StatusRowResult {
+  row: Adw.ActionRow;
+  update: (state: LicenseState) => void;
 }
 
-function updateStatusRow(row: Adw.ActionRow, state: LicenseState): void {
-  const { title, subtitle, showPurchaseLink } = getStatusDisplay(state);
+function createStatusRow(initialState: LicenseState): StatusRowResult {
+  const row = new Adw.ActionRow();
+  let currentPurchaseButton: Gtk.Button | null = null;
 
-  row.set_title(title);
-  row.set_subtitle(subtitle);
+  const update = (state: LicenseState): void => {
+    const { title, subtitle, showPurchaseLink } = getStatusDisplay(state);
 
-  // Remove existing suffix widgets
-  let child = row.get_first_child();
-  while (child) {
-    const next = child.get_next_sibling();
-    if (child instanceof Gtk.Button) {
-      row.remove(child);
+    row.set_title(title);
+    row.set_subtitle(subtitle);
+
+    // Remove existing purchase button if present
+    if (currentPurchaseButton) {
+      row.remove(currentPurchaseButton);
+      currentPurchaseButton = null;
     }
-    child = next;
-  }
 
-  if (showPurchaseLink) {
-    const purchaseButton = new Gtk.Button({
-      label: 'Purchase License',
-      valign: Gtk.Align.CENTER,
-    });
-    purchaseButton.add_css_class('suggested-action');
-    purchaseButton.connect('clicked', () => {
-      Gtk.show_uri(null, __LICENSE_PURCHASE_URL__, 0);
-    });
-    row.add_suffix(purchaseButton);
-  }
+    if (showPurchaseLink) {
+      const purchaseButton = new Gtk.Button({
+        label: 'Purchase License',
+        valign: Gtk.Align.CENTER,
+      });
+      purchaseButton.add_css_class('suggested-action');
+      purchaseButton.connect('clicked', () => {
+        Gtk.show_uri(null, __LICENSE_PURCHASE_URL__, 0);
+      });
+      row.add_suffix(purchaseButton);
+      currentPurchaseButton = purchaseButton;
+    }
+  };
+
+  update(initialState);
+  return { row, update };
 }
 
 interface StatusDisplay {
