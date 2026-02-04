@@ -27,7 +27,7 @@ jobs:
 
       - name: Build
         run: |
-          source .envrc.example
+          cp .envrc.example .envrc
           npm run build
 
       - name: Run tests
