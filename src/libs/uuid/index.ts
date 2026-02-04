@@ -1,8 +1,12 @@
+export interface UUIDGenerator {
+  generate(): string;
+}
+
 /**
  * Generates a simple UUID v4-like string
  * Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
  */
-export function generateUUID(): string {
+function generateUUID(): string {
   const chars = '0123456789abcdef';
   let uuid = '';
 
@@ -23,3 +27,7 @@ export function generateUUID(): string {
 
   return uuid;
 }
+
+export const uuidGenerator: UUIDGenerator = {
+  generate: generateUUID,
+};

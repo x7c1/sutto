@@ -13,7 +13,7 @@ import type {
   SpaceSetting,
   SpacesRowSetting,
 } from '../../../domain/settings/index.js';
-import { generateUUID } from '../../../libs/uuid/index.js';
+import { uuidGenerator } from '../../../libs/uuid/index.js';
 import type { SpaceCollectionRepository } from '../space-collection-repository.js';
 
 declare function log(message: string): void;
@@ -121,7 +121,7 @@ function settingToSpace(
   }
 
   return {
-    id: generateUUID(),
+    id: uuidGenerator.generate(),
     enabled: true,
     displays,
   };
@@ -129,7 +129,7 @@ function settingToSpace(
 
 function settingToLayout(setting: LayoutSetting): Layout {
   return {
-    id: generateUUID(),
+    id: uuidGenerator.generate(),
     hash: generateLayoutHash(setting.x, setting.y, setting.width, setting.height),
     label: setting.label,
     position: { x: setting.x, y: setting.y },

@@ -4,14 +4,10 @@ import {
   WIDE_LAYOUT_GROUP_NAMES,
 } from '../../../domain/layout/preset-config.js';
 import type { SpaceCollection } from '../../../domain/layout/types.js';
+import type { UUIDGenerator } from '../../../libs/uuid/index.js';
 import type { MonitorCountRepository, MonitorDetector } from '../../monitor/index.js';
 import type { SpaceCollectionRepository } from '../space-collection-repository.js';
-import {
-  generatePreset,
-  getPresetName,
-  type MonitorType,
-  type UUIDGenerator,
-} from './preset-generator.js';
+import { generatePreset, getPresetName, type MonitorType } from './preset-generator.js';
 
 declare function log(message: string): void;
 

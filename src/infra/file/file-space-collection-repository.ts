@@ -1,6 +1,7 @@
 import Gio from 'gi://Gio';
 
 import type { CollectionId, SpaceCollection, SpaceId } from '../../domain/layout/index.js';
+import type { UUIDGenerator } from '../../libs/uuid/index.js';
 import type { SpaceCollectionRepository } from '../../usecase/layout/space-collection-repository.js';
 
 const log = (message: string): void => console.log(message);
@@ -13,7 +14,7 @@ export class FileSpaceCollectionRepository implements SpaceCollectionRepository 
   constructor(
     private readonly presetFilePath: string,
     private readonly customFilePath: string,
-    private readonly generateUUID: () => string
+    private readonly uuidGenerator: UUIDGenerator
   ) {}
 
   loadPresetCollections(): SpaceCollection[] {
@@ -41,7 +42,7 @@ export class FileSpaceCollectionRepository implements SpaceCollectionRepository 
   addCustomCollection(collection: Omit<SpaceCollection, 'id'>): SpaceCollection {
     const newCollection: SpaceCollection = {
       ...collection,
-      id: this.generateUUID(),
+      id: this.uuidGenerator.generate(),
     };
 
     const existing = this.loadCustomCollections();

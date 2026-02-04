@@ -7,12 +7,9 @@ import type {
   SpacesRow,
 } from '../../../domain/layout/types.js';
 import type { LayoutGroupSetting, LayoutSetting } from '../../../domain/settings/index.js';
+import type { UUIDGenerator } from '../../../libs/uuid/index.js';
 
 export type MonitorType = 'wide' | 'standard';
-
-export interface UUIDGenerator {
-  generate(): string;
-}
 
 export function generatePreset(
   monitorCount: number,

@@ -10,7 +10,7 @@ import {
   PRESET_SPACE_COLLECTIONS_FILE_NAME,
 } from '../infra/constants.js';
 import { FileSpaceCollectionRepository, getExtensionDataPath } from '../infra/file/index.js';
-import { generateUUID } from '../libs/uuid/index.js';
+import { uuidGenerator } from '../libs/uuid/index.js';
 import type { SpaceCollectionRepository } from '../usecase/layout/index.js';
 
 let repositoryInstance: SpaceCollectionRepository | null = null;
@@ -24,7 +24,7 @@ export function resolveSpaceCollectionRepository(): SpaceCollectionRepository {
     repositoryInstance = new FileSpaceCollectionRepository(
       getExtensionDataPath(PRESET_SPACE_COLLECTIONS_FILE_NAME),
       getExtensionDataPath(CUSTOM_SPACE_COLLECTIONS_FILE_NAME),
-      generateUUID
+      uuidGenerator
     );
   }
   return repositoryInstance;
