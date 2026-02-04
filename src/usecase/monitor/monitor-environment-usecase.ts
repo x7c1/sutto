@@ -6,17 +6,9 @@ import {
   type MonitorEnvironmentStorage,
 } from '../../domain/monitor/index.js';
 import type { MonitorEnvironmentRepository } from './monitor-environment-repository.js';
+import type { MonitorProvider } from './monitor-provider.js';
 
 declare function log(message: string): void;
-
-/**
- * Provider interface for monitor detection (infra layer).
- */
-export interface MonitorProvider {
-  detectMonitors(): Map<string, Monitor>;
-  getMonitors(): Map<string, Monitor>;
-  getMonitorAtPosition(x: number, y: number): Monitor | null;
-}
 
 /**
  * Usecase for managing monitor environments.
