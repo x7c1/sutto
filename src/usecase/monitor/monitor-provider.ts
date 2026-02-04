@@ -1,8 +1,8 @@
 import type { Monitor } from '../../domain/monitor/index.js';
 
 /**
- * Interface for monitor detection.
- * Infrastructure layer implements this with platform-specific detection.
+ * Interface for providing monitor information.
+ * Infrastructure layer implements this with platform-specific APIs.
  */
 export interface MonitorProvider {
   detectMonitors(): Map<string, Monitor>;
