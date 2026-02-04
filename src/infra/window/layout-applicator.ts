@@ -11,7 +11,7 @@ import type { LayoutSelectedEvent } from '../../domain/layout/index.js';
 import { LayoutId } from '../../domain/layout/index.js';
 import { evaluate, parse } from '../../domain/layout-expression/index.js';
 import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
-import type { GnomeShellMonitorManager } from '../monitor/gnome-shell-monitor-manager.js';
+import type { GnomeShellMonitorProvider } from '../monitor/gnome-shell-monitor-provider.js';
 
 declare function log(message: string): void;
 
@@ -21,7 +21,7 @@ export interface LayoutApplicationCallbacks {
 
 export class LayoutApplicator {
   constructor(
-    private readonly monitorManager: GnomeShellMonitorManager,
+    private readonly monitorManager: GnomeShellMonitorProvider,
     private readonly layoutHistoryRepository: LayoutHistoryRepository,
     private readonly callbacks: LayoutApplicationCallbacks = {}
   ) {}

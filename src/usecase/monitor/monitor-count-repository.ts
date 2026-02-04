@@ -1,6 +1,5 @@
 /**
  * Interface for loading monitor count from persistent storage.
- * Infrastructure layer implements this with file-based storage.
  */
 export interface MonitorCountRepository {
   /**

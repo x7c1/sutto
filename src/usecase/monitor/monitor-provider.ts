@@ -2,7 +2,6 @@ import type { Monitor } from '../../domain/monitor/index.js';
 
 /**
  * Interface for monitor access used by UI layer.
- * Infrastructure layer implements this with GnomeShellMonitorManager.
  */
 export interface MonitorProvider {
   /**

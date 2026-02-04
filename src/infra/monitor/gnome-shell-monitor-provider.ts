@@ -1,10 +1,10 @@
 /**
- * GNOME Shell Monitor Manager
+ * GNOME Shell Monitor Provider
  *
  * WARNING: This module depends on GNOME Shell APIs (main.js) and can only be used
  * in the extension context. Do NOT import this from prefs or other GTK-only contexts.
  *
- * Manages monitor detection and multi-environment configuration.
+ * Provides monitor detection and multi-environment configuration.
  * Tracks connected monitors and provides lookup methods.
  * Stores multiple monitor environments for different physical setups.
  */
@@ -45,7 +45,7 @@ function generateEnvironmentId(monitors: Monitor[]): string {
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
-export class GnomeShellMonitorManager implements MonitorProvider {
+export class GnomeShellMonitorProvider implements MonitorProvider {
   private monitors: Map<string, Monitor> = new Map();
   private monitorsChangedId: number | null = null;
   private storage: MonitorEnvironmentStorage = { environments: [], current: '' };
@@ -67,7 +67,7 @@ export class GnomeShellMonitorManager implements MonitorProvider {
     const primaryMonitorIndex = global.display.get_primary_monitor();
 
     log(
-      `[GnomeShellMonitorManager] Detecting ${nMonitors} monitors (primary: ${primaryMonitorIndex})`
+      `[GnomeShellMonitorProvider] Detecting ${nMonitors} monitors (primary: ${primaryMonitorIndex})`
     );
 
     for (let i = 0; i < nMonitors; i++) {
@@ -94,7 +94,7 @@ export class GnomeShellMonitorManager implements MonitorProvider {
 
       monitors.set(String(i), monitor);
       log(
-        `[GnomeShellMonitorManager] Monitor ${i}: ${geometry.width}x${geometry.height} at (${geometry.x}, ${geometry.y})${isPrimary ? ' (PRIMARY)' : ''}`
+        `[GnomeShellMonitorProvider] Monitor ${i}: ${geometry.width}x${geometry.height} at (${geometry.x}, ${geometry.y})${isPrimary ? ' (PRIMARY)' : ''}`
       );
     }
 
@@ -151,18 +151,18 @@ export class GnomeShellMonitorManager implements MonitorProvider {
    */
   connectToMonitorChanges(onMonitorsChanged: () => void): void {
     if (this.monitorsChangedId !== null) {
-      log('[GnomeShellMonitorManager] Already connected to monitors-changed signal');
+      log('[GnomeShellMonitorProvider] Already connected to monitors-changed signal');
       return;
     }
 
     // Use Main.layoutManager instead of global.display for monitors-changed signal
     this.monitorsChangedId = Main.layoutManager.connect('monitors-changed', () => {
-      log('[GnomeShellMonitorManager] Monitors configuration changed, re-detecting...');
+      log('[GnomeShellMonitorProvider] Monitors configuration changed, re-detecting...');
       this.detectMonitors();
       onMonitorsChanged();
     });
 
-    log('[GnomeShellMonitorManager] Connected to monitors-changed signal');
+    log('[GnomeShellMonitorProvider] Connected to monitors-changed signal');
   }
 
   /**
@@ -172,7 +172,7 @@ export class GnomeShellMonitorManager implements MonitorProvider {
     if (this.monitorsChangedId !== null) {
       Main.layoutManager.disconnect(this.monitorsChangedId);
       this.monitorsChangedId = null;
-      log('[GnomeShellMonitorManager] Disconnected from monitors-changed signal');
+      log('[GnomeShellMonitorProvider] Disconnected from monitors-changed signal');
     }
   }
 
@@ -221,7 +221,7 @@ export class GnomeShellMonitorManager implements MonitorProvider {
     const file = Gio.File.new_for_path(filePath);
 
     if (!file.query_exists(null)) {
-      log('[GnomeShellMonitorManager] No storage file found, starting fresh');
+      log('[GnomeShellMonitorProvider] No storage file found, starting fresh');
       return;
     }
 
@@ -232,10 +232,10 @@ export class GnomeShellMonitorManager implements MonitorProvider {
         const parsed = JSON.parse(json);
 
         this.storage = parsed as MonitorEnvironmentStorage;
-        log(`[GnomeShellMonitorManager] Loaded ${this.storage.environments.length} environments`);
+        log(`[GnomeShellMonitorProvider] Loaded ${this.storage.environments.length} environments`);
       }
     } catch (e) {
-      log(`[GnomeShellMonitorManager] Error loading storage: ${e}`);
+      log(`[GnomeShellMonitorProvider] Error loading storage: ${e}`);
     }
   }
 
@@ -277,7 +277,7 @@ export class GnomeShellMonitorManager implements MonitorProvider {
         if (environmentChanged) {
           collectionToActivate = environment.lastActiveCollectionId;
           log(
-            `[GnomeShellMonitorManager] Environment switched to ${envId}, activating collection: ${collectionToActivate}`
+            `[GnomeShellMonitorProvider] Environment switched to ${envId}, activating collection: ${collectionToActivate}`
           );
         } else if (this.currentActiveCollectionId) {
           // Same environment - update collection if we have one
@@ -295,7 +295,7 @@ export class GnomeShellMonitorManager implements MonitorProvider {
         this.storage.environments.push(environment);
         collectionToActivate = defaultCollectionId;
         log(
-          `[GnomeShellMonitorManager] New environment detected: ${envId} (${monitorsArray.length} monitors), activating: ${defaultCollectionId}`
+          `[GnomeShellMonitorProvider] New environment detected: ${envId} (${monitorsArray.length} monitors), activating: ${defaultCollectionId}`
         );
       }
 
@@ -304,9 +304,9 @@ export class GnomeShellMonitorManager implements MonitorProvider {
       const json = JSON.stringify(this.storage, null, 2);
       file.replace_contents(json, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
-      log('[GnomeShellMonitorManager] Monitors saved successfully');
+      log('[GnomeShellMonitorProvider] Monitors saved successfully');
     } catch (e) {
-      log(`[GnomeShellMonitorManager] Error saving monitors: ${e}`);
+      log(`[GnomeShellMonitorProvider] Error saving monitors: ${e}`);
     }
 
     return collectionToActivate;
