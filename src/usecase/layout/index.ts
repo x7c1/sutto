@@ -1,10 +1,3 @@
-export type {
-  LayoutConfiguration,
-  LayoutGroupSetting as ImportLayoutGroupSetting,
-  LayoutSetting as ImportLayoutSetting,
-  SpaceSetting,
-  SpacesRowSetting,
-} from './import-collection.js';
 export {
   deleteCustomCollection,
   importLayoutConfiguration,

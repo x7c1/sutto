@@ -7,40 +7,17 @@ import {
   type SpaceCollection,
   type SpacesRow,
 } from '../../domain/layout/index.js';
+import type {
+  LayoutConfiguration,
+  LayoutGroupSetting,
+  LayoutSetting,
+  SpaceSetting,
+  SpacesRowSetting,
+} from '../../domain/types/index.js';
 import { generateUUID } from '../../libs/uuid/index.js';
 import type { SpaceCollectionRepository } from './space-collection-repository.js';
 
 declare function log(message: string): void;
-
-// Configuration types for import
-export interface LayoutSetting {
-  label: string;
-  x: string;
-  y: string;
-  width: string;
-  height: string;
-}
-
-export interface LayoutGroupSetting {
-  name: string;
-  layouts: LayoutSetting[];
-}
-
-export interface SpaceSetting {
-  displays: {
-    [monitorKey: string]: string;
-  };
-}
-
-export interface SpacesRowSetting {
-  spaces: SpaceSetting[];
-}
-
-export interface LayoutConfiguration {
-  name: string;
-  layoutGroups: LayoutGroupSetting[];
-  rows: SpacesRowSetting[];
-}
 
 /**
  * Validate that the input is a valid LayoutConfiguration with required name
