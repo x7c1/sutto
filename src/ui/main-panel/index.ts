@@ -18,7 +18,7 @@ import type {
   SpacesRow,
 } from '../../domain/layout/index.js';
 import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
-import type { MonitorProvider } from '../../usecase/monitor/index.js';
+import type { MonitorEnvironmentUsecase } from '../../usecase/monitor/index.js';
 import { AUTO_HIDE_DELAY_MS } from '../constants.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
@@ -37,7 +37,7 @@ declare function log(message: string): void;
 
 export interface MainPanelOptions {
   metadata: ExtensionMetadata;
-  monitorProvider: MonitorProvider;
+  monitorEnvironment: MonitorEnvironmentUsecase;
   layoutHistoryRepository: LayoutHistoryRepository;
   getActiveSpaceCollectionId: () => string;
   onLayoutSelected: (event: LayoutSelectedEvent) => void;
@@ -54,7 +54,7 @@ export class MainPanel {
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private rendererEventIds: PanelEventIds | null = null;
   private readonly metadata: ExtensionMetadata;
-  private readonly monitorProvider: MonitorProvider;
+  private readonly monitorEnvironment: MonitorEnvironmentUsecase;
   private readonly layoutHistoryRepository: LayoutHistoryRepository;
   private readonly getActiveSpaceCollectionId: () => string;
   private readonly onLayoutSelected: (event: LayoutSelectedEvent) => void;
@@ -73,7 +73,7 @@ export class MainPanel {
 
   constructor(options: MainPanelOptions) {
     this.metadata = options.metadata;
-    this.monitorProvider = options.monitorProvider;
+    this.monitorEnvironment = options.monitorEnvironment;
     this.layoutHistoryRepository = options.layoutHistoryRepository;
     this.getActiveSpaceCollectionId = options.getActiveSpaceCollectionId;
     this.onLayoutSelected = options.onLayoutSelected;
@@ -83,7 +83,7 @@ export class MainPanel {
     this.onPanelShownCallback = options.onPanelShown;
     this.onPanelHiddenCallback = options.onPanelHidden;
 
-    this.positionManager = new MainPanelPositionManager(this.monitorProvider);
+    this.positionManager = new MainPanelPositionManager(this.monitorEnvironment);
     this.autoHide.setOnHide(() => {
       this.hide();
     });
@@ -344,7 +344,7 @@ export class MainPanel {
 
     // Get monitors for rendering (may include data from different environment)
     const { monitors, inactiveMonitorKeys } =
-      this.monitorProvider.getMonitorsForRendering(maxDisplayCount);
+      this.monitorEnvironment.getMonitorsForRendering(maxDisplayCount);
 
     const rowsView = createSpacesRowView(
       monitors,

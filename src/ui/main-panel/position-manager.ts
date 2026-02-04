@@ -11,7 +11,7 @@ import type { Position, Size } from '../../domain/geometry/index.js';
 import type { SpacesRow } from '../../domain/layout/index.js';
 import { adjustMainPanelPosition } from '../../domain/positioning/index.js';
 import type { ScreenBoundaries } from '../../domain/positioning/types.js';
-import type { MonitorProvider } from '../../usecase/monitor/index.js';
+import type { MonitorEnvironmentUsecase } from '../../usecase/monitor/index.js';
 import { calculateSpaceDimensions } from '../components/space-dimensions.js';
 import {
   FOOTER_MARGIN_TOP,
@@ -22,10 +22,10 @@ import {
 } from '../constants.js';
 
 export class MainPanelPositionManager {
-  private monitorProvider: MonitorProvider;
+  private monitorEnvironment: MonitorEnvironmentUsecase;
 
-  constructor(monitorProvider: MonitorProvider) {
-    this.monitorProvider = monitorProvider;
+  constructor(monitorEnvironment: MonitorEnvironmentUsecase) {
+    this.monitorEnvironment = monitorEnvironment;
   }
   /**
    * Calculate panel dimensions based on rows to render
@@ -39,7 +39,7 @@ export class MainPanelPositionManager {
       return { width: minWidth, height: minHeight };
     }
 
-    const monitors = this.monitorProvider.getMonitors();
+    const monitors = this.monitorEnvironment.getMonitors();
 
     // Calculate width: maximum row width
     let maxRowWidth = 0;
@@ -110,7 +110,7 @@ export class MainPanelPositionManager {
    */
   adjustPosition(cursor: Position, panelDimensions: Size, centerVertically = false): Position {
     // Get monitor at cursor position
-    const monitor = this.monitorProvider.getMonitorAtPosition(cursor.x, cursor.y);
+    const monitor = this.monitorEnvironment.getMonitorAtPosition(cursor.x, cursor.y);
 
     // Use monitor workArea if found, otherwise fallback to global screen
     let boundaries: ScreenBoundaries;

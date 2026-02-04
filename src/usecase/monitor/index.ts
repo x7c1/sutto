@@ -5,4 +5,3 @@ export {
   type MonitorDetectionProvider,
   MonitorEnvironmentUsecase,
 } from './monitor-environment-usecase.js';
-export type { MonitorProvider } from './monitor-provider.js';

@@ -6,7 +6,6 @@ import {
   type MonitorEnvironmentStorage,
 } from '../../domain/monitor/index.js';
 import type { MonitorEnvironmentRepository } from './monitor-environment-repository.js';
-import type { MonitorProvider } from './monitor-provider.js';
 
 declare function log(message: string): void;
 
@@ -39,7 +38,7 @@ export interface MonitorDetectionProvider {
  * Usecase for managing monitor environments.
  * Orchestrates monitor detection and environment storage.
  */
-export class MonitorEnvironmentUsecase implements MonitorProvider {
+export class MonitorEnvironmentUsecase {
   private storage: MonitorEnvironmentStorage = { environments: [], current: '' };
   private currentActiveCollectionId: string = '';
   private initialized: boolean = false;
@@ -152,8 +151,6 @@ export class MonitorEnvironmentUsecase implements MonitorProvider {
   getCurrentEnvironment(): MonitorEnvironment | null {
     return this.storage.environments.find((e) => e.id === this.storage.current) ?? null;
   }
-
-  // MonitorProvider interface implementation
 
   getMonitors(): Map<string, Monitor> {
     return this.provider.getMonitors();

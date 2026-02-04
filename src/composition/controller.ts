@@ -121,7 +121,7 @@ export class Controller {
 
     this.mainPanel = new MainPanel({
       metadata,
-      monitorProvider: this.monitorEnvironmentUsecase,
+      monitorEnvironment: this.monitorEnvironmentUsecase,
       layoutHistoryRepository: this.layoutHistoryRepository,
       onLayoutSelected: (event) => this.applyLayoutToCurrentWindow(event),
       getOpenPreferencesShortcuts: () => preferencesRepository.getOpenPreferencesShortcut(),
