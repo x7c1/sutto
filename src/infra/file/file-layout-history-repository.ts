@@ -336,7 +336,7 @@ export class FileLayoutHistoryRepository implements LayoutHistoryRepository {
   private hashString(input: string): string {
     const checksum = GLib.compute_checksum_for_string(GLib.ChecksumType.SHA256, input, -1);
     if (!checksum) {
-      return '0000000000000000';
+      throw new Error(`Failed to compute checksum for: ${input}`);
     }
     return checksum.substring(0, 16);
   }
