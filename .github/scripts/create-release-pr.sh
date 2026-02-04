@@ -104,6 +104,23 @@ update_release_pr() {
     local changelog="$4"
     local last_tag="$5"
     local repo_url="$6"
+    local branch="release/v${version}"
+
+    git config user.name "github-actions[bot]"
+    git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    # Rebase release branch onto latest main
+    git fetch origin "$branch"
+    git checkout "$branch"
+    git rebase main
+
+    # Re-apply version bump on top of latest main
+    jq ".version = ${version}" "$METADATA_FILE" > "${METADATA_FILE}.tmp"
+    mv "${METADATA_FILE}.tmp" "$METADATA_FILE"
+    git add "$METADATA_FILE"
+    git commit --amend --no-edit
+
+    git push origin "$branch" --force-with-lease
 
     gh pr edit "$pr_number" \
         --body "$(generate_pr_body "$version" "$current_version" "$changelog" "$last_tag" "$repo_url")"
