@@ -1,10 +1,10 @@
-/// <reference path="./types/build-mode.d.ts" />
+/// <reference path="./libs/gnome-types/build-mode.d.ts" />
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
-import { EXTENSION_UUID } from './app/constants.js';
-import { Controller } from './app/controller.js';
-import { DBusReloader } from './reloader/dbus-reloader.js';
-import { ExtensionSettings } from './settings/extension-settings.js';
+import { Controller } from './composition/controller.js';
+import { EXTENSION_UUID } from './infra/constants.js';
+import { GSettingsPreferencesRepository } from './infra/glib/index.js';
+import { DBusReloader } from './libs/reloader/index.js';
 
 export default class SnappaExtension extends Extension {
   private dbusReloader: DBusReloader | null = null;
@@ -44,22 +44,22 @@ export default class SnappaExtension extends Extension {
     }
   }
 
-  private initializeSettings(): ExtensionSettings | null {
+  private initializePreferencesRepository(): GSettingsPreferencesRepository | null {
     try {
-      return new ExtensionSettings(this.metadata);
+      return new GSettingsPreferencesRepository(this.metadata);
     } catch (e) {
-      console.log(`[Snappa] ERROR: Failed to initialize settings: ${e}`);
+      console.log(`[Snappa] ERROR: Failed to initialize preferences repository: ${e}`);
       return null;
     }
   }
 
   private initializeController(): Controller | null {
-    const settings = this.initializeSettings();
-    if (!settings) {
+    const preferencesRepository = this.initializePreferencesRepository();
+    if (!preferencesRepository) {
       return null;
     }
     try {
-      return new Controller(settings, this.metadata);
+      return new Controller(preferencesRepository, this.metadata);
     } catch (e) {
       console.log(`[Snappa] ERROR: Failed to initialize controller: ${e}`);
       return null;

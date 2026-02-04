@@ -4,8 +4,11 @@
     "lib": ["ES2022"],
     "module": "ES2022",
     "moduleResolution": "node",
-    "outDir": "./.tsc",
-    "rootDir": "./src",
+    "outDir": "../../.tsc/composition",
+    "rootDir": ".",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "strict": true,
     "noImplicitAny": true,
@@ -21,15 +24,13 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/extension.ts", "src/prefs.ts", "src/libs/gnome-types/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "include": ["./**/*", "../libs/gnome-types/**/*"],
+  "exclude": ["**/*.test.ts"],
   "references": [
-    { "path": "./src/libs" },
-    { "path": "./src/domain" },
-    { "path": "./src/usecase" },
-    { "path": "./src/infra" },
-    { "path": "./src/ui" },
-    { "path": "./src/prefs" },
-    { "path": "./src/composition" }
+    { "path": "../libs" },
+    { "path": "../domain" },
+    { "path": "../usecase" },
+    { "path": "../infra" },
+    { "path": "../ui" }
   ]
 }
