@@ -7,7 +7,8 @@
 
 import Gtk from 'gi://Gtk';
 
-import type { LayoutGroup, Monitor } from '../domain/types/index.js';
+import type { LayoutGroup } from '../domain/layout/index.js';
+import type { Monitor } from '../domain/monitor/index.js';
 
 // Cairo Context interface for drawing operations
 // Defined locally to avoid type conflicts with GI bindings

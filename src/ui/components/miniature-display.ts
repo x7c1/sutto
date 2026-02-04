@@ -1,12 +1,8 @@
 import Clutter from 'gi://Clutter';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
-import type {
-  Layout,
-  LayoutGroup,
-  LayoutSelectedEvent,
-  Monitor,
-} from '../../domain/types/index.js';
+import type { Layout, LayoutGroup, LayoutSelectedEvent } from '../../domain/layout/index.js';
+import type { Monitor } from '../../domain/monitor/index.js';
 import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
 import { DISPLAY_BG_COLOR, DISPLAY_SPACING, DISPLAY_SPACING_HORIZONTAL } from '../constants.js';
 import { createLayoutButton } from './layout-button.js';

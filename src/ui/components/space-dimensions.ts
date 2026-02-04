@@ -5,12 +5,12 @@
  * Used by both miniature-space.ts (for rendering) and position-manager.ts (for layout).
  */
 
+import type { Space } from '../../domain/layout/index.js';
 import {
   DEFAULT_MONITOR_HEIGHT,
   DEFAULT_MONITOR_WIDTH,
   type Monitor,
-  type Space,
-} from '../../domain/types/index.js';
+} from '../../domain/monitor/index.js';
 import {
   MAX_MONITOR_DISPLAY_HEIGHT,
   MAX_MONITOR_DISPLAY_WIDTH,

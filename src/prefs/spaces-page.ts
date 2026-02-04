@@ -6,13 +6,8 @@ import {
   resolvePresetGeneratorUseCase,
   resolveSpaceCollectionUseCase,
 } from '../composition/usecase-factory.js';
-import type {
-  Monitor,
-  MonitorEnvironmentStorage,
-  Space,
-  SpaceCollection,
-  SpacesRow,
-} from '../domain/types/index.js';
+import type { Space, SpaceCollection, SpacesRow } from '../domain/layout/index.js';
+import type { Monitor, MonitorEnvironmentStorage } from '../domain/monitor/index.js';
 import { calculateSpaceDimensions, createGtkMiniatureSpace } from './gtk-miniature-space.js';
 import {
   createDefaultMonitors,

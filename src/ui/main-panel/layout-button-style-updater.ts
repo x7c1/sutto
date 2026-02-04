@@ -5,7 +5,7 @@
  */
 
 import type St from 'gi://St';
-import type { Layout } from '../../domain/types/index.js';
+import type { Layout } from '../../domain/layout/index.js';
 import { BUTTON_BG_COLOR, BUTTON_BG_COLOR_SELECTED } from '../constants.js';
 import type { LayoutButtonWithMetadata } from '../types/button.js';
 

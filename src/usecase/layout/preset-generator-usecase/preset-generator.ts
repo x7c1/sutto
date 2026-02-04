@@ -6,7 +6,7 @@ import type {
   SpaceCollection,
   SpacesRow,
 } from '../../../domain/layout/types.js';
-import type { LayoutGroupSetting, LayoutSetting } from '../../../domain/types/layout-setting.js';
+import type { LayoutGroupSetting, LayoutSetting } from '../../../domain/settings/index.js';
 
 export type MonitorType = 'wide' | 'standard';
 

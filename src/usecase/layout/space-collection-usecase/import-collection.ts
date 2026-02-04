@@ -12,7 +12,7 @@ import type {
   LayoutSetting,
   SpaceSetting,
   SpacesRowSetting,
-} from '../../../domain/types/index.js';
+} from '../../../domain/settings/index.js';
 import { generateUUID } from '../../../libs/uuid/index.js';
 import type { SpaceCollectionRepository } from '../space-collection-repository.js';
 

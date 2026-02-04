@@ -7,9 +7,10 @@
 
 import Clutter from 'gi://Clutter';
 import type St from 'gi://St';
+import type { Position, Size } from '../../domain/geometry/index.js';
+import type { SpacesRow } from '../../domain/layout/index.js';
 import { adjustMainPanelPosition } from '../../domain/positioning/index.js';
 import type { ScreenBoundaries } from '../../domain/positioning/types.js';
-import type { Position, Size, SpacesRow } from '../../domain/types/index.js';
 import type { MonitorProvider } from '../../usecase/monitor/index.js';
 import { calculateSpaceDimensions } from '../components/space-dimensions.js';
 import {

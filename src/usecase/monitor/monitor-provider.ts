@@ -1,4 +1,4 @@
-import type { Monitor } from '../../domain/types/index.js';
+import type { Monitor } from '../../domain/monitor/index.js';
 
 /**
  * Interface for monitor access used by UI layer.

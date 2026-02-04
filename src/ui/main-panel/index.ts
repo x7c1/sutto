@@ -10,14 +10,13 @@ import Meta from 'gi://Meta';
 import St from 'gi://St';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import type { Position, Size } from '../../domain/geometry/index.js';
 import type {
   Layout,
   LayoutSelectedEvent,
-  Position,
-  Size,
   SpaceCollection,
   SpacesRow,
-} from '../../domain/types/index.js';
+} from '../../domain/layout/index.js';
 import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
 import type { MonitorProvider } from '../../usecase/monitor/index.js';
 import { AUTO_HIDE_DELAY_MS } from '../constants.js';

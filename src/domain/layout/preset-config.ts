@@ -5,7 +5,7 @@
  * No external dependencies - can be used in any context.
  */
 
-import type { LayoutGroupSetting } from '../types/layout-setting.js';
+import type { LayoutGroupSetting } from '../settings/index.js';
 
 /**
  * Base layout group definitions

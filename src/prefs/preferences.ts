@@ -8,7 +8,7 @@ import {
   resolveSpaceCollectionUseCase,
 } from '../composition/usecase-factory.js';
 import type { SpaceCollection } from '../domain/layout/index.js';
-import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../domain/types/index.js';
+import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../domain/monitor/index.js';
 import { createGeneralPage } from './keyboard-shortcuts.js';
 import { loadMonitors } from './monitors.js';
 import { calculateWindowDimensionsForCollection, createSpacesPage } from './spaces-page.js';

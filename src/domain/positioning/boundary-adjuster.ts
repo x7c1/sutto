@@ -4,7 +4,7 @@
  * Provides functions to adjust UI element positions to keep them within screen boundaries.
  */
 
-import type { Position, Size } from '../types/geometry.js';
+import type { Position, Size } from '../geometry/index.js';
 import type { MainPanelPositionOptions, ScreenBoundaries } from './types.js';
 
 /**

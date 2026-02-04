@@ -14,8 +14,9 @@
 
 import Meta from 'gi://Meta';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
+import type { Position } from '../domain/geometry/index.js';
+import type { LayoutSelectedEvent } from '../domain/layout/index.js';
 import { CollectionId } from '../domain/layout/index.js';
-import type { LayoutSelectedEvent, Position } from '../domain/types/index.js';
 import { HttpLicenseApiClient } from '../infra/api/index.js';
 import { HISTORY_FILE_NAME } from '../infra/constants.js';
 import {

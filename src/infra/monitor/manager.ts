@@ -9,13 +9,14 @@
 import Gio from 'gi://Gio';
 import type Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import type {
-  BoundingBox,
-  Monitor,
-  MonitorEnvironment,
-  MonitorEnvironmentStorage,
-} from '../../domain/types/index.js';
-import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../../domain/types/index.js';
+import {
+  type BoundingBox,
+  DEFAULT_MONITOR_HEIGHT,
+  DEFAULT_MONITOR_WIDTH,
+  type Monitor,
+  type MonitorEnvironment,
+  type MonitorEnvironmentStorage,
+} from '../../domain/monitor/index.js';
 import type { MonitorProvider } from '../../usecase/monitor/index.js';
 import { MONITORS_FILE_NAME } from '../constants.js';
 import { getExtensionDataPath } from '../file/index.js';

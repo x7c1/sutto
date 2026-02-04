@@ -2,13 +2,14 @@ import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-import type {
-  Monitor,
-  MonitorEnvironment,
-  MonitorEnvironmentStorage,
-  SpacesRow,
-} from '../domain/types/index.js';
-import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../domain/types/index.js';
+import type { SpacesRow } from '../domain/layout/index.js';
+import {
+  DEFAULT_MONITOR_HEIGHT,
+  DEFAULT_MONITOR_WIDTH,
+  type Monitor,
+  type MonitorEnvironment,
+  type MonitorEnvironmentStorage,
+} from '../domain/monitor/index.js';
 import { EXTENSION_UUID, MONITORS_FILE_NAME } from '../infra/constants.js';
 
 /**

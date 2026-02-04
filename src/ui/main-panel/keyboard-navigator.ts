@@ -1,7 +1,7 @@
 import Clutter from 'gi://Clutter';
 import type St from 'gi://St';
 
-import type { Layout, LayoutSelectedEvent } from '../../domain/types/index.js';
+import type { Layout, LayoutSelectedEvent } from '../../domain/layout/index.js';
 import { getButtonStyle } from '../components/layout-button.js';
 import type { LayoutButtonWithMetadata } from '../types/button.js';
 
