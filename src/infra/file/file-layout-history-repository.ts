@@ -48,7 +48,7 @@ export class FileLayoutHistoryRepository implements LayoutHistoryRepository {
     }
   }
 
-  load(): void {
+  restoreHistory(): void {
     let events = this.readEventsFromFile();
     if (events.length === 0) {
       return;

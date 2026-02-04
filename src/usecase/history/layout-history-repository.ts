@@ -12,9 +12,9 @@ export interface LayoutHistoryRepository {
   setActiveCollection(collectionId: CollectionId): void;
 
   /**
-   * Load history from storage
+   * Restore history data from storage and build in-memory indexes
    */
-  load(): void;
+  restoreHistory(): void;
 
   /**
    * Record a layout selection for a window

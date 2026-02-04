@@ -212,7 +212,7 @@ export class Controller {
    */
   private ensureHistoryLoaded(): void {
     if (!this.historyLoaded) {
-      this.layoutHistoryRepository.load();
+      this.layoutHistoryRepository.restoreHistory();
       this.historyLoaded = true;
     }
     this.syncActiveCollectionToHistory();
