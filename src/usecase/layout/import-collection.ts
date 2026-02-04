@@ -1,5 +1,4 @@
 import {
-  CollectionId,
   generateLayoutHash,
   type Layout,
   type LayoutGroup,
@@ -101,11 +100,7 @@ function configurationToSpacesRows(config: LayoutConfiguration): SpacesRow[] {
   return config.rows.map((rowSetting) => settingToSpacesRow(rowSetting, config.layoutGroups));
 }
 
-/**
- * Import a LayoutConfiguration and create a custom SpaceCollection
- * Returns the created SpaceCollection, or null if validation failed
- */
-export function importLayoutConfiguration(
+function importLayoutConfiguration(
   repository: SpaceCollectionRepository,
   data: unknown
 ): SpaceCollection | null {
@@ -146,16 +141,4 @@ export function importLayoutConfigurationFromJson(
     log(`[ImportCollection] Error parsing JSON: ${e}`);
     return null;
   }
-}
-
-/**
- * Delete a custom SpaceCollection by ID
- * Returns true if deleted, false if not found or is a preset
- */
-export function deleteCustomCollection(
-  repository: SpaceCollectionRepository,
-  collectionId: string
-): boolean {
-  const id = new CollectionId(collectionId);
-  return repository.deleteCustomCollection(id);
 }
