@@ -26,7 +26,7 @@ import {
   GLibDateProvider,
   GSettingsLicenseRepository,
   SystemDeviceInfoProvider,
-} from '../infra/gsettings/index.js';
+} from '../infra/glib/index.js';
 import { GnomeShellMonitorProvider } from '../infra/monitor/gnome-shell-monitor-provider.js';
 import { MainPanel } from '../ui/main-panel/index.js';
 import type { LayoutHistoryRepository } from '../usecase/history/index.js';

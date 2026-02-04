@@ -8,7 +8,7 @@ import {
   GLibDateProvider,
   GSettingsLicenseRepository,
   SystemDeviceInfoProvider,
-} from '../infra/gsettings/index.js';
+} from '../infra/glib/index.js';
 import { LicenseUsecase } from '../usecase/licensing/index.js';
 
 /**
