@@ -2,16 +2,16 @@ import {
   BASE_LAYOUT_GROUPS,
   STANDARD_LAYOUT_GROUP_NAMES,
   WIDE_LAYOUT_GROUP_NAMES,
-} from '../../domain/layout/preset-config.js';
+} from '../../../domain/layout/preset-config.js';
+import type { SpaceCollection } from '../../../domain/layout/types.js';
+import type { MonitorCountProvider } from '../monitor-count-provider.js';
+import type { SpaceCollectionRepository } from '../space-collection-repository.js';
 import {
   generatePreset,
   getPresetName,
   type MonitorType,
   type UUIDGenerator,
-} from '../../domain/layout/preset-generator.js';
-import type { SpaceCollection } from '../../domain/layout/types.js';
-import type { MonitorCountProvider } from './monitor-count-provider.js';
-import type { SpaceCollectionRepository } from './space-collection-repository.js';
+} from './preset-generator.js';
 
 declare function log(message: string): void;
 
