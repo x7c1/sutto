@@ -22,10 +22,10 @@ import {
 } from '../constants.js';
 
 export class MainPanelPositionManager {
-  private monitorManager: MonitorProvider;
+  private monitorProvider: MonitorProvider;
 
-  constructor(monitorManager: MonitorProvider) {
-    this.monitorManager = monitorManager;
+  constructor(monitorProvider: MonitorProvider) {
+    this.monitorProvider = monitorProvider;
   }
   /**
    * Calculate panel dimensions based on rows to render
@@ -39,7 +39,7 @@ export class MainPanelPositionManager {
       return { width: minWidth, height: minHeight };
     }
 
-    const monitors = this.monitorManager.getMonitors();
+    const monitors = this.monitorProvider.getMonitors();
 
     // Calculate width: maximum row width
     let maxRowWidth = 0;
@@ -110,7 +110,7 @@ export class MainPanelPositionManager {
    */
   adjustPosition(cursor: Position, panelDimensions: Size, centerVertically = false): Position {
     // Get monitor at cursor position
-    const monitor = this.monitorManager.getMonitorAtPosition(cursor.x, cursor.y);
+    const monitor = this.monitorProvider.getMonitorAtPosition(cursor.x, cursor.y);
 
     // Use monitor workArea if found, otherwise fallback to global screen
     let boundaries: ScreenBoundaries;
