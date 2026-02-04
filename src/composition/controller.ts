@@ -27,13 +27,13 @@ import {
 } from '../infra/drag/index.js';
 import { FileLayoutHistoryRepository, getExtensionDataPath } from '../infra/file/index.js';
 import {
+  type ExtensionSettings,
   GioNetworkStateProvider,
   GLibDateProvider,
   GSettingsLicenseRepository,
   SystemDeviceInfoProvider,
 } from '../infra/gsettings/index.js';
 import { GnomeShellMonitorProvider } from '../infra/monitor/gnome-shell-monitor-provider.js';
-import type { ExtensionSettings } from '../infra/settings/extension-settings.js';
 import { KeyboardShortcutManager } from '../infra/shortcuts/index.js';
 import { LayoutApplicator } from '../infra/window/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';

@@ -3,7 +3,7 @@
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { Controller } from './composition/controller.js';
 import { EXTENSION_UUID } from './infra/constants.js';
-import { ExtensionSettings } from './infra/settings/extension-settings.js';
+import { ExtensionSettings } from './infra/gsettings/index.js';
 import { DBusReloader } from './libs/reloader/index.js';
 
 export default class SnappaExtension extends Extension {
