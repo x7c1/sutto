@@ -10,8 +10,8 @@ import { generateUUID } from '../libs/uuid/index.js';
 import { PresetGeneratorUseCase, SpaceCollectionUseCase } from '../usecase/layout/index.js';
 import { resolveSpaceCollectionRepository } from './repository-factory.js';
 
-let spaceCollectionUseCase: SpaceCollectionUseCase | null = null;
-let presetGeneratorUseCase: PresetGeneratorUseCase | null = null;
+let spaceCollectionUsecase: SpaceCollectionUseCase | null = null;
+let presetGeneratorUsecase: PresetGeneratorUseCase | null = null;
 
 const uuidGenerator = {
   generate: generateUUID,
@@ -20,31 +20,31 @@ const uuidGenerator = {
 /**
  * Resolve the shared SpaceCollectionUseCase instance.
  */
-export function resolveSpaceCollectionUseCase(): SpaceCollectionUseCase {
-  if (!spaceCollectionUseCase) {
-    spaceCollectionUseCase = new SpaceCollectionUseCase(resolveSpaceCollectionRepository());
+export function resolveSpaceCollectionUsecase(): SpaceCollectionUseCase {
+  if (!spaceCollectionUsecase) {
+    spaceCollectionUsecase = new SpaceCollectionUseCase(resolveSpaceCollectionRepository());
   }
-  return spaceCollectionUseCase;
+  return spaceCollectionUsecase;
 }
 
 /**
  * Resolve the shared PresetGeneratorUseCase instance.
  */
-export function resolvePresetGeneratorUseCase(): PresetGeneratorUseCase {
-  if (!presetGeneratorUseCase) {
-    presetGeneratorUseCase = new PresetGeneratorUseCase(
+export function resolvePresetGeneratorUsecase(): PresetGeneratorUseCase {
+  if (!presetGeneratorUsecase) {
+    presetGeneratorUsecase = new PresetGeneratorUseCase(
       resolveSpaceCollectionRepository(),
       new FileMonitorCountProvider(),
       uuidGenerator
     );
   }
-  return presetGeneratorUseCase;
+  return presetGeneratorUsecase;
 }
 
 /**
  * Reset UseCase instances (for testing).
  */
-export function resetUseCases(): void {
-  spaceCollectionUseCase = null;
-  presetGeneratorUseCase = null;
+export function resetUsecases(): void {
+  spaceCollectionUsecase = null;
+  presetGeneratorUsecase = null;
 }

@@ -31,7 +31,7 @@ export interface DeviceInfoProvider {
   getDeviceLabel(): string;
 }
 
-export interface LicenseUseCaseResult {
+export interface LicenseUsecaseResult {
   success: boolean;
   deactivatedDevice?: string | null;
   error?: string;
@@ -141,7 +141,7 @@ export class LicenseUseCase {
   /**
    * Activate a license key for this device
    */
-  async activate(licenseKey: LicenseKey): Promise<LicenseUseCaseResult> {
+  async activate(licenseKey: LicenseKey): Promise<LicenseUsecaseResult> {
     log('[LicenseUseCase] Activating license...');
 
     const deviceId = this.deviceInfoProvider.getDeviceId();
@@ -243,7 +243,7 @@ export class LicenseUseCase {
     this.recordTrialUsage();
   }
 
-  private handleActivationError(result: ActivationResult): LicenseUseCaseResult {
+  private handleActivationError(result: ActivationResult): LicenseUsecaseResult {
     const error = result.getError();
 
     const errorMessages: Record<string, string> = {

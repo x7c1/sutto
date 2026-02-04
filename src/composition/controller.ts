@@ -39,7 +39,7 @@ import { LayoutApplicator } from '../infra/window/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';
 import type { LayoutHistoryRepository } from '../usecase/history/index.js';
 import { LicenseUseCase } from '../usecase/licensing/index.js';
-import { resolvePresetGeneratorUseCase, resolveSpaceCollectionUseCase } from './usecase-factory.js';
+import { resolvePresetGeneratorUsecase, resolveSpaceCollectionUsecase } from './usecase-factory.js';
 
 declare function log(message: string): void;
 
@@ -63,7 +63,7 @@ export class Controller {
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
   private settings: ExtensionSettings;
-  private licenseUseCase: LicenseUseCase;
+  private licenseUsecase: LicenseUseCase;
   private isLicenseValid: boolean = true;
 
   constructor(settings: ExtensionSettings, metadata: ExtensionMetadata) {
@@ -96,15 +96,15 @@ export class Controller {
     // Initialize license management
     const licenseRepository = new GSettingsLicenseRepository(settings.getGSettings());
     const licenseApiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
-    this.licenseUseCase = new LicenseUseCase(
+    this.licenseUsecase = new LicenseUseCase(
       licenseRepository,
       licenseApiClient,
       new GLibDateProvider(),
       new GioNetworkStateProvider(),
       new SystemDeviceInfoProvider()
     );
-    this.licenseUseCase.onStateChange(() => {
-      this.isLicenseValid = this.licenseUseCase.shouldExtensionBeEnabled();
+    this.licenseUsecase.onStateChange(() => {
+      this.isLicenseValid = this.licenseUsecase.shouldExtensionBeEnabled();
       if (!this.isLicenseValid) {
         log('[Controller] License invalid, hiding panel');
         this.mainPanel.hide();
@@ -121,10 +121,10 @@ export class Controller {
     this.mainPanel.setActiveSpaceCollectionIdGetter(() => settings.getActiveSpaceCollectionId());
     // Inject UseCase callbacks
     this.mainPanel.setEnsurePresetForCurrentMonitors(() =>
-      resolvePresetGeneratorUseCase().ensurePresetForCurrentMonitors()
+      resolvePresetGeneratorUsecase().ensurePresetForCurrentMonitors()
     );
     this.mainPanel.setGetActiveSpaceCollection((activeId) =>
-      resolveSpaceCollectionUseCase().getActiveSpaceCollection(activeId)
+      resolveSpaceCollectionUsecase().getActiveSpaceCollection(activeId)
     );
     // Dynamic registration prevents shortcut conflicts when panel is hidden
     this.mainPanel.setOnPanelShown(() => {
@@ -140,8 +140,8 @@ export class Controller {
    */
   enable(): void {
     // Initialize license checking
-    this.licenseUseCase.initialize().then(() => {
-      this.isLicenseValid = this.licenseUseCase.shouldExtensionBeEnabled();
+    this.licenseUsecase.initialize().then(() => {
+      this.isLicenseValid = this.licenseUsecase.shouldExtensionBeEnabled();
       if (!this.isLicenseValid) {
         log('[Controller] License invalid on startup, extension disabled');
       }
@@ -184,7 +184,7 @@ export class Controller {
    * Disable the controller
    */
   disable(): void {
-    this.licenseUseCase.clearCallbacks();
+    this.licenseUsecase.clearCallbacks();
     this.motionMonitor.stop();
     this.dragSignalHandler.disconnect();
     this.keyboardShortcutManager.unregisterAll();
@@ -238,7 +238,7 @@ export class Controller {
    */
   private getAllValidLayoutIds(): Set<string> {
     const ids = new Set<string>();
-    const collections = resolveSpaceCollectionUseCase().loadAllCollections();
+    const collections = resolveSpaceCollectionUsecase().loadAllCollections();
 
     for (const collection of collections) {
       for (const row of collection.rows) {

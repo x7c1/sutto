@@ -4,7 +4,7 @@ export type { LicenseRepository } from './license-repository.js';
 export type {
   DateProvider,
   DeviceInfoProvider,
-  LicenseUseCaseResult,
+  LicenseUsecaseResult,
   NetworkStateProvider,
 } from './license-usecase.js';
 export { LicenseUseCase } from './license-usecase.js';
