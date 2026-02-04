@@ -9,7 +9,7 @@ import {
   GSettingsLicenseRepository,
   SystemDeviceInfoProvider,
 } from '../infra/gsettings/index.js';
-import { LicenseUseCase } from '../usecase/licensing/index.js';
+import { LicenseUsecase } from '../usecase/licensing/index.js';
 
 /**
  * Create the License preferences group
@@ -24,7 +24,7 @@ export function createLicenseGroup(
 
   const repository = new GSettingsLicenseRepository(settings);
   const apiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
-  const licenseUsecase = new LicenseUseCase(
+  const licenseUsecase = new LicenseUsecase(
     repository,
     apiClient,
     new GLibDateProvider(),
@@ -171,7 +171,7 @@ interface LicenseKeyRowResult {
 }
 
 function createLicenseKeyRow(
-  licenseUsecase: LicenseUseCase,
+  licenseUsecase: LicenseUsecase,
   onUpdate: () => void
 ): LicenseKeyRowResult {
   const row = new Adw.EntryRow({

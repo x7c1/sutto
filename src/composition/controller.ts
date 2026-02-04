@@ -38,7 +38,7 @@ import { KeyboardShortcutManager } from '../infra/shortcuts/index.js';
 import { LayoutApplicator } from '../infra/window/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';
 import type { LayoutHistoryRepository } from '../usecase/history/index.js';
-import { LicenseUseCase } from '../usecase/licensing/index.js';
+import { LicenseUsecase } from '../usecase/licensing/index.js';
 import { resolvePresetGeneratorUsecase, resolveSpaceCollectionUsecase } from './usecase-factory.js';
 
 declare function log(message: string): void;
@@ -63,7 +63,7 @@ export class Controller {
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
   private settings: ExtensionSettings;
-  private licenseUsecase: LicenseUseCase;
+  private licenseUsecase: LicenseUsecase;
   private isLicenseValid: boolean = true;
 
   constructor(settings: ExtensionSettings, metadata: ExtensionMetadata) {
@@ -96,7 +96,7 @@ export class Controller {
     // Initialize license management
     const licenseRepository = new GSettingsLicenseRepository(settings.getGSettings());
     const licenseApiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
-    this.licenseUsecase = new LicenseUseCase(
+    this.licenseUsecase = new LicenseUsecase(
       licenseRepository,
       licenseApiClient,
       new GLibDateProvider(),
@@ -119,7 +119,7 @@ export class Controller {
     this.mainPanel.setOpenPreferencesShortcutsGetter(() => settings.getOpenPreferencesShortcut());
     // Pass getter for active SpaceCollection ID
     this.mainPanel.setActiveSpaceCollectionIdGetter(() => settings.getActiveSpaceCollectionId());
-    // Inject UseCase callbacks
+    // Inject Usecase callbacks
     this.mainPanel.setEnsurePresetForCurrentMonitors(() =>
       resolvePresetGeneratorUsecase().ensurePresetForCurrentMonitors()
     );

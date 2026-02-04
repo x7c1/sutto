@@ -42,7 +42,7 @@ export interface LicenseUsecaseResult {
  * Coordinates validation, activation, and state transitions
  * Does not contain GLib/timer dependencies - those belong in the controller
  */
-export class LicenseUseCase {
+export class LicenseUsecase {
   private readonly repository: LicenseRepository;
   private readonly apiClient: LicenseApiClient;
   private readonly dateProvider: DateProvider;
@@ -69,7 +69,7 @@ export class LicenseUseCase {
    * Should be called when extension is enabled
    */
   async initialize(): Promise<void> {
-    log('[LicenseUseCase] Initializing...');
+    log('[LicenseUsecase] Initializing...');
 
     const status = this.repository.getStatus();
     const license = this.repository.loadLicense();
@@ -142,7 +142,7 @@ export class LicenseUseCase {
    * Activate a license key for this device
    */
   async activate(licenseKey: LicenseKey): Promise<LicenseUsecaseResult> {
-    log('[LicenseUseCase] Activating license...');
+    log('[LicenseUsecase] Activating license...');
 
     const deviceId = this.deviceInfoProvider.getDeviceId();
     const deviceLabel = this.deviceInfoProvider.getDeviceLabel();
@@ -156,7 +156,7 @@ export class LicenseUseCase {
       );
       this.repository.setStatus('valid');
 
-      log('[LicenseUseCase] License activated successfully');
+      log('[LicenseUsecase] License activated successfully');
       this.notifyStateChange();
 
       return {
@@ -175,11 +175,11 @@ export class LicenseUseCase {
     const license = this.repository.loadLicense();
 
     if (!license) {
-      log('[LicenseUseCase] No license to validate');
+      log('[LicenseUsecase] No license to validate');
       return false;
     }
 
-    log('[LicenseUseCase] Validating license...');
+    log('[LicenseUsecase] Validating license...');
 
     const result = await this.apiClient.validate(license.licenseKey, license.activationId);
 
@@ -189,7 +189,7 @@ export class LicenseUseCase {
       this.repository.saveLicense(updatedLicense);
       this.repository.setStatus('valid');
 
-      log('[LicenseUseCase] License validation successful');
+      log('[LicenseUsecase] License validation successful');
       this.notifyStateChange();
       return true;
     }
@@ -203,7 +203,7 @@ export class LicenseUseCase {
   clearLicense(): void {
     this.repository.clearLicense();
     this.notifyStateChange();
-    log('[LicenseUseCase] License cleared, returning to trial mode');
+    log('[LicenseUsecase] License cleared, returning to trial mode');
   }
 
   /**
@@ -214,17 +214,17 @@ export class LicenseUseCase {
     const today = this.dateProvider.today();
 
     if (!trial.canRecordUsage(today)) {
-      log(`[LicenseUseCase] Trial usage already recorded for today`);
+      log(`[LicenseUsecase] Trial usage already recorded for today`);
       return false;
     }
 
     const updatedTrial = trial.recordUsage(today);
     this.repository.saveTrialPeriod(updatedTrial);
 
-    log(`[LicenseUseCase] Recorded trial day ${updatedTrial.daysUsed.toNumber()}/${30} (${today})`);
+    log(`[LicenseUsecase] Recorded trial day ${updatedTrial.daysUsed.toNumber()}/${30} (${today})`);
 
     if (updatedTrial.isExpired()) {
-      log('[LicenseUseCase] Trial period has ended');
+      log('[LicenseUsecase] Trial period has ended');
       this.repository.setStatus('expired');
     }
 
@@ -236,7 +236,7 @@ export class LicenseUseCase {
     const networkState = this.networkStateProvider.getNetworkState();
 
     if (networkState === 'backend_unreachable') {
-      log('[LicenseUseCase] Backend unreachable during trial, not counting usage day');
+      log('[LicenseUsecase] Backend unreachable during trial, not counting usage day');
       return;
     }
 
@@ -271,7 +271,7 @@ export class LicenseUseCase {
   }
 
   private handleValidationError(error: ValidationError): boolean {
-    log(`[LicenseUseCase] Validation failed: ${error}`);
+    log(`[LicenseUsecase] Validation failed: ${error}`);
 
     if (
       error === 'LICENSE_EXPIRED' ||
@@ -280,7 +280,7 @@ export class LicenseUseCase {
     ) {
       this.repository.setStatus('expired');
     } else if (error === 'NETWORK_ERROR' || error === 'BACKEND_UNREACHABLE') {
-      log('[LicenseUseCase] Backend unreachable during validation, using cached status');
+      log('[LicenseUsecase] Backend unreachable during validation, using cached status');
       return this.repository.getStatus() === 'valid';
     } else {
       this.repository.setStatus('invalid');
@@ -310,7 +310,7 @@ export class LicenseUseCase {
       try {
         callback(state);
       } catch (e) {
-        log(`[LicenseUseCase] State change callback error: ${e}`);
+        log(`[LicenseUsecase] State change callback error: ${e}`);
       }
     }
   }

@@ -18,7 +18,7 @@ declare function log(message: string): void;
 /**
  * Use case for generating preset SpaceCollections for different monitor configurations.
  */
-export class PresetGeneratorUseCase {
+export class PresetGeneratorUsecase {
   constructor(
     private readonly repository: SpaceCollectionRepository,
     private readonly monitorCountProvider: MonitorCountProvider,

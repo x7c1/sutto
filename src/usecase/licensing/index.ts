@@ -7,4 +7,4 @@ export type {
   LicenseUsecaseResult,
   NetworkStateProvider,
 } from './license-usecase.js';
-export { LicenseUseCase } from './license-usecase.js';
+export { LicenseUsecase } from './license-usecase.js';
