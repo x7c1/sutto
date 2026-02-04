@@ -4,7 +4,7 @@ import {
   WIDE_LAYOUT_GROUP_NAMES,
 } from '../../../domain/layout/preset-config.js';
 import type { SpaceCollection } from '../../../domain/layout/types.js';
-import type { MonitorCountProvider } from '../../monitor/index.js';
+import type { MonitorCountRepository, MonitorDetector } from '../../monitor/index.js';
 import type { SpaceCollectionRepository } from '../space-collection-repository.js';
 import {
   generatePreset,
@@ -21,7 +21,8 @@ declare function log(message: string): void;
 export class PresetGeneratorUsecase {
   constructor(
     private readonly repository: SpaceCollectionRepository,
-    private readonly monitorCountProvider: MonitorCountProvider,
+    private readonly monitorCountRepository: MonitorCountRepository,
+    private readonly monitorDetector: MonitorDetector,
     private readonly uuidGenerator: UUIDGenerator
   ) {}
 
@@ -78,7 +79,8 @@ export class PresetGeneratorUsecase {
    * Called when main panel or settings screen opens.
    */
   ensurePresetForCurrentMonitors(): void {
-    const monitorCount = this.monitorCountProvider.getMonitorCount();
+    const monitorCount =
+      this.monitorCountRepository.loadMonitorCount() ?? this.monitorDetector.detectMonitorCount();
     if (monitorCount === 0) {
       log('[PresetGenerator] No monitor info available, skipping preset generation');
       return;

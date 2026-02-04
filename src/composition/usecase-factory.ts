@@ -10,30 +10,14 @@ import { FileMonitorCountRepository, getExtensionDataPath } from '../infra/file/
 import { GdkMonitorDetector } from '../infra/monitor/index.js';
 import { generateUUID } from '../libs/uuid/index.js';
 import { PresetGeneratorUsecase, SpaceCollectionUsecase } from '../usecase/layout/index.js';
-import { MonitorUsecase } from '../usecase/monitor/index.js';
 import { resolveSpaceCollectionRepository } from './repository-factory.js';
 
 let spaceCollectionUsecase: SpaceCollectionUsecase | null = null;
 let presetGeneratorUsecase: PresetGeneratorUsecase | null = null;
-let monitorUsecase: MonitorUsecase | null = null;
 
 const uuidGenerator = {
   generate: generateUUID,
 };
-
-/**
- * Resolve the shared MonitorUsecase instance.
- */
-export function resolveMonitorUsecase(): MonitorUsecase {
-  if (!monitorUsecase) {
-    const filePath = getExtensionDataPath(MONITORS_FILE_NAME);
-    monitorUsecase = new MonitorUsecase(
-      new FileMonitorCountRepository(filePath),
-      new GdkMonitorDetector()
-    );
-  }
-  return monitorUsecase;
-}
 
 /**
  * Resolve the shared SpaceCollectionUsecase instance.
@@ -50,9 +34,11 @@ export function resolveSpaceCollectionUsecase(): SpaceCollectionUsecase {
  */
 export function resolvePresetGeneratorUsecase(): PresetGeneratorUsecase {
   if (!presetGeneratorUsecase) {
+    const filePath = getExtensionDataPath(MONITORS_FILE_NAME);
     presetGeneratorUsecase = new PresetGeneratorUsecase(
       resolveSpaceCollectionRepository(),
-      resolveMonitorUsecase(),
+      new FileMonitorCountRepository(filePath),
+      new GdkMonitorDetector(),
       uuidGenerator
     );
   }
@@ -65,5 +51,4 @@ export function resolvePresetGeneratorUsecase(): PresetGeneratorUsecase {
 export function resetUsecases(): void {
   spaceCollectionUsecase = null;
   presetGeneratorUsecase = null;
-  monitorUsecase = null;
 }
