@@ -114,7 +114,7 @@ format_changelog() {
     local output=""
     for key in "${section_order[@]}"; do
         if [ -n "${sections[$key]}" ]; then
-            output+="#### ${section_titles[$key]}"$'\n\n'
+            output+="## ${section_titles[$key]}"$'\n\n'
             output+="${sections[$key]}"$'\n'
         fi
     done
@@ -190,20 +190,17 @@ generate_pr_body() {
     local changelog="$3"
     local last_tag="$4"
     local repo_url="$5"
-    local changes_header
+    local full_changelog=""
 
     if [ -n "$last_tag" ]; then
-        changes_header="[Changes since v${current_version}](${repo_url}/compare/${last_tag}...release/v${version})"
-    else
-        changes_header="Changes since v${current_version}"
+        full_changelog="## Full Changelog
+
+[v${current_version}...v${version}](${repo_url}/compare/${last_tag}...release/v${version})"
     fi
 
     cat <<EOF
-## Release v${version}
-
-### ${changes_header}
-
 ${changelog}
+${full_changelog}
 EOF
 }
 
