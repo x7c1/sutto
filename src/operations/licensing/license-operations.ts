@@ -39,9 +39,9 @@ export interface LicenseOperationsResult {
 }
 
 /**
- * License management use case
- * Coordinates validation, activation, and state transitions
- * Does not contain GLib/timer dependencies - those belong in the controller
+ * License management operations.
+ * Coordinates validation, activation, and state transitions.
+ * Does not contain GLib/timer dependencies - those belong in the controller.
  */
 export class LicenseOperations {
   private readonly repository: LicenseRepository;

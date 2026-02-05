@@ -12,7 +12,7 @@ import { generatePreset, getPresetName, type MonitorType } from './preset-genera
 declare function log(message: string): void;
 
 /**
- * Use case for generating preset SpaceCollections for different monitor configurations.
+ * Operations for generating preset SpaceCollections for different monitor configurations.
  */
 export class PresetGeneratorOperations {
   constructor(
