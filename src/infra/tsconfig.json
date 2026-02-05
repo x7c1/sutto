@@ -28,7 +28,7 @@
   "exclude": ["**/*.test.ts"],
   "references": [
     { "path": "../domain" },
-    { "path": "../usecase" },
+    { "path": "../operations" },
     { "path": "../libs" }
   ]
 }

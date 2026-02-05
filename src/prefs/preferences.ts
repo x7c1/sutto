@@ -4,8 +4,8 @@ import type Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 import type Gio from 'gi://Gio';
 import {
-  resolvePresetGeneratorUsecase,
-  resolveSpaceCollectionUsecase,
+  resolvePresetGeneratorOperations,
+  resolveSpaceCollectionOperations,
 } from '../composition/factory/index.js';
 import type { SpaceCollection } from '../domain/layout/index.js';
 import { DEFAULT_MONITOR_HEIGHT, DEFAULT_MONITOR_WIDTH } from '../domain/monitor/index.js';
@@ -31,7 +31,7 @@ export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.
   // Ensure presets exist for current monitor count
   console.log('[Snappa Prefs] Ensuring presets...');
   try {
-    resolvePresetGeneratorUsecase().ensurePresetForCurrentMonitors();
+    resolvePresetGeneratorOperations().ensurePresetForCurrentMonitors();
     console.log('[Snappa Prefs] Presets ensured');
   } catch (e) {
     console.log(`[Snappa Prefs] ERROR ensuring presets: ${e}`);
@@ -41,7 +41,7 @@ export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.
   console.log('[Snappa Prefs] Loading collections...');
   let collections: SpaceCollection[] = [];
   try {
-    collections = resolveSpaceCollectionUsecase().loadAllCollections();
+    collections = resolveSpaceCollectionOperations().loadAllCollections();
     console.log(`[Snappa Prefs] Loaded ${collections.length} collections`);
   } catch (e) {
     console.log(`[Snappa Prefs] ERROR loading collections: ${e}`);

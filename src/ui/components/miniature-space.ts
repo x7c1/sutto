@@ -15,7 +15,7 @@ import {
   DEFAULT_MONITOR_WIDTH,
   type Monitor,
 } from '../../domain/monitor/index.js';
-import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
+import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 import { MINIATURE_SPACE_BG_COLOR, MONITOR_MARGIN, SPACE_SPACING } from '../constants.js';
 import { createMiniatureDisplayView } from './miniature-display.js';
 import { calculateSpaceDimensions } from './space-dimensions.js';

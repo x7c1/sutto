@@ -11,10 +11,10 @@ import type { MonitorProvider } from './monitor-provider.js';
 declare function log(message: string): void;
 
 /**
- * Usecase for managing monitor environments.
+ * Operations for managing monitor environments.
  * Orchestrates monitor detection and environment storage.
  */
-export class MonitorEnvironmentUsecase {
+export class MonitorEnvironmentOperations {
   private storage: MonitorEnvironmentStorage = { environments: [], current: '' };
   private currentActiveCollectionId: string = '';
   private initialized: boolean = false;
@@ -33,9 +33,9 @@ export class MonitorEnvironmentUsecase {
     const loaded = this.repository.load();
     if (loaded) {
       this.storage = loaded;
-      log(`[MonitorEnvironmentUsecase] Loaded ${this.storage.environments.length} environments`);
+      log(`[MonitorEnvironmentOperations] Loaded ${this.storage.environments.length} environments`);
     } else {
-      log('[MonitorEnvironmentUsecase] No storage found, starting fresh');
+      log('[MonitorEnvironmentOperations] No storage found, starting fresh');
     }
     this.initialized = true;
   }
@@ -65,7 +65,7 @@ export class MonitorEnvironmentUsecase {
       if (environmentChanged) {
         collectionToActivate = environment.lastActiveCollectionId;
         log(
-          `[MonitorEnvironmentUsecase] Environment switched to ${envId}, activating collection: ${collectionToActivate}`
+          `[MonitorEnvironmentOperations] Environment switched to ${envId}, activating collection: ${collectionToActivate}`
         );
       } else if (this.currentActiveCollectionId) {
         environment.lastActiveCollectionId = this.currentActiveCollectionId;
@@ -81,13 +81,13 @@ export class MonitorEnvironmentUsecase {
       this.storage.environments.push(environment);
       collectionToActivate = defaultCollectionId;
       log(
-        `[MonitorEnvironmentUsecase] New environment detected: ${envId} (${monitorsArray.length} monitors), activating: ${defaultCollectionId}`
+        `[MonitorEnvironmentOperations] New environment detected: ${envId} (${monitorsArray.length} monitors), activating: ${defaultCollectionId}`
       );
     }
 
     this.storage.current = envId;
     this.repository.save(this.storage);
-    log('[MonitorEnvironmentUsecase] Monitors saved successfully');
+    log('[MonitorEnvironmentOperations] Monitors saved successfully');
 
     return collectionToActivate;
   }

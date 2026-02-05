@@ -17,8 +17,8 @@ import type {
   SpaceCollection,
   SpacesRow,
 } from '../../domain/layout/index.js';
-import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
-import type { MonitorEnvironmentUsecase } from '../../usecase/monitor/index.js';
+import type { LayoutHistoryRepository } from '../../operations/history/index.js';
+import type { MonitorEnvironmentOperations } from '../../operations/monitor/index.js';
 import { AUTO_HIDE_DELAY_MS } from '../constants.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
@@ -37,7 +37,7 @@ declare function log(message: string): void;
 
 export interface MainPanelOptions {
   metadata: ExtensionMetadata;
-  monitorEnvironment: MonitorEnvironmentUsecase;
+  monitorEnvironment: MonitorEnvironmentOperations;
   layoutHistoryRepository: LayoutHistoryRepository;
   getActiveSpaceCollectionId: () => string;
   onLayoutSelected: (event: LayoutSelectedEvent) => void;
@@ -54,7 +54,7 @@ export class MainPanel {
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private rendererEventIds: PanelEventIds | null = null;
   private readonly metadata: ExtensionMetadata;
-  private readonly monitorEnvironment: MonitorEnvironmentUsecase;
+  private readonly monitorEnvironment: MonitorEnvironmentOperations;
   private readonly layoutHistoryRepository: LayoutHistoryRepository;
   private readonly getActiveSpaceCollectionId: () => string;
   private readonly onLayoutSelected: (event: LayoutSelectedEvent) => void;

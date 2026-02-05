@@ -26,7 +26,7 @@
   "references": [
     { "path": "./src/libs" },
     { "path": "./src/domain" },
-    { "path": "./src/usecase" },
+    { "path": "./src/operations" },
     { "path": "./src/infra" },
     { "path": "./src/ui" },
     { "path": "./src/prefs" },

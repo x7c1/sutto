@@ -30,7 +30,7 @@
     { "path": "../domain" },
     { "path": "../infra" },
     { "path": "../composition" },
-    { "path": "../usecase" },
+    { "path": "../operations" },
     { "path": "../libs" }
   ]
 }

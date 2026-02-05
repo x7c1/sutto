@@ -2,7 +2,7 @@ import Gio from 'gi://Gio';
 
 import type { CollectionId, Space, SpaceCollection, SpaceId } from '../../domain/layout/index.js';
 import type { UUIDGenerator } from '../../libs/uuid/index.js';
-import type { SpaceCollectionRepository } from '../../usecase/layout/space-collection-repository.js';
+import type { SpaceCollectionRepository } from '../../operations/layout/space-collection-repository.js';
 
 const log = (message: string): void => console.log(message);
 

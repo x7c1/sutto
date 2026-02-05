@@ -1,5 +1,5 @@
 import GLib from 'gi://GLib';
-import type { DateProvider } from '../../usecase/licensing/index.js';
+import type { DateProvider } from '../../operations/licensing/index.js';
 
 /**
  * GLib-based DateProvider implementation.

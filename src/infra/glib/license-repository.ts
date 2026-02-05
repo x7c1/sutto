@@ -9,7 +9,7 @@ import {
   TrialDays,
   TrialPeriod,
 } from '../../domain/licensing/index.js';
-import type { LicenseRepository } from '../../usecase/licensing/index.js';
+import type { LicenseRepository } from '../../operations/licensing/index.js';
 
 /**
  * GSettings implementation of LicenseRepository

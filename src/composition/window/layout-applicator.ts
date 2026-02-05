@@ -11,7 +11,7 @@ import type { LayoutSelectedEvent } from '../../domain/layout/index.js';
 import { LayoutId } from '../../domain/layout/index.js';
 import { evaluate, parse } from '../../domain/layout-expression/index.js';
 import type { GnomeShellMonitorProvider } from '../../infra/monitor/gnome-shell-monitor-provider.js';
-import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
+import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 
 declare function log(message: string): void;
 

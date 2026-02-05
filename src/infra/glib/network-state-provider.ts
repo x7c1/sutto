@@ -1,6 +1,6 @@
 import Gio from 'gi://Gio';
 import type { NetworkState } from '../../domain/licensing/index.js';
-import type { NetworkStateProvider } from '../../usecase/licensing/index.js';
+import type { NetworkStateProvider } from '../../operations/licensing/index.js';
 
 /**
  * NetworkStateProvider implementation using Gio.NetworkMonitor.

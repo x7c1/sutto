@@ -1,7 +1,7 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import { DeviceId } from '../../domain/licensing/index.js';
-import type { DeviceInfoProvider } from '../../usecase/licensing/index.js';
+import type { DeviceInfoProvider } from '../../operations/licensing/index.js';
 
 /**
  * DeviceInfoProvider implementation reading system files.

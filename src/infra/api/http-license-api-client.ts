@@ -8,7 +8,7 @@ import {
   type DeviceId,
   type LicenseKey,
 } from '../../domain/licensing/index.js';
-import { type LicenseApiClient, ValidationResult } from '../../usecase/licensing/index.js';
+import { type LicenseApiClient, ValidationResult } from '../../operations/licensing/index.js';
 
 const log = (message: string): void => console.log(message);
 

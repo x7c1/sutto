@@ -1,6 +1,6 @@
 import Gio from 'gi://Gio';
 
-import type { MonitorCountRepository } from '../../usecase/monitor/monitor-count-repository.js';
+import type { MonitorCountRepository } from '../../operations/monitor/monitor-count-repository.js';
 
 const log = (message: string): void => console.log(message);
 

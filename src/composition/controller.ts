@@ -32,12 +32,15 @@ import {
   SystemDeviceInfoProvider,
 } from '../infra/glib/index.js';
 import { GnomeShellMonitorProvider } from '../infra/monitor/gnome-shell-monitor-provider.js';
+import type { LayoutHistoryRepository } from '../operations/history/index.js';
+import { LicenseOperations } from '../operations/licensing/index.js';
+import { MonitorEnvironmentOperations } from '../operations/monitor/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';
-import type { LayoutHistoryRepository } from '../usecase/history/index.js';
-import { LicenseUsecase } from '../usecase/licensing/index.js';
-import { MonitorEnvironmentUsecase } from '../usecase/monitor/index.js';
 import { DragSignalHandler, EdgeTimerManager, MotionMonitor } from './drag/index.js';
-import { resolvePresetGeneratorUsecase, resolveSpaceCollectionUsecase } from './factory/index.js';
+import {
+  resolvePresetGeneratorOperations,
+  resolveSpaceCollectionOperations,
+} from './factory/index.js';
 import { KeyboardShortcutManager } from './shortcuts/index.js';
 import { LayoutApplicator } from './window/index.js';
 
@@ -54,7 +57,7 @@ export class Controller {
   private isAtEdge: boolean = false;
   private mainPanel: MainPanel;
   private monitorProvider: GnomeShellMonitorProvider;
-  private monitorEnvironmentUsecase: MonitorEnvironmentUsecase;
+  private monitorEnvironmentOperations: MonitorEnvironmentOperations;
   private edgeDetector: EdgeDetector;
   private edgeTimerManager: EdgeTimerManager;
   private motionMonitor: MotionMonitor;
@@ -64,7 +67,7 @@ export class Controller {
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
   private preferencesRepository: GSettingsPreferencesRepository;
-  private licenseUsecase: LicenseUsecase;
+  private licenseOperations: LicenseOperations;
   private isLicenseValid: boolean = true;
 
   constructor(preferencesRepository: GSettingsPreferencesRepository, metadata: ExtensionMetadata) {
@@ -73,7 +76,7 @@ export class Controller {
     const monitorEnvironmentRepository = new FileMonitorEnvironmentRepository(
       getExtensionDataPath(MONITORS_FILE_NAME)
     );
-    this.monitorEnvironmentUsecase = new MonitorEnvironmentUsecase(
+    this.monitorEnvironmentOperations = new MonitorEnvironmentOperations(
       this.monitorProvider,
       monitorEnvironmentRepository
     );
@@ -104,15 +107,15 @@ export class Controller {
     // Initialize license management
     const licenseRepository = new GSettingsLicenseRepository(preferencesRepository.getGSettings());
     const licenseApiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
-    this.licenseUsecase = new LicenseUsecase(
+    this.licenseOperations = new LicenseOperations(
       licenseRepository,
       licenseApiClient,
       new GLibDateProvider(),
       new GioNetworkStateProvider(),
       new SystemDeviceInfoProvider()
     );
-    this.licenseUsecase.onStateChange(() => {
-      this.isLicenseValid = this.licenseUsecase.shouldExtensionBeEnabled();
+    this.licenseOperations.onStateChange(() => {
+      this.isLicenseValid = this.licenseOperations.shouldExtensionBeEnabled();
       if (!this.isLicenseValid) {
         log('[Controller] License invalid, hiding panel');
         this.mainPanel.hide();
@@ -121,15 +124,15 @@ export class Controller {
 
     this.mainPanel = new MainPanel({
       metadata,
-      monitorEnvironment: this.monitorEnvironmentUsecase,
+      monitorEnvironment: this.monitorEnvironmentOperations,
       layoutHistoryRepository: this.layoutHistoryRepository,
       onLayoutSelected: (event) => this.applyLayoutToCurrentWindow(event),
       getOpenPreferencesShortcuts: () => preferencesRepository.getOpenPreferencesShortcut(),
       getActiveSpaceCollectionId: () => preferencesRepository.getActiveSpaceCollectionId(),
       ensurePresetForCurrentMonitors: () =>
-        resolvePresetGeneratorUsecase().ensurePresetForCurrentMonitors(),
+        resolvePresetGeneratorOperations().ensurePresetForCurrentMonitors(),
       getActiveSpaceCollection: (activeId) =>
-        resolveSpaceCollectionUsecase().getActiveSpaceCollection(activeId),
+        resolveSpaceCollectionOperations().getActiveSpaceCollection(activeId),
       onPanelShown: () =>
         this.keyboardShortcutManager.registerHidePanelShortcut(() => this.onHidePanelShortcut()),
       onPanelHidden: () => this.keyboardShortcutManager.unregisterHidePanelShortcut(),
@@ -141,8 +144,8 @@ export class Controller {
    */
   enable(): void {
     // Initialize license checking
-    this.licenseUsecase.initialize().then(() => {
-      this.isLicenseValid = this.licenseUsecase.shouldExtensionBeEnabled();
+    this.licenseOperations.initialize().then(() => {
+      this.isLicenseValid = this.licenseOperations.shouldExtensionBeEnabled();
       if (!this.isLicenseValid) {
         log('[Controller] License invalid on startup, extension disabled');
       }
@@ -151,14 +154,14 @@ export class Controller {
     // Sync current active collection from settings
     const currentCollectionId = this.preferencesRepository.getActiveSpaceCollectionId();
     if (currentCollectionId) {
-      this.monitorEnvironmentUsecase.setActiveCollectionId(currentCollectionId);
+      this.monitorEnvironmentOperations.setActiveCollectionId(currentCollectionId);
     }
 
     // Detect monitors and save environment
-    this.handleMonitorsSaveResult(this.monitorEnvironmentUsecase.detectAndSaveMonitors());
+    this.handleMonitorsSaveResult(this.monitorEnvironmentOperations.detectAndSaveMonitors());
 
     this.monitorProvider.connectToMonitorChanges(() => {
-      const collectionToActivate = this.monitorEnvironmentUsecase.detectAndSaveMonitors();
+      const collectionToActivate = this.monitorEnvironmentOperations.detectAndSaveMonitors();
       this.handleMonitorsSaveResult(collectionToActivate);
 
       // Re-render panel when monitors change to reflect new configuration
@@ -181,7 +184,7 @@ export class Controller {
    * Disable the controller
    */
   disable(): void {
-    this.licenseUsecase.clearCallbacks();
+    this.licenseOperations.clearCallbacks();
     this.motionMonitor.stop();
     this.dragSignalHandler.disconnect();
     this.keyboardShortcutManager.unregisterAll();
@@ -206,7 +209,7 @@ export class Controller {
     if (collectionToActivate) {
       log(`[Controller] Environment changed, activating collection: ${collectionToActivate}`);
       this.preferencesRepository.setActiveSpaceCollectionId(collectionToActivate);
-      this.monitorEnvironmentUsecase.setActiveCollectionId(collectionToActivate);
+      this.monitorEnvironmentOperations.setActiveCollectionId(collectionToActivate);
       this.syncActiveCollectionToHistory();
     }
   }
@@ -234,7 +237,7 @@ export class Controller {
    * Get all valid layout IDs from all collections
    */
   private getAllValidLayoutIds(): Set<string> {
-    const collections = resolveSpaceCollectionUsecase().loadAllCollections();
+    const collections = resolveSpaceCollectionOperations().loadAllCollections();
     return extractLayoutIds(collections);
   }
 
@@ -332,7 +335,7 @@ export class Controller {
     }
 
     this.ensureHistoryLoaded();
-    this.handleMonitorsSaveResult(this.monitorEnvironmentUsecase.detectAndSaveMonitors());
+    this.handleMonitorsSaveResult(this.monitorEnvironmentOperations.detectAndSaveMonitors());
 
     const cursor = this.getCursorPosition();
     const window = this.getCurrentWindow();

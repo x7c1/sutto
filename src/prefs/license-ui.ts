@@ -9,7 +9,7 @@ import {
   GSettingsLicenseRepository,
   SystemDeviceInfoProvider,
 } from '../infra/glib/index.js';
-import { LicenseUsecase } from '../usecase/licensing/index.js';
+import { LicenseOperations } from '../operations/licensing/index.js';
 
 /**
  * Create the License preferences group
@@ -24,7 +24,7 @@ export function createLicenseGroup(
 
   const repository = new GSettingsLicenseRepository(settings);
   const apiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
-  const licenseUsecase = new LicenseUsecase(
+  const licenseOperations = new LicenseOperations(
     repository,
     apiClient,
     new GLibDateProvider(),
@@ -32,20 +32,20 @@ export function createLicenseGroup(
     new SystemDeviceInfoProvider()
   );
 
-  const { row: statusRow, update: updateStatus } = createStatusRow(licenseUsecase.getState());
+  const { row: statusRow, update: updateStatus } = createStatusRow(licenseOperations.getState());
   group.add(statusRow);
 
-  const { row: keyRow } = createLicenseKeyRow(licenseUsecase, () =>
-    updateStatus(licenseUsecase.getState())
+  const { row: keyRow } = createLicenseKeyRow(licenseOperations, () =>
+    updateStatus(licenseOperations.getState())
   );
   group.add(keyRow);
 
-  licenseUsecase.onStateChange((state: LicenseState) => {
+  licenseOperations.onStateChange((state: LicenseState) => {
     updateStatus(state);
   });
 
   window.connect('close-request', () => {
-    licenseUsecase.clearCallbacks();
+    licenseOperations.clearCallbacks();
     return false;
   });
 
@@ -175,7 +175,7 @@ interface LicenseKeyRowResult {
 }
 
 function createLicenseKeyRow(
-  licenseUsecase: LicenseUsecase,
+  licenseOperations: LicenseOperations,
   onUpdate: () => void
 ): LicenseKeyRowResult {
   const row = new Adw.EntryRow({
@@ -236,7 +236,7 @@ function createLicenseKeyRow(
 
     try {
       const licenseKey = new LicenseKey(licenseKeyText);
-      const result = await licenseUsecase.activate(licenseKey);
+      const result = await licenseOperations.activate(licenseKey);
 
       if (result.success) {
         row.set_text('');

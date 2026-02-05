@@ -1,7 +1,7 @@
 import Gio from 'gi://Gio';
 
 import type { MonitorEnvironmentStorage } from '../../domain/monitor/index.js';
-import type { MonitorEnvironmentRepository } from '../../usecase/monitor/index.js';
+import type { MonitorEnvironmentRepository } from '../../operations/monitor/index.js';
 
 const log = (message: string): void => console.log(message);
 

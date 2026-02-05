@@ -4,7 +4,7 @@
     "lib": ["ES2022"],
     "module": "ES2022",
     "moduleResolution": "node",
-    "outDir": "../../.tsc/usecase",
+    "outDir": "../../.tsc/operations",
     "rootDir": ".",
     "composite": true,
     "declaration": true,

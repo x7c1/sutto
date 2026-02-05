@@ -2,7 +2,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import { LayoutEvent, type WindowIdentifier } from '../../domain/history/index.js';
 import { type CollectionId, LayoutId } from '../../domain/layout/index.js';
-import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
+import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 import { toRawLayoutEvent } from './layout-event-serializer.js';
 
 declare function log(message: string): void;

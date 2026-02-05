@@ -1,6 +1,6 @@
 import Gdk from 'gi://Gdk';
 
-import type { MonitorDetector } from '../../usecase/monitor/monitor-detector.js';
+import type { MonitorDetector } from '../../operations/monitor/monitor-detector.js';
 
 const log = (message: string): void => console.log(message);
 

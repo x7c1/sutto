@@ -11,7 +11,7 @@ import type { Position, Size } from '../../domain/geometry/index.js';
 import type { SpacesRow } from '../../domain/layout/index.js';
 import { adjustMainPanelPosition } from '../../domain/positioning/index.js';
 import type { ScreenBoundaries } from '../../domain/positioning/types.js';
-import type { MonitorEnvironmentUsecase } from '../../usecase/monitor/index.js';
+import type { MonitorEnvironmentOperations } from '../../operations/monitor/index.js';
 import { calculateSpaceDimensions } from '../components/space-dimensions.js';
 import {
   FOOTER_MARGIN_TOP,
@@ -22,9 +22,9 @@ import {
 } from '../constants.js';
 
 export class MainPanelPositionManager {
-  private monitorEnvironment: MonitorEnvironmentUsecase;
+  private monitorEnvironment: MonitorEnvironmentOperations;
 
-  constructor(monitorEnvironment: MonitorEnvironmentUsecase) {
+  constructor(monitorEnvironment: MonitorEnvironmentOperations) {
     this.monitorEnvironment = monitorEnvironment;
   }
   /**

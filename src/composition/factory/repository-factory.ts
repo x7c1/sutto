@@ -11,7 +11,7 @@ import {
 } from '../../infra/constants.js';
 import { FileSpaceCollectionRepository, getExtensionDataPath } from '../../infra/file/index.js';
 import { uuidGenerator } from '../../libs/uuid/index.js';
-import type { SpaceCollectionRepository } from '../../usecase/layout/index.js';
+import type { SpaceCollectionRepository } from '../../operations/layout/index.js';
 
 let repositoryInstance: SpaceCollectionRepository | null = null;
 

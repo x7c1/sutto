@@ -3,7 +3,7 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { Layout, LayoutSelectedEvent, SpacesRow } from '../../domain/layout/index.js';
 import type { Monitor } from '../../domain/monitor/index.js';
-import type { LayoutHistoryRepository } from '../../usecase/history/index.js';
+import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 import { createMiniatureSpaceView } from '../components/miniature-space.js';
 import {
   FOOTER_MARGIN_TOP,

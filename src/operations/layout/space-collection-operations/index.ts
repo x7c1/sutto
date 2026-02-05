@@ -2,7 +2,7 @@ import { CollectionId, type SpaceCollection, SpaceId } from '../../../domain/lay
 import type { SpaceCollectionRepository } from '../space-collection-repository.js';
 import { importLayoutConfigurationFromJson } from './import-collection.js';
 
-export class SpaceCollectionUsecase {
+export class SpaceCollectionOperations {
   constructor(private readonly repository: SpaceCollectionRepository) {}
 
   loadPresetCollections(): SpaceCollection[] {

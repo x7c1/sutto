@@ -11,7 +11,7 @@
 import type Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { BoundingBox, Monitor } from '../../domain/monitor/index.js';
-import type { MonitorProvider } from '../../usecase/monitor/index.js';
+import type { MonitorProvider } from '../../operations/monitor/index.js';
 
 declare function log(message: string): void;
 
