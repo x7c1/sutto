@@ -17,6 +17,17 @@ Note: The actual domain state (license, trial period) is stored in repositories.
 
 Using non-standard terminology causes confusion. The name `operations` better describes what these classes actually do: provide a set of related operations that may hold state and notify changes.
 
+## Why not MVVM?
+
+We considered introducing a ViewModel layer (separating state notification from business logic), but decided against it:
+
+- MVVM's ViewModel separation is designed for platforms with complex UI lifecycles (Android screen rotation, iOS view controller lifecycle)
+- snappa (GNOME Shell extension) doesn't have these concerns
+- Separating operations into Usecase + ViewModel would be over-engineering for this project
+- The issue was naming, not architecture — our design is appropriate for the use case
+
+See `mvvm-overview.md` in this directory for reference material.
+
 ## Scope
 
 - Rename directory: `src/usecase/` → `src/operations/`
