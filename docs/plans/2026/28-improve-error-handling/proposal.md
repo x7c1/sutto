@@ -49,8 +49,8 @@ type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
 ## Decision
 
-- [ ] Accept
+- [x] Accept
 - [ ] Reject
-- [x] Defer
+- [ ] Defer
 
 **Notes**: Need to first identify which errors should be user-facing. Some errors are already displayed in the UI (e.g., license activation). Blanket introduction of Result type or GNOME notifications may be over-engineering.

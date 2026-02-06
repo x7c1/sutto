@@ -36,7 +36,7 @@ No way to:
 ## Decision
 
 - [ ] Accept
-- [ ] Reject
-- [x] Defer
+- [x] Reject
+- [ ] Defer
 
 **Notes**: Custom layouts are already JSON-based and can be copied manually. The only settings requiring manual reconfiguration are two keyboard shortcuts (stored in GSettings). Power users can use `dconf dump` for backup. Low priority until user demand emerges.

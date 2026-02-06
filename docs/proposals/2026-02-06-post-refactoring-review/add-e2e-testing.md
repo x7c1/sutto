@@ -25,6 +25,10 @@ Core user flows are only tested manually:
 ## Research Done
 
 - `docs/plans/2026/9-demo-gif-generation/ui-automation-research.md` explored UI automation options
+- `docs/plans/2026/9-demo-gif-generation/investigation-results.md` found that visual cursor movement in QEMU/KVM VM is not achievable (Mutter renders cursor independently from X11 pointer)
+- Container-based testing (gnome-shell-pod with xvfb) may avoid the VM issue, but unverified
+- Dogtail/AT-SPI can interact with named UI elements, but many St.Widget elements in the extension lack accessibility names
+- Schneegans' gnome-shell-pod supports GNOME Shell 46 (Fedora 40 image), used by Burn-My-Windows and ddterm for CI
 
 ## Proposed Actions
 
@@ -39,7 +43,7 @@ High - requires GNOME Shell session for testing, complex CI setup.
 ## Decision
 
 - [ ] Accept
-- [ ] Reject
-- [x] Defer
+- [x] Reject
+- [ ] Defer
 
-**Notes**: Would be valuable if feasible, but need to research approach first. Unknown whether GNOME Shell extension E2E testing is practical. Prerequisite: investigate testing frameworks and CI setup options before committing.
+**Notes**: Rejected due to unresolved technical blockers: (1) Mouse operation emulation — Plan 9 investigation showed Mutter renders cursor independently from X11 pointer in VMs; xvfb containers may differ but unverified. (2) UI element identification — many extension UI elements (St.Widget) lack accessibility names, making Dogtail/AT-SPI targeting unreliable. No technical feasibility in sight.
