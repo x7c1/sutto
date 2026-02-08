@@ -4,7 +4,7 @@ Status: Draft
 
 ## Overview
 
-Create a user-facing usage guide explaining how to use Snappa's core features.
+Create a user-facing usage guide explaining how to use Sutto's core features.
 
 ## Content
 

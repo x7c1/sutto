@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the investigation into automated demo GIF generation for the snappa GNOME Shell extension. The goal was to programmatically control mouse cursor movement in a GNOME VM environment to record demonstration GIFs. **The investigation concluded that reliable visual cursor movement in a QEMU/KVM VM is not achievable with the approaches tested.**
+This document summarizes the investigation into automated demo GIF generation for the sutto GNOME Shell extension. The goal was to programmatically control mouse cursor movement in a GNOME VM environment to record demonstration GIFs. **The investigation concluded that reliable visual cursor movement in a QEMU/KVM VM is not achievable with the approaches tested.**
 
 ## Environment
 

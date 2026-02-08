@@ -12,8 +12,8 @@ Edit the version field in `dist/metadata.json`:
 
 ```json
 {
-  "uuid": "snappa@x7c1.github.io",
-  "name": "Snappa",
+  "uuid": "sutto@x7c1.github.io",
+  "name": "Sutto",
   "version": 2
 }
 ```
@@ -44,7 +44,7 @@ After merging to main:
 1. CI workflow runs (lint, build, tests)
 2. Release workflow detects version change
 3. Extension is built in production mode
-4. Extension is packaged as `snappa@x7c1.github.io.v2.shell-extension.zip`
+4. Extension is packaged as `sutto@x7c1.github.io.v2.shell-extension.zip`
 5. Git tag `v2` is created automatically
 6. GitHub Release is created with:
    - Extension zip file
@@ -78,7 +78,7 @@ The extension zip file follows GNOME's naming convention:
 <uuid>.v<version>.shell-extension.zip
 ```
 
-Example: `snappa@x7c1.github.io.v2.shell-extension.zip`
+Example: `sutto@x7c1.github.io.v2.shell-extension.zip`
 
 Where:
 - `<uuid>`: Extension UUID from `metadata.json`

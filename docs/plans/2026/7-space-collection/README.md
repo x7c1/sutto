@@ -8,7 +8,7 @@ Introduce the SpaceCollection concept - a container that holds multiple SpacesRo
 
 ## Background
 
-Currently, snappa has a single set of SpacesRows that constitutes the main panel. This limits flexibility for users who work in different environments (office vs home) or with different monitor configurations.
+Currently, sutto has a single set of SpacesRows that constitutes the main panel. This limits flexibility for users who work in different environments (office vs home) or with different monitor configurations.
 
 ## Requirements
 
@@ -23,8 +23,8 @@ Currently, snappa has a single set of SpacesRows that constitutes the main panel
 
 | Type | Storage | Edit | Delete |
 |------|---------|------|--------|
-| Preset | `preset-space-collections.snappa.json` | No | No |
-| Custom | `custom-space-collections.snappa.json` | No | Yes |
+| Preset | `preset-space-collections.sutto.json` | No | No |
+| Custom | `custom-space-collections.sutto.json` | No | Yes |
 
 ### Preset SpaceCollections
 
@@ -35,9 +35,9 @@ Currently, snappa has a single set of SpacesRows that constitutes the main panel
 - Generation rules based on connected monitor count:
   - 1 monitor: 2 spaces per row
   - 2+ monitors: 1 space per row
-- Monitor count obtained from `monitors.snappa.json`
+- Monitor count obtained from `monitors.sutto.json`
 - Space enabled state stored within SpaceCollection (same as Custom)
-- Saved to `preset-space-collections.snappa.json` after generation
+- Saved to `preset-space-collections.sutto.json` after generation
 - Read-only (cannot be modified or deleted by user)
 
 ### Custom SpaceCollections
@@ -46,7 +46,7 @@ Currently, snappa has a single set of SpacesRows that constitutes the main panel
 - LayoutConfiguration type extended with required `name` field for import
 - Parsed to generate IDs and create Layout instances
 - Space enabled state stored within SpaceCollection
-- Stored in `custom-space-collections.snappa.json`
+- Stored in `custom-space-collections.sutto.json`
 - Read-only (cannot be edited in UI)
 - Can be deleted by user
 
@@ -60,10 +60,10 @@ Currently, snappa has a single set of SpacesRows that constitutes the main panel
 
 | Current | New |
 |---------|-----|
-| `spaces.snappa.json` | `preset-space-collections.snappa.json` |
-| (new) | `custom-space-collections.snappa.json` |
+| `spaces.sutto.json` | `preset-space-collections.sutto.json` |
+| (new) | `custom-space-collections.sutto.json` |
 
-Note: Backward compatibility with existing `spaces.snappa.json` is not required (single developer use only). No migration needed.
+Note: Backward compatibility with existing `spaces.sutto.json` is not required (single developer use only). No migration needed.
 
 ## Implementation Plan
 
@@ -71,7 +71,7 @@ Note: Backward compatibility with existing `spaces.snappa.json` is not required 
 
 - Define `SpaceCollection` type
 - Update repository layer to handle SpaceCollection
-- Rename `spaces.json` to `preset-space-collections.snappa.json`
+- Rename `spaces.json` to `preset-space-collections.sutto.json`
 
 ### Phase 2: GSettings Integration
 
@@ -87,13 +87,13 @@ Note: Backward compatibility with existing `spaces.snappa.json` is not required 
   - 1 monitor: 2 spaces per row
   - 2+ monitors: 1 space per row
 - Generate preset when main panel or settings screen opens (if preset for current monitor count doesn't exist)
-- Save generated preset to `preset-space-collections.snappa.json`
+- Save generated preset to `preset-space-collections.sutto.json`
 
 ### Phase 4: Custom Import
 
 - Implement LayoutConfiguration JSON import
 - Parse and generate SpaceCollection from imported data
-- Store in `custom-space-collections.snappa.json`
+- Store in `custom-space-collections.sutto.json`
 - Implement delete functionality for custom collections
 
 ### Phase 5: UI Integration

@@ -14,7 +14,7 @@ Allow users to enable/disable individual Spaces from Preferences UI. Disabled Sp
 
 ### 2. Preset Spaces
 
-Provide built-in Spaces that come pre-installed with Snappa. These are curated layouts for common use cases.
+Provide built-in Spaces that come pre-installed with Sutto. These are curated layouts for common use cases.
 
 **Characteristics:**
 - Included in the extension package

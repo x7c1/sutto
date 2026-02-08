@@ -4,7 +4,7 @@ Status: Draft
 
 ## Overview
 
-Create a user-facing installation guide for Snappa.
+Create a user-facing installation guide for Sutto.
 
 ## Content
 

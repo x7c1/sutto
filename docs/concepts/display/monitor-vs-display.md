@@ -1,6 +1,6 @@
 # Monitor vs Display
 
-This document explains how to distinguish between "monitor" and "display" in the Snappa codebase.
+This document explains how to distinguish between "monitor" and "display" in the Sutto codebase.
 
 ## Monitor
 

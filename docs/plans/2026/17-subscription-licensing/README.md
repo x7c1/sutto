@@ -1,24 +1,24 @@
-# Plan: Subscription-based Licensing for snappa
+# Plan: Subscription-based Licensing for sutto
 
 Status: Completed
 
 ## Overview
 
-Implement a subscription-based licensing system for snappa. Users will have a 30-day free trial, after which a valid license is required to continue using the extension. The license will be verified via a snappa backend API, which communicates with an external billing provider. This architecture keeps billing service credentials server-side and allows future provider changes without client updates.
+Implement a subscription-based licensing system for sutto. Users will have a 30-day free trial, after which a valid license is required to continue using the extension. The license will be verified via a sutto backend API, which communicates with an external billing provider. This architecture keeps billing service credentials server-side and allows future provider changes without client updates.
 
 ## Background
 
-snappa is currently a free, open-source GNOME Shell extension. To sustain ongoing development, a monetization strategy is needed. A low-cost subscription model (e.g., ~$3/month, pricing TBD) with a generous trial period balances accessibility with revenue generation.
+sutto is currently a free, open-source GNOME Shell extension. To sustain ongoing development, a monetization strategy is needed. A low-cost subscription model (e.g., ~$3/month, pricing TBD) with a generous trial period balances accessibility with revenue generation.
 
 ## Requirements
 
 ### Functional Requirements
 
-- Users can use snappa for 30 days' worth without a license (trial period counts actual usage days, not calendar days)
-- After trial expiration, snappa is completely disabled until a valid license is entered
+- Users can use sutto for 30 days' worth without a license (trial period counts actual usage days, not calendar days)
+- After trial expiration, sutto is completely disabled until a valid license is entered
 - License is user-based with a limit of 3 device activations
 - Users can enter their license key in the Preferences UI
-- License validation and activation occurs via snappa backend API (which proxies to billing provider)
+- License validation and activation occurs via sutto backend API (which proxies to billing provider)
 - Valid licenses unlock full functionality
 - **Graceful degradation**: Extension works normally when offline or backend unreachable
 
@@ -39,7 +39,7 @@ Based on ADR decision: Use external billing provider with abstraction layer (see
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     snappa Extension                        │
+│                     sutto Extension                        │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
 │  │ Preferences │  │  License    │  │    Main Extension   │  │
@@ -55,7 +55,7 @@ Based on ADR decision: Use external billing provider with abstraction layer (see
 └──────────────────────────┼──────────────────────────────────┘
                            │ HTTPS
                     ┌──────┴──────┐
-                    │   snappa    │
+                    │   sutto    │
                     │ Backend API │
                     └──────┬──────┘
                            │ (credentials server-side)
@@ -72,7 +72,7 @@ Based on ADR decision: Use external billing provider with abstraction layer (see
 **Extension (Client)**:
 - **LicenseManager**: Core service handling license validation, activation, caching, and state
 - **LicenseStorage**: Persistence layer using GSettings for license key, activation ID, and validation cache
-- **LicenseClient**: HTTP client for snappa backend API communication
+- **LicenseClient**: HTTP client for sutto backend API communication
 - **LicenseUI**: Preferences panel components for license entry, status display, and device management link
 - **TrialManager**: Tracks usage days (increments daily on first use of each day)
 - **ConnectivityChecker**: Detects network state (online / offline / backend unreachable)
@@ -148,11 +148,11 @@ Feedback is shown persistently in the License Status Row rather than transient t
 
 ### API Integration
 
-#### Client → snappa Backend API
+#### Client → sutto Backend API
 
 **Activation** (first use on a device):
 ```
-POST https://api.snappa.example.com/v1/license/activate
+POST https://api.sutto.example.com/v1/license/activate
 Content-Type: application/json
 
 {
@@ -200,7 +200,7 @@ Error types for activation:
 
 **Validation** (subsequent uses):
 ```
-POST https://api.snappa.example.com/v1/license/validate
+POST https://api.sutto.example.com/v1/license/validate
 Content-Type: application/json
 
 {
@@ -265,7 +265,7 @@ New keys to add to schema:
 
 **Note**: Device ID is read from `/etc/machine-id` at runtime (no storage needed).
 
-**Note on activation_id**: The `activation_id` returned by the snappa backend is an abstraction over billing provider-specific identifiers. For example, Lemon Squeezy uses `instance_id`. The backend may use a structured format like `LEMON_SQUEEZY:{instance_id}` to enable provider-agnostic handling. The exact format will be decided during backend implementation.
+**Note on activation_id**: The `activation_id` returned by the sutto backend is an abstraction over billing provider-specific identifiers. For example, Lemon Squeezy uses `instance_id`. The backend may use a structured format like `LEMON_SQUEEZY:{instance_id}` to enable provider-agnostic handling. The exact format will be decided during backend implementation.
 
 **license-status values** (stored states only):
 | Value | Description |
@@ -371,7 +371,7 @@ Activation request for Device D:
 When an old device validates its license, the backend checks its storage and returns `DEVICE_DEACTIVATED` if the device is no longer associated.
 
 **Notes**:
-- **Implementation Detail**: When the snappa backend deactivates an old device from its own storage, it must also call the billing provider's API (e.g., Lemon Squeezy `deactivate`) to ensure consistency. If the deactivate API call fails, the backend should handle this gracefully (e.g., retry, log for manual review, or accept minor inconsistency). This is out of scope for this plan and will be addressed during backend implementation.
+- **Implementation Detail**: When the sutto backend deactivates an old device from its own storage, it must also call the billing provider's API (e.g., Lemon Squeezy `deactivate`) to ensure consistency. If the deactivate API call fails, the backend should handle this gracefully (e.g., retry, log for manual review, or accept minor inconsistency). This is out of scope for this plan and will be addressed during backend implementation.
 - Due to client-side caching (24-hour validation interval), the deactivated device may continue working until its next validation check. This is acceptable as a trade-off for simplicity.
 - If the user re-enters the license key on a deactivated device, it will be re-activated (triggering last-wins again if at limit). This is intentional - the system is designed to support willing users, not to prevent determined circumvention.
 
@@ -390,7 +390,7 @@ Not implemented in initial release. See [ADR](./adr.md) for details on detection
 Not implemented in initial release. In future versions, the Preferences UI could display a list of activated devices:
 
 - Show device label, activation date, and last validation time
-- Allow users to deactivate devices directly from snappa (requires new backend endpoint)
+- Allow users to deactivate devices directly from sutto (requires new backend endpoint)
 - This would use the `device_label` field to identify devices in the list
 
 For initial release, users can manage devices via the billing provider's customer portal or by re-entering their license key (triggering last-wins).
@@ -436,7 +436,7 @@ For initial release, users can manage devices via the billing provider's custome
 - Create account with chosen billing provider
 - Configure product with subscription pricing (~$3/month)
 - Set up license key generation (activation limit: unlimited or high number)
-  - Device limit is managed by snappa backend, not billing provider
+  - Device limit is managed by sutto backend, not billing provider
   - This allows consistent behavior across different billing providers
 - Configure webhook for subscription events (optional)
 - Test end-to-end purchase flow

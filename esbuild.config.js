@@ -70,7 +70,7 @@ async function build() {
         });
 
         // Compile GSettings schema if it exists
-        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml';
+        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml';
         if (fs.existsSync(schemaPath)) {
             console.log('Compiling GSettings schema...');
             try {

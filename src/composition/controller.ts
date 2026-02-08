@@ -1,7 +1,7 @@
 /**
  * Controller
  *
- * Main controller for Snappa extension.
+ * Main controller for Sutto extension.
  * Monitors window dragging and displays the main panel when the cursor reaches screen edges.
  * Allows users to quickly snap windows to predefined positions by dropping them on panel buttons.
  *

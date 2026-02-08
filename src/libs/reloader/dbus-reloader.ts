@@ -6,8 +6,8 @@
  * Usage from command line:
  *   gdbus call --session \
  *     --dest org.gnome.Shell \
- *     --object-path /io/github/x7c1/Snappa \
- *     --method io.github.x7c1.Snappa.Reload
+ *     --object-path /io/github/x7c1/Sutto \
+ *     --method io.github.x7c1.Sutto.Reload
  */
 
 import Gio from 'gi://Gio';
@@ -17,7 +17,7 @@ import { Reloader } from './reloader.js';
 // D-Bus interface XML definition
 const DBUS_INTERFACE_XML = `
 <node>
-  <interface name="io.github.x7c1.Snappa">
+  <interface name="io.github.x7c1.Sutto">
     <method name="Reload">
       <arg type="b" direction="out" name="success"/>
     </method>
@@ -54,7 +54,7 @@ export class DBusReloader {
       const nodeInfo = Gio.DBusNodeInfo.new_for_xml(DBUS_INTERFACE_XML);
       console.log('[DBusReloader] Parsed XML interface definition');
 
-      const interfaceInfo = nodeInfo.lookup_interface('io.github.x7c1.Snappa');
+      const interfaceInfo = nodeInfo.lookup_interface('io.github.x7c1.Sutto');
       console.log('[DBusReloader] Looked up interface info');
 
       if (!interfaceInfo) {
@@ -63,7 +63,7 @@ export class DBusReloader {
 
       // Register the D-Bus object
       this.dbusId = connection.register_object(
-        '/io/github/x7c1/Snappa',
+        '/io/github/x7c1/Sutto',
         interfaceInfo,
         (
           _connection: any,
@@ -84,7 +84,7 @@ export class DBusReloader {
       );
 
       console.log(
-        `[DBusReloader] D-Bus interface registered at /io/github/x7c1/Snappa with ID: ${this.dbusId}`
+        `[DBusReloader] D-Bus interface registered at /io/github/x7c1/Sutto with ID: ${this.dbusId}`
       );
     } catch (e: unknown) {
       console.log(`[DBusReloader] Failed to register D-Bus interface: ${this.getErrorMessage(e)}`);

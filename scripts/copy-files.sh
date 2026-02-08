@@ -3,7 +3,7 @@
 
 set -e
 
-EXTENSION_UUID="snappa@x7c1.github.io"
+EXTENSION_UUID="sutto@x7c1.github.io"
 EXTENSION_DIR="$HOME/.local/share/gnome-shell/extensions/$EXTENSION_UUID"
 
 # Check if dist directory exists

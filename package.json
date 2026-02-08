@@ -1,5 +1,5 @@
 {
-  "name": "snappa",
+  "name": "sutto",
   "version": "0.0.1",
   "description": "Window snapping extension for GNOME Shell",
   "main": "extension.js",
@@ -12,7 +12,7 @@
     "watch": "tsc --build --watch",
     "clean": "rm -f dist/*.js dist/*.js.map",
     "copy-files": "./scripts/copy-files.sh",
-    "reload": "gdbus call --session --dest org.gnome.Shell --object-path /io/github/x7c1/Snappa --method io.github.x7c1.Snappa.Reload",
+    "reload": "gdbus call --session --dest org.gnome.Shell --object-path /io/github/x7c1/Sutto --method io.github.x7c1.Sutto.Reload",
     "dev": "npm run build && npm run copy-files && npm run reload",
     "lint": "biome lint .",
     "format": "biome format --write .",
@@ -24,7 +24,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/x7c1/snappa.git"
+    "url": "git+https://github.com/x7c1/sutto.git"
   },
   "keywords": [
     "gnome-shell-extension",
@@ -36,9 +36,9 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/x7c1/snappa/issues"
+    "url": "https://github.com/x7c1/sutto/issues"
   },
-  "homepage": "https://github.com/x7c1/snappa#readme",
+  "homepage": "https://github.com/x7c1/sutto#readme",
   "devDependencies": {
     "@biomejs/biome": "^2.3.11",
     "@girs/adw-1": "1.6.0-4.0.0-beta.12",

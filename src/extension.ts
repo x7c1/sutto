@@ -6,12 +6,12 @@ import { EXTENSION_UUID } from './infra/constants.js';
 import { GSettingsPreferencesRepository } from './infra/glib/index.js';
 import { DBusReloader } from './libs/reloader/index.js';
 
-export default class SnappaExtension extends Extension {
+export default class SuttoExtension extends Extension {
   private dbusReloader: DBusReloader | null = null;
   private controller: Controller | null = null;
 
   enable() {
-    console.log('[Snappa] Extension enabled');
+    console.log('[Sutto] Extension enabled');
 
     this.dbusReloader = this.initializeDBusReloader();
     this.dbusReloader?.enable();
@@ -21,7 +21,7 @@ export default class SnappaExtension extends Extension {
   }
 
   disable() {
-    console.log('[Snappa] Extension disabled');
+    console.log('[Sutto] Extension disabled');
 
     // Clean up controller
     this.controller?.disable();
@@ -39,7 +39,7 @@ export default class SnappaExtension extends Extension {
     try {
       return new DBusReloader(EXTENSION_UUID, this.metadata.uuid);
     } catch (e) {
-      console.log(`[Snappa] ERROR: Failed to initialize DBusReloader: ${e}`);
+      console.log(`[Sutto] ERROR: Failed to initialize DBusReloader: ${e}`);
       return null;
     }
   }
@@ -48,7 +48,7 @@ export default class SnappaExtension extends Extension {
     try {
       return new GSettingsPreferencesRepository(this.metadata);
     } catch (e) {
-      console.log(`[Snappa] ERROR: Failed to initialize preferences repository: ${e}`);
+      console.log(`[Sutto] ERROR: Failed to initialize preferences repository: ${e}`);
       return null;
     }
   }
@@ -61,7 +61,7 @@ export default class SnappaExtension extends Extension {
     try {
       return new Controller(preferencesRepository, this.metadata);
     } catch (e) {
-      console.log(`[Snappa] ERROR: Failed to initialize controller: ${e}`);
+      console.log(`[Sutto] ERROR: Failed to initialize controller: ${e}`);
       return null;
     }
   }

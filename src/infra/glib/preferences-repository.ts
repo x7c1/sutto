@@ -22,10 +22,10 @@ export class GSettingsPreferencesRepository {
       Gio.SettingsSchemaSource.get_default(),
       false
     );
-    const schema = schemaSource.lookup('org.gnome.shell.extensions.snappa', false);
+    const schema = schemaSource.lookup('org.gnome.shell.extensions.sutto', false);
 
     if (!schema) {
-      throw new Error('GSettings schema not found for Snappa extension');
+      throw new Error('GSettings schema not found for Sutto extension');
     }
 
     this.settings = new Gio.Settings({ settings_schema: schema });

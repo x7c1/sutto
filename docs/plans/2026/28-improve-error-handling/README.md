@@ -45,10 +45,10 @@ interface NotificationService {
 // infra layer - implementation
 class GnomeNotificationService implements NotificationService {
   notifyError(title: string, details?: string): void {
-    Main.notifyError(`Snappa: ${title}`, details ?? '');
+    Main.notifyError(`Sutto: ${title}`, details ?? '');
   }
   notifyWarning(title: string, details?: string): void {
-    Main.notify(`Snappa: ${title}`, details ?? '');
+    Main.notify(`Sutto: ${title}`, details ?? '');
   }
 }
 ```

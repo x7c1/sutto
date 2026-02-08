@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to generate demo GIF animations for snappa documentation using a VM-based recording system. The system uses Packer to build a reproducible GNOME VM image, then records scripted scenarios inside the VM.
+This guide explains how to generate demo GIF animations for sutto documentation using a VM-based recording system. The system uses Packer to build a reproducible GNOME VM image, then records scripted scenarios inside the VM.
 
 Key components:
 - **Packer**: Builds the VM image with all required tools
@@ -78,7 +78,7 @@ This process:
 
 The build takes 20-40 minutes depending on your internet connection and hardware.
 
-Output: `output-snappa-demo/snappa-demo.qcow2`
+Output: `output-sutto-demo/sutto-demo.qcow2`
 
 ### Build Options
 

@@ -50,8 +50,8 @@ The debug panel displays:
 
 The extension uses GNOME's GSettings for configuration:
 
-- **Schema**: `dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml`
-- **Schema ID**: `org.gnome.shell.extensions.snappa`
+- **Schema**: `dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml`
+- **Schema ID**: `org.gnome.shell.extensions.sutto`
 - **Current Settings**:
   - `show-panel-shortcut`: Keyboard shortcut to show main panel (default: disabled)
   - `hide-panel-shortcut`: Keyboard shortcut to hide main panel (default: Escape)
@@ -122,7 +122,7 @@ await esbuild.build({
 
 ### Step 1: Add GSettings Schema Key
 
-**File**: `dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml`
+**File**: `dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml`
 
 Add new boolean key after the `hide-panel-shortcut` key (line 13):
 
@@ -316,7 +316,7 @@ constructor(metadata: ExtensionMetadata) {
 ## Files to Modify
 
 - `esbuild.config.js` - Add `define` section to prefs.js build config
-- `dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml` - Add new setting key
+- `dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml` - Add new setting key
 - `src/settings/extension-settings.ts` - Add getter method
 - `src/settings/preferences.ts` - Add debug settings group UI
 - `src/app/main-panel/debug-integration.ts` - Check setting value

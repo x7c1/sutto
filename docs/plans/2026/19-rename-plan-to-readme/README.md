@@ -4,7 +4,7 @@ Status: Completed
 
 ## Overview
 
-Change the planning document filename from `plan.md` to `README.md` across both strata and snappa repositories. This allows GitHub to automatically render the document when viewing a plan directory.
+Change the planning document filename from `plan.md` to `README.md` across both strata and sutto repositories. This allows GitHub to automatically render the document when viewing a plan directory.
 
 ## Motivation
 
@@ -34,7 +34,7 @@ Change the planning document filename from `plan.md` to `README.md` across both 
 **Documentation:**
 - `CLAUDE.md` - Section header
 
-### snappa (parent repository)
+### sutto (parent repository)
 
 - Rename files: 36x `plan.md` → `README.md`
 
@@ -51,4 +51,4 @@ Change the planning document filename from `plan.md` to `README.md` across both 
 - [ ] strata: Update skills and hooks
 - [ ] strata: Update CLAUDE.md
 - [ ] strata: Run tests
-- [ ] snappa: Rename all 36 `plan.md` files to `README.md`
+- [ ] sutto: Rename all 36 `plan.md` files to `README.md`

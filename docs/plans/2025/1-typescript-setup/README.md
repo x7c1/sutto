@@ -3,10 +3,10 @@
 Status: Completed
 
 ## Overview
-Set up TypeScript development environment for the Snappa GNOME Shell extension to enable type-safe development with modern JavaScript features while maintaining compatibility with the GJS runtime.
+Set up TypeScript development environment for the Sutto GNOME Shell extension to enable type-safe development with modern JavaScript features while maintaining compatibility with the GJS runtime.
 
 ## Background
-The Snappa extension is currently written in plain JavaScript (extension.js). TypeScript will provide:
+The Sutto extension is currently written in plain JavaScript (extension.js). TypeScript will provide:
 - Type safety and better IDE support
 - Better code documentation through types
 - Compile-time error detection
@@ -192,11 +192,11 @@ npm run build
 
 # Create distribution ZIP
 cd dist
-zip -r ../snappa@x7c1.github.io.zip .
+zip -r ../sutto@x7c1.github.io.zip .
 cd ..
 
 # Install for testing
-gnome-extensions install snappa@x7c1.github.io.zip --force
+gnome-extensions install sutto@x7c1.github.io.zip --force
 ```
 
 ### Documentation

@@ -1,4 +1,4 @@
-"""Multi-monitor scenario demonstrating snappa across displays.
+"""Multi-monitor scenario demonstrating sutto across displays.
 
 This scenario shows:
 1. Opening windows on the primary monitor

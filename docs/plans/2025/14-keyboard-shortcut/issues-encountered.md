@@ -127,7 +127,7 @@ dialog.set_child(box);
 ## 6. Reloader UUID Suffix Issue
 
 ### Problem
-- Settings button used hardcoded `'snappa@x7c1.github.io'`
+- Settings button used hardcoded `'sutto@x7c1.github.io'`
 - Reloader adds suffix like `-reload-1764962070653074`
 - Caused "Extension doesn't exist" error
 

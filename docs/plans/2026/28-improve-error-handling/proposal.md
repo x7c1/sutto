@@ -22,7 +22,7 @@ Current pattern:
 
 ```typescript
 } catch (e) {
-  console.log(`[Snappa] ERROR: Failed to initialize: ${e}`);
+  console.log(`[Sutto] ERROR: Failed to initialize: ${e}`);
   return null;
 }
 ```

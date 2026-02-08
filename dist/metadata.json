@@ -1,10 +1,10 @@
 {
-  "uuid": "snappa@x7c1.github.io",
-  "name": "Snappa",
+  "uuid": "sutto@x7c1.github.io",
+  "name": "Sutto",
   "description": "Window snapping extension for GNOME Shell",
   "shell-version": [
     "46"
   ],
-  "url": "https://github.com/x7c1/snappa",
+  "url": "https://github.com/x7c1/sutto",
   "version": 5
 }

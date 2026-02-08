@@ -4,7 +4,7 @@ Status: Completed
 
 ## Overview
 
-Create hierarchical concept documentation (`docs/concepts/`) that defines the ubiquitous language for the Snappa project. This documentation will establish core domain concepts and terminology used consistently across code, documentation, and discussions, following Domain-Driven Design (DDD) principles.
+Create hierarchical concept documentation (`docs/concepts/`) that defines the ubiquitous language for the Sutto project. This documentation will establish core domain concepts and terminology used consistently across code, documentation, and discussions, following Domain-Driven Design (DDD) principles.
 
 ## Background
 
@@ -95,7 +95,7 @@ docs/concepts/
 
 ## Introduction
 
-This documentation defines the core concepts and terminology used throughout the Snappa codebase, documentation, and team discussions. These terms form our **ubiquitous language** - the shared vocabulary that ensures consistent communication between domain experts, developers, and documentation.
+This documentation defines the core concepts and terminology used throughout the Sutto codebase, documentation, and team discussions. These terms form our **ubiquitous language** - the shared vocabulary that ensures consistent communication between domain experts, developers, and documentation.
 
 ### Purpose
 - Establish canonical terminology for domain concepts
@@ -306,7 +306,7 @@ Each file follows the same structure:
 
 ## Overview
 
-This document tracks the evolution of terminology in the Snappa project. When reading historical planning documents or old code, use this guide to understand deprecated terms.
+This document tracks the evolution of terminology in the Sutto project. When reading historical planning documents or old code, use this guide to understand deprecated terms.
 
 ---
 
@@ -319,7 +319,7 @@ These terms were used in earlier versions but have been superseded. They appear 
 
 **Reason for Change**: "Main Panel" better reflects the component's role as the primary UI panel, not just a "menu". The term "snap" is specific to window snapping, while "main panel" is more generic and future-proof.
 
-**Commit**: Renamed in 8a6b033 "refactor: rename snappa to app and snap-menu to main-panel"
+**Commit**: Renamed in 8a6b033 "refactor: rename sutto to app and snap-menu to main-panel"
 
 **Where You'll See It**:
 - Historical issues: #3, #4, #10, #11
@@ -576,7 +576,7 @@ Reads docs/concepts/core/main-panel.md for current definition
 This concept document embodies Domain-Driven Design principles:
 
 1. **Ubiquitous Language**: Shared vocabulary used everywhere
-2. **Bounded Context**: Clear scope (Snappa domain)
+2. **Bounded Context**: Clear scope (Sutto domain)
 3. **Domain Model**: Concepts represent domain entities
 4. **Continuous Refinement**: Document evolves with understanding
 5. **Explicit Knowledge**: Domain knowledge made visible and shared

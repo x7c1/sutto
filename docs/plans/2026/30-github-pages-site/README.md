@@ -4,18 +4,18 @@ Status: Draft
 
 ## Overview
 
-Create a user-facing website for Snappa using VitePress, deployed to GitHub Pages via GitHub Actions. The site provides documentation, licensing information, and support content for end users — separate from the developer-facing docs in `docs/`.
+Create a user-facing website for Sutto using VitePress, deployed to GitHub Pages via GitHub Actions. The site provides documentation, licensing information, and support content for end users — separate from the developer-facing docs in `docs/`.
 
 ## Background
 
-The current documentation lives in `docs/`, which is developer-facing. General users need a separate, polished site that explains how to use Snappa, how to purchase and activate a license, and how to troubleshoot common issues. The `LICENSE_PURCHASE_URL` in the extension also needs a destination page.
+The current documentation lives in `docs/`, which is developer-facing. General users need a separate, polished site that explains how to use Sutto, how to purchase and activate a license, and how to troubleshoot common issues. The `LICENSE_PURCHASE_URL` in the extension also needs a destination page.
 
 ## Technical Approach
 
 - **Generator**: VitePress (see [adr.md](adr.md) for decision rationale)
 - **Source directory**: `site/`
 - **Deployment**: GitHub Actions workflow on push to main
-- **URL**: GitHub Pages (`https://x7c1.github.io/snappa/`)
+- **URL**: GitHub Pages (`https://x7c1.github.io/sutto/`)
 
 ## Sub-Plans
 

@@ -79,7 +79,7 @@ At runtime, GNOME Shell:
 
 ### Must Include
 ```
-snappa@x7c1.github.io.zip
+sutto@x7c1.github.io.zip
 ├── metadata.json     ✓ Required
 ├── extension.js      ✓ Required (compiled from .ts if using TypeScript)
 ├── prefs.js          ✓ If you have settings UI
@@ -148,5 +148,5 @@ Before creating distribution ZIP:
 npm run build           # Compile TypeScript
 make clean             # Remove old builds
 make dist              # Create distribution ZIP
-gnome-extensions install snappa@x7c1.github.io.zip --force
+gnome-extensions install sutto@x7c1.github.io.zip --force
 ```

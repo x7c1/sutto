@@ -19,7 +19,7 @@ variable "ubuntu_iso_checksum" {
 
 variable "vm_name" {
   type    = string
-  default = "snappa-demo"
+  default = "sutto-demo"
 }
 
 variable "disk_size" {

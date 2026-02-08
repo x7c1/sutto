@@ -32,7 +32,7 @@ When triggered, the Main Panel shows a visual representation of all available [S
 
 ## Related Concepts
 
-- See [Snappa](../snappa/) for how the Main Panel fits into the overall tool
+- See [Sutto](../sutto/) for how the Main Panel fits into the overall tool
 - See [Space](../space/) for what is displayed in the Main Panel
 - See [Layout](../layout/) for the options shown as buttons
 - See [Layout History](../layout-history/) for how layout suggestions are determined

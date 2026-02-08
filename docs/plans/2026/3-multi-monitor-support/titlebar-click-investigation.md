@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add a feature to show the Snappa layout panel when a user double-clicks (or clicks) on a window's title bar, instead of maximizing the window.
+Add a feature to show the Sutto layout panel when a user double-clicks (or clicks) on a window's title bar, instead of maximizing the window.
 
 ## Motivation
 
@@ -171,6 +171,6 @@ These methods work reliably and provide good UX without architectural limitation
 
 - `src/app/double-click/double-click-handler.ts` - Remove entire file
 - `src/settings/preferences.ts` - Remove middle-click toggle
-- `dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml` - Remove `show-on-double-click` key
+- `dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml` - Remove `show-on-double-click` key
 - `src/settings/extension-settings.ts` - Remove `getShowOnDoubleClick()` method
 - `src/app/controller.ts` - Remove DoubleClickHandler integration

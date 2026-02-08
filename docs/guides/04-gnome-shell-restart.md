@@ -2,7 +2,7 @@
 
 ## When Do You Need to Restart?
 
-With snappa's **self-reload feature**, you rarely need to restart GNOME Shell:
+With sutto's **self-reload feature**, you rarely need to restart GNOME Shell:
 
 - **First time installing** an extension: Yes (one-time only)
 - **Updating existing extension during development**: No (use the "Reload" button)
@@ -56,7 +56,7 @@ You must:
 
 ## For Extension Development
 
-**Good news:** After the initial installation, snappa's built-in "Reload" button allows you to reload the extension instantly without restarting GNOME Shell!
+**Good news:** After the initial installation, sutto's built-in "Reload" button allows you to reload the extension instantly without restarting GNOME Shell!
 
 The methods described above are only needed for:
 - Initial installation

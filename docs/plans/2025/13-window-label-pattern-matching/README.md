@@ -123,7 +123,7 @@ Allow users to:
 
 ### Pattern Storage Location
 
-- File: `~/.local/share/gnome-shell/extensions/snappa/window-label-patterns.json`
+- File: `~/.local/share/gnome-shell/extensions/sutto/window-label-patterns.json`
 - Format: JSON with WM_CLASS as keys
 - Include default patterns in extension code
 

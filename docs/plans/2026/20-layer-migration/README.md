@@ -59,8 +59,8 @@ Both old and new code coexist, causing duplication and confusion.
 
 | File | New Location | Reason |
 |------|--------------|--------|
-| `src/app/repository/uuid-generator.ts` | `src/libs/uuid/index.ts` | Generic utility, not snappa-specific |
-| `src/app/repository/layout-hash-generator.ts` | `src/domain/layout/layout-hash.ts` | Pure function, snappa domain logic |
+| `src/app/repository/uuid-generator.ts` | `src/libs/uuid/index.ts` | Generic utility, not sutto-specific |
+| `src/app/repository/layout-hash-generator.ts` | `src/domain/layout/layout-hash.ts` | Pure function, sutto domain logic |
 | `src/app/repository/history-compaction.ts` | `src/domain/history/compaction.ts` | Pure algorithm on domain types |
 | `src/app/repository/extension-path.ts` | `src/infra/file/extension-path.ts` | GLib dependency |
 | `src/app/service/license/license-manager.ts` | `src/usecase/licensing/license-service.ts` | Orchestration logic |

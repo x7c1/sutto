@@ -76,7 +76,7 @@ This is because preferences run in a separate GTK process, not in GNOME Shell.
   import Adw from 'gi://Adw';
   import Gio from 'gi://Gio';
 
-  export default class SnappaPreferences extends Adw.PreferencesGroup {
+  export default class SuttoPreferences extends Adw.PreferencesGroup {
     private settings: Gio.Settings;
 
     constructor(params = {}) {
@@ -95,7 +95,7 @@ This is because preferences run in a separate GTK process, not in GNOME Shell.
         Gio.SettingsSchemaSource.get_default(),
         false
       );
-      const schema = schemaSource.lookup('org.gnome.shell.extensions.snappa', false);
+      const schema = schemaSource.lookup('org.gnome.shell.extensions.sutto', false);
       return new Gio.Settings({ settings_schema: schema });
     }
 
@@ -113,7 +113,7 @@ This is because preferences run in a separate GTK process, not in GNOME Shell.
   // GNOME Shell calls this function
   function fillPreferencesWindow(window: Adw.PreferencesWindow): void {
     const page = new Adw.PreferencesPage();
-    const group = new SnappaPreferences();
+    const group = new SuttoPreferences();
     page.add(group);
     window.add(page);
   }
@@ -197,7 +197,7 @@ async function build() {
         });
 
         // Compile GSettings schema if it exists (added in Phase 3)
-        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml';
+        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml';
         if (fs.existsSync(schemaPath)) {
             console.log('Compiling GSettings schema...');
             try {
@@ -245,7 +245,7 @@ dist/
 ├── metadata.json     # Extension metadata
 └── schemas/
     ├── gschemas.compiled
-    └── org.gnome.shell.extensions.snappa.gschema.xml
+    └── org.gnome.shell.extensions.sutto.gschema.xml
 ```
 
 ### Phase 2: Keyboard Shortcut Picker Widget
@@ -261,7 +261,7 @@ dist/
 #### UI Design
 ```
 ┌─────────────────────────────────────────────────────┐
-│ Snappa Preferences                                  │
+│ Sutto Preferences                                  │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │ Keyboard Shortcut                                   │
@@ -405,11 +405,11 @@ private clearShortcut(button: Gtk.Button): void {
 - Enable user customization via dedicated Preferences UI (accessible from GNOME Extensions app)
 
 #### Files to Create
-- **`schemas/org.gnome.shell.extensions.snappa.gschema.xml`**:
+- **`schemas/org.gnome.shell.extensions.sutto.gschema.xml`**:
   ```xml
   <?xml version="1.0" encoding="UTF-8"?>
   <schemalist>
-    <schema id="org.gnome.shell.extensions.snappa" path="/org/gnome/shell/extensions/snappa/">
+    <schema id="org.gnome.shell.extensions.sutto" path="/org/gnome/shell/extensions/sutto/">
       <key name="show-panel-shortcut" type="as">
         <default>[]</default>
         <summary>Show main panel shortcut</summary>
@@ -428,13 +428,13 @@ dist/                                                 ← Direct management (lik
 ├── prefs.js                                          ← Build output (gitignored)
 ├── metadata.json                                     ← Version controlled (direct edit)
 └── schemas/                                          ← Version controlled (direct edit)
-    ├── org.gnome.shell.extensions.snappa.gschema.xml ← Source file
+    ├── org.gnome.shell.extensions.sutto.gschema.xml ← Source file
     └── gschemas.compiled                             ← Build artifact (gitignored)
 ```
 
 **Build Steps**:
 1. Create schema file directly in `dist/schemas/`:
-   - Edit `dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml`
+   - Edit `dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml`
    - This file is version controlled (just like `dist/metadata.json`)
 2. Compile schema in-place:
    ```bash
@@ -471,7 +471,7 @@ async function build() {
         // ... existing build code ...
 
         // Compile GSettings schema if it exists
-        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml';
+        const schemaPath = 'dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml';
         if (fs.existsSync(schemaPath)) {
             console.log('Compiling GSettings schema...');
             try {
@@ -498,7 +498,7 @@ Add a dedicated script in `package.json`:
 ```json
 "scripts": {
   "build": "tsc --noEmit && node esbuild.config.js && npm run compile-schema",
-  "compile-schema": "test -f dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml && glib-compile-schemas dist/schemas/ || echo 'No schema to compile'"
+  "compile-schema": "test -f dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml && glib-compile-schemas dist/schemas/ || echo 'No schema to compile'"
 }
 ```
 
@@ -537,7 +537,7 @@ Add a dedicated script in `package.json`:
         Gio.SettingsSchemaSource.get_default(),
         false
       );
-      const schema = schemaSource.lookup('org.gnome.shell.extensions.snappa', false);
+      const schema = schemaSource.lookup('org.gnome.shell.extensions.sutto', false);
       this.settings = new Gio.Settings({ settings_schema: schema });
     }
 
@@ -690,9 +690,9 @@ glib-compile-schemas dist/schemas/
 ls -l dist/schemas/gschemas.compiled
 
 # Test schema loading (after installation)
-gsettings list-schemas | grep snappa
-gsettings list-keys org.gnome.shell.extensions.snappa
-gsettings get org.gnome.shell.extensions.snappa show-panel-shortcut
+gsettings list-schemas | grep sutto
+gsettings list-keys org.gnome.shell.extensions.sutto
+gsettings get org.gnome.shell.extensions.sutto show-panel-shortcut
 ```
 
 ### Phase 8: Settings Button in Main Panel Footer
@@ -701,7 +701,7 @@ gsettings get org.gnome.shell.extensions.snappa show-panel-shortcut
 
 #### Tasks
 - Add small settings icon button to footer
-- Position icon next to "Powered by Snappa" text
+- Position icon next to "Powered by Sutto" text
 - Open preferences window when clicked
 - Close main panel after opening preferences
 
@@ -712,7 +712,7 @@ gsettings get org.gnome.shell.extensions.snappa show-panel-shortcut
 ┌─────────────────────────────────┐
 │  [Layout buttons...]            │
 │                                 │
-│  Powered by Snappa              │
+│  Powered by Sutto              │
 └─────────────────────────────────┘
 ```
 
@@ -721,7 +721,7 @@ gsettings get org.gnome.shell.extensions.snappa show-panel-shortcut
 ┌─────────────────────────────────┐
 │  [Layout buttons...]            │
 │                                 │
-│  Powered by Snappa          ⚙️  │ ← Small icon on the right
+│  Powered by Sutto          ⚙️  │ ← Small icon on the right
 └─────────────────────────────────┘
 ```
 
@@ -742,7 +742,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
 
   // Text label
   const label = new St.Label({
-    text: 'Powered by Snappa',
+    text: 'Powered by Sutto',
     style: `
       font-size: 12px;
       color: ${FOOTER_TEXT_COLOR};
@@ -751,7 +751,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
 
   // Settings icon button
   const settingsButton = new St.Button({
-    style_class: 'snappa-settings-icon',
+    style_class: 'sutto-settings-icon',
     style: `
       margin-left: 8px;
       padding: 2px 4px;
@@ -821,7 +821,7 @@ private openPreferences(): void {
   try {
     // Use gnome-extensions command to open preferences
     GLib.spawn_command_line_async(
-      'gnome-extensions prefs snappa@x7c1.github.io'
+      'gnome-extensions prefs sutto@x7c1.github.io'
     );
     log('[MainPanel] Opening preferences window');
   } catch (e) {
@@ -843,7 +843,7 @@ private openPreferences(): void {
     // Fallback to gnome-extensions command
     const GLib = imports.gi.GLib;
     GLib.spawn_command_line_async(
-      'gnome-extensions prefs snappa@x7c1.github.io'
+      'gnome-extensions prefs sutto@x7c1.github.io'
     );
   }
 }
@@ -928,7 +928,7 @@ Extension
 - `src/types/gtk4.d.ts` - GTK4 type definitions
 - `src/types/adwaita.d.ts` - Libadwaita type definitions
 - `src/types/gdk4.d.ts` - GDK4 type definitions (key events)
-- `dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml` - GSettings schema definition
+- `dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml` - GSettings schema definition
 - `src/settings/extension-settings.ts` - Settings manager class
 
 **Modified Files (7)**:
@@ -992,7 +992,7 @@ Extension
 
 **Method 1: From Extensions App**
 - Open GNOME Extensions app
-- Find "Snappa" extension
+- Find "Sutto" extension
 - Click settings/gear icon (or right-click → Preferences)
 - **Expected**: Preferences window opens showing "Disabled"
 
@@ -1078,7 +1078,7 @@ Extension
 
 ### Phase 3: GSettings Schema (Estimated: 1 point)
 - Create `dist/schemas/` directory
-- Create schema XML file directly: `dist/schemas/org.gnome.shell.extensions.snappa.gschema.xml`
+- Create schema XML file directly: `dist/schemas/org.gnome.shell.extensions.sutto.gschema.xml`
   - Following the same pattern as `dist/metadata.json` (version controlled)
 - Define default shortcut binding (empty array)
 - Add schema compilation to build process
@@ -1127,9 +1127,9 @@ Extension
 - Validate with gsettings commands:
   ```bash
   # After installing extension
-  gsettings list-schemas | grep snappa
-  gsettings list-keys org.gnome.shell.extensions.snappa
-  gsettings get org.gnome.shell.extensions.snappa show-panel-shortcut
+  gsettings list-schemas | grep sutto
+  gsettings list-keys org.gnome.shell.extensions.sutto
+  gsettings get org.gnome.shell.extensions.sutto show-panel-shortcut
   ```
 - Verify `.gitignore` correctly handles version control
   - `dist/schemas/*.gschema.xml` should be committed (like metadata.json)
@@ -1277,12 +1277,12 @@ The D-Bus interface should remain for the reloader feature (development use case
 
 The compiled schema must be present in the extension directory:
 ```
-~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io/
+~/.local/share/gnome-shell/extensions/sutto@x7c1.github.io/
   ├── extension.js
   ├── metadata.json
   └── schemas/
       ├── gschemas.compiled
-      └── org.gnome.shell.extensions.snappa.gschema.xml
+      └── org.gnome.shell.extensions.sutto.gschema.xml
 ```
 
 Users don't need to manually install the schema - GNOME Shell loads it automatically from the extension directory when the extension is enabled.

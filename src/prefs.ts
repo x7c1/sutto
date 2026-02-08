@@ -6,14 +6,14 @@ import GLib from 'gi://GLib';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import { buildPreferencesUI } from './prefs/preferences.js';
 
-const SCHEMA_ID = 'org.gnome.shell.extensions.snappa';
+const SCHEMA_ID = 'org.gnome.shell.extensions.sutto';
 
-export default class SnappaPreferences extends ExtensionPreferences {
+export default class SuttoPreferences extends ExtensionPreferences {
   async fillPreferencesWindow(window: Adw.PreferencesWindow): Promise<void> {
     const settings = this.loadSettings();
     if (!settings) {
       console.log(
-        '[Snappa Prefs] ERROR: Failed to load settings, preferences UI will not be created'
+        '[Sutto Prefs] ERROR: Failed to load settings, preferences UI will not be created'
       );
       return;
     }
@@ -28,7 +28,7 @@ export default class SnappaPreferences extends ExtensionPreferences {
     try {
       const schemaPath = this.findSchemaPath();
       if (!schemaPath) {
-        console.log('[Snappa Prefs] ERROR: Schema directory not found');
+        console.log('[Sutto Prefs] ERROR: Schema directory not found');
         return null;
       }
 
@@ -40,13 +40,13 @@ export default class SnappaPreferences extends ExtensionPreferences {
 
       const schema = schemaSource.lookup(SCHEMA_ID, false);
       if (!schema) {
-        console.log('[Snappa Prefs] ERROR: Schema not found');
+        console.log('[Sutto Prefs] ERROR: Schema not found');
         return null;
       }
 
       return new Gio.Settings({ settings_schema: schema });
     } catch (e) {
-      console.log(`[Snappa Prefs] ERROR: Failed to load settings: ${e}`);
+      console.log(`[Sutto Prefs] ERROR: Failed to load settings: ${e}`);
       return null;
     }
   }

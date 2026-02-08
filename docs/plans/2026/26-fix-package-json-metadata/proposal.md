@@ -32,7 +32,7 @@ Current state:
 
 ```json
 {
-  "name": "snappa",
+  "name": "sutto",
   "version": "0.0.1",
   "description": "Window snapping extension for GNOME Shell",
   "author": "x7c1"

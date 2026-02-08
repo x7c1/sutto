@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document evaluates billing platforms for implementing subscription-based licensing in snappa, a GNOME Shell extension. The primary requirements are low transaction fees for micro-subscriptions ($2-3/month), built-in license key management, and compatibility with desktop application verification.
+This document evaluates billing platforms for implementing subscription-based licensing in sutto, a GNOME Shell extension. The primary requirements are low transaction fees for micro-subscriptions ($2-3/month), built-in license key management, and compatibility with desktop application verification.
 
 ## Status
 
@@ -10,11 +10,11 @@ Proposed
 
 ## Context
 
-snappa needs a monetization strategy to sustain development. The requirements are:
+sutto needs a monetization strategy to sustain development. The requirements are:
 
 - Subscription-based licensing ($2-3/month range, pricing TBD)
 - 30-day free trial period
-- License verification via backend API (client → snappa backend → billing provider)
+- License verification via backend API (client → sutto backend → billing provider)
 - Backend abstracts billing provider to allow future changes without client updates
 - Global tax compliance (VAT, sales tax handling)
 

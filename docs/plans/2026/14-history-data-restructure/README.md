@@ -4,7 +4,7 @@ Status: Completed
 
 ## Overview
 
-Redesign `history.snappa.jsonl` using an event log approach. Store layout selection events chronologically, build in-memory structures at startup. No backward compatibility required.
+Redesign `history.sutto.jsonl` using an event log approach. Store layout selection events chronologically, build in-memory structures at startup. No backward compatibility required.
 
 ## Background
 
@@ -54,7 +54,7 @@ interface LayoutEvent {
 }
 ```
 
-File extension: `history.snappa.jsonl`
+File extension: `history.sutto.jsonl`
 
 ### In-Memory Structure (Built on Load)
 
@@ -78,7 +78,7 @@ interface LayoutEntry {
 
 ## Example Data
 
-### File (history.snappa.jsonl)
+### File (history.sutto.jsonl)
 
 ```
 {"ts":1706400000000,"wmClassHash":"f1e2d3c4b5a69788","titleHash":"a1b2c3d4e5f6g7h8","layoutId":"uuid-1"}
@@ -189,7 +189,7 @@ This minimizes file size while preserving all useful history.
 ## Out of Scope
 
 - Migration from v1 to v2 (not needed)
-- Pattern rules for title matching (future feature, stored in separate `rules.snappa.json`)
+- Pattern rules for title matching (future feature, stored in separate `rules.sutto.json`)
 - User-assignable window labels (future feature)
 
 ## Points Estimate

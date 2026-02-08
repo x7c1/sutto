@@ -4,7 +4,7 @@ Status: Completed
 
 ## Overview
 
-This plan addresses the lack of clear layer separation in the snappa codebase. Currently, external data (from APIs, GSettings, JSON files) flows into the application with minimal validation and no explicit conversion to domain objects. The goal is to introduce clear layer boundaries where:
+This plan addresses the lack of clear layer separation in the sutto codebase. Currently, external data (from APIs, GSettings, JSON files) flows into the application with minimal validation and no explicit conversion to domain objects. The goal is to introduce clear layer boundaries where:
 
 - External data is validated and converted at the boundary (Infrastructure layer)
 - Domain objects enforce invariants in their constructors
@@ -20,7 +20,7 @@ This plan addresses the lack of clear layer separation in the snappa codebase. C
 - **Scattered validation**: Some files have good predicates (`isValidSpaceCollectionArray`), others have none
 - **Unclear data flow**: API response models, storage models, and domain models are not distinguished
 - **Hard to test**: Business logic is tightly coupled with I/O (GSettings, file system, HTTP), making unit tests difficult without mocking external dependencies
-- **Desktop freeze risk**: When backward compatibility of stored data is unintentionally broken, invalid data can cause the entire GNOME Shell to freeze (not just snappa). This is arguably a GNOME Shell design issue, but we must handle it defensively by validating all external data at boundaries
+- **Desktop freeze risk**: When backward compatibility of stored data is unintentionally broken, invalid data can cause the entire GNOME Shell to freeze (not just sutto). This is arguably a GNOME Shell design issue, but we must handle it defensively by validating all external data at boundaries
 
 ### Files with Unsafe Type Assertions
 

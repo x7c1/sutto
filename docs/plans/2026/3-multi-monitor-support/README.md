@@ -4,7 +4,7 @@ Status: Completed
 
 ## Overview
 
-Add comprehensive multi-monitor support to Snappa GNOME Shell extension, enabling users to:
+Add comprehensive multi-monitor support to Sutto GNOME Shell extension, enabling users to:
 - View layouts for all monitors simultaneously in their physical 2D arrangement
 - Create **Display Groups** that define which Layout Group appears on which monitor
 - Support multiple Display Group patterns within a Category (e.g., "both same" vs "different per monitor")
@@ -117,7 +117,7 @@ Users define global Layout Groups once, then reference them by name in Display G
 - **layoutGroups**: Global definitions of Layout Groups (defined once, reused by name)
 - **layoutCategories**: Categories containing Display Groups
 - **displayGroups**: Map monitor keys to Layout Group names (e.g., "0": "vertical 3-split")
-- When Snappa imports this, it resolves Layout Group names, expands them, and generates unique IDs for Display Groups, Layout Groups, and all Layouts
+- When Sutto imports this, it resolves Layout Group names, expands them, and generates unique IDs for Display Groups, Layout Groups, and all Layouts
 - The runtime format stored in `imported-layouts.json` has fully expanded Layout Groups with IDs (see Storage Changes section)
 
 ## Architecture Changes
@@ -199,7 +199,7 @@ export interface LayoutConfiguration {
 **Important distinction:**
 - `LayoutSetting` types (above) are used for **import input only** (no id/hash)
 - `imported-layouts.json` stores runtime types with id/hash generated at import time
-- When Snappa imports settings, it converts `LayoutSetting` → `Layout` by adding id/hash
+- When Sutto imports settings, it converts `LayoutSetting` → `Layout` by adding id/hash
 - Similarly, it converts `LayoutGroupSetting` → `LayoutGroup` by adding id to the group and id/hash to each layout
 
 Create new runtime types in `src/app/types/display-group.ts`:
@@ -885,11 +885,11 @@ Before starting Phase 3 implementation, users may optionally backup existing dat
 
 ```bash
 # Optional backup before Phase 3
-cp ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io/imported-layouts.json \
-   ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io/imported-layouts.json.backup
+cp ~/.local/share/gnome-shell/extensions/sutto@x7c1.github.io/imported-layouts.json \
+   ~/.local/share/gnome-shell/extensions/sutto@x7c1.github.io/imported-layouts.json.backup
 
-cp ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io/layout-history.json \
-   ~/.local/share/gnome-shell/extensions/snappa@x7c1.github.io/layout-history.json.backup
+cp ~/.local/share/gnome-shell/extensions/sutto@x7c1.github.io/layout-history.json \
+   ~/.local/share/gnome-shell/extensions/sutto@x7c1.github.io/layout-history.json.backup
 ```
 
 ### Single Monitor Behavior
@@ -1052,7 +1052,7 @@ This preserves the spatial relationship: Monitor 2 is below and aligned with Mon
 - **Input vs Runtime formats**:
   - **Input format** (user writes): LayoutConfiguration with global layoutGroups array, displayGroups reference by name
   - **Runtime format** (stored in imported-layouts.json): LayoutCategory[] with Display Groups containing expanded LayoutGroups with unique IDs
-- **Layout Group expansion**: During import, Snappa resolves Layout Group names and creates separate instances with unique IDs for each monitor in each Display Group
+- **Layout Group expansion**: During import, Sutto resolves Layout Group names and creates separate instances with unique IDs for each monitor in each Display Group
 - **History tracking**: Per-monitor to support different workflows on different monitors (version 2 format)
 - **Scale factor**: Calculated per Display Group to fit all referenced monitors in panel while preserving aspect ratios and spatial relationships
 - **Error handling**: Missing monitors show error indicator (integrated in Phase 3)

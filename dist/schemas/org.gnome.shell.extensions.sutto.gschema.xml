@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="org.gnome.shell.extensions.snappa" path="/org/gnome/shell/extensions/snappa/">
+  <schema id="org.gnome.shell.extensions.sutto" path="/org/gnome/shell/extensions/sutto/">
     <key name="show-panel-shortcut" type="as">
       <default>[]</default>
       <summary>Show main panel shortcut</summary>

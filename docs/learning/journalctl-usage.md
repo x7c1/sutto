@@ -11,7 +11,7 @@ This document explains how to monitor logs for GNOME Shell extensions using `jou
 View logs from the current boot session:
 
 ```bash
-journalctl -b | grep -i "snappa" | grep -i "prefs" | tail -20
+journalctl -b | grep -i "sutto" | grep -i "prefs" | tail -20
 ```
 
 Options:
@@ -24,13 +24,13 @@ Monitor new logs as they appear (like `tail -f`):
 
 ```bash
 # Method 1: Using journalctl's built-in grep (RECOMMENDED - most reliable)
-journalctl -b -f --grep="snappa"
+journalctl -b -f --grep="sutto"
 
 # Method 2: Using grep with --line-buffered (if you need multiple filters)
-journalctl -b -f | grep --line-buffered -i snappa | grep --line-buffered -i prefs
+journalctl -b -f | grep --line-buffered -i sutto | grep --line-buffered -i prefs
 
 # Method 3: Using stdbuf to disable buffering
-journalctl -b -f | stdbuf -o0 grep -i snappa | stdbuf -o0 grep -i prefs
+journalctl -b -f | stdbuf -o0 grep -i sutto | stdbuf -o0 grep -i prefs
 ```
 
 **Important**: Regular `grep` without `--line-buffered` will buffer output and NOT show logs in real-time!
@@ -49,10 +49,10 @@ Show existing logs first, then monitor new ones:
 
 ```bash
 # Terminal 1: View existing logs
-journalctl -b | grep -i snappa | grep -i prefs | tail -20
+journalctl -b | grep -i sutto | grep -i prefs | tail -20
 
 # Terminal 2: Monitor new logs (use --line-buffered!)
-journalctl -b -f | grep --line-buffered -i snappa | grep --line-buffered -i prefs
+journalctl -b -f | grep --line-buffered -i sutto | grep --line-buffered -i prefs
 ```
 
 ## Why Different Commands Show Different Results
@@ -61,10 +61,10 @@ journalctl -b -f | grep --line-buffered -i snappa | grep --line-buffered -i pref
 
 ```bash
 # WITHOUT --line-buffered (WRONG - logs won't appear in real-time!)
-journalctl -f -o cat | grep -i snappa
+journalctl -f -o cat | grep -i sutto
 
 # WITH --line-buffered (CORRECT - logs appear immediately)
-journalctl -f -o cat | grep --line-buffered -i snappa
+journalctl -f -o cat | grep --line-buffered -i sutto
 ```
 
 - Only shows **new logs** generated after the command starts
@@ -74,7 +74,7 @@ journalctl -f -o cat | grep --line-buffered -i snappa
 ### Historical Search (`journalctl -b`)
 
 ```bash
-journalctl -b | grep -i snappa
+journalctl -b | grep -i sutto
 ```
 
 - Shows **all logs** from current boot session
@@ -91,24 +91,24 @@ GNOME Shell extensions may log to different processes:
 To see both:
 
 ```bash
-journalctl -b -f | grep -i snappa
+journalctl -b -f | grep -i sutto
 ```
 
 ## Recommended Workflow
 
 1. **During development**: Use real-time monitoring with --grep
    ```bash
-   journalctl -b -f --grep="snappa"
+   journalctl -b -f --grep="sutto"
    ```
 
 2. **Debugging issues**: Check historical logs first
    ```bash
-   journalctl -b | grep -i snappa | tail -50
+   journalctl -b | grep -i sutto | tail -50
    ```
 
 3. **Testing preferences**: Monitor with multiple filters
    ```bash
-   journalctl -b -f | grep --line-buffered -i snappa | grep --line-buffered -i prefs
+   journalctl -b -f | grep --line-buffered -i sutto | grep --line-buffered -i prefs
    ```
 
 ## Tips
@@ -126,17 +126,17 @@ journalctl -b -f | grep -i snappa
 
 ❌ **Wrong** (logs are buffered):
 ```bash
-journalctl -b -f | grep -i snappa
+journalctl -b -f | grep -i sutto
 ```
 
 ✅ **Correct** (use one of these):
 ```bash
 # Option 1: Use journalctl's --grep
-journalctl -b -f --grep="snappa"
+journalctl -b -f --grep="sutto"
 
 # Option 2: Use grep --line-buffered
-journalctl -b -f | grep --line-buffered -i snappa
+journalctl -b -f | grep --line-buffered -i sutto
 
 # Option 3: Use stdbuf
-journalctl -b -f | stdbuf -o0 grep -i snappa
+journalctl -b -f | stdbuf -o0 grep -i sutto
 ```

@@ -42,14 +42,14 @@ killall -3 gnome-shell
 ### 3. Enable the Extension
 
 ```bash
-gnome-extensions enable snappa@x7c1.github.io
+gnome-extensions enable sutto@x7c1.github.io
 ```
 
 ### 4. Verify Installation
 
 ```bash
 gnome-extensions list
-gnome-extensions info snappa@x7c1.github.io
+gnome-extensions info sutto@x7c1.github.io
 ```
 
 ## After Installation

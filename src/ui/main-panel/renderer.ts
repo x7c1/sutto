@@ -97,7 +97,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
 
   // Text label
   const label = new St.Label({
-    text: 'Powered by Snappa',
+    text: 'Powered by Sutto',
     style: `
       font-size: 12px;
       font-family: "DejaVu Sans Condensed";
@@ -110,7 +110,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
 
   // Settings icon button
   const settingsButton = new St.Button({
-    style_class: 'snappa-settings-icon',
+    style_class: 'sutto-settings-icon',
     style: `
       margin-left: ${SETTINGS_MARGIN}px;
       padding: ${SETTINGS_PADDING_VERTICAL}px ${SETTINGS_PADDING_HORIZONTAL}px;

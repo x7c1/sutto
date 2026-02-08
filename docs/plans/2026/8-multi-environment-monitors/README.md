@@ -4,15 +4,15 @@ Status: Completed
 
 ## Overview
 
-Extend `monitors.snappa.json` to store multiple monitor environment configurations, enabling proper display of miniature spaces when switching collections across different monitor setups.
+Extend `monitors.sutto.json` to store multiple monitor environment configurations, enabling proper display of miniature spaces when switching collections across different monitor setups.
 
 ## Problem Statement
 
 When switching collections in the preferences UI, miniature spaces for collections created in different monitor environments cannot be displayed properly.
 
 **Reproduction steps:**
-- Open snappa in a 2-monitor environment
-- Open snappa in a 1-monitor environment
+- Open sutto in a 2-monitor environment
+- Open sutto in a 1-monitor environment
 - Try to view the 2-monitor collection in preferences
 
 **Current behavior:**
@@ -21,18 +21,18 @@ When switching collections in the preferences UI, miniature spaces for collectio
 - When viewing a 2-monitor collection on a 1-monitor setup, there's no geometry information for the second monitor
 
 **Root cause:**
-- `monitors.snappa.json` only stores the current monitor configuration
+- `monitors.sutto.json` only stores the current monitor configuration
 - No historical monitor environment data is preserved
 
 ## Scope
 
-**No backward compatibility required** - the only user is the developer. Existing `*.snappa.json` files will be deleted and regenerated. No migration logic needed.
+**No backward compatibility required** - the only user is the developer. Existing `*.sutto.json` files will be deleted and regenerated. No migration logic needed.
 
 ## Proposed Solution
 
 ### New Data Structure
 
-Transform `monitors.snappa.json` from a flat array to a structured object with multiple environments:
+Transform `monitors.sutto.json` from a flat array to a structured object with multiple environments:
 
 **Before (current):**
 ```json

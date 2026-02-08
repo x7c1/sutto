@@ -8,8 +8,8 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
-PACKER_OUTPUT = SCRIPT_DIR.parent / "packer" / "output-snappa-demo"
-VM_IMAGE = PACKER_OUTPUT / "snappa-demo.qcow2"
+PACKER_OUTPUT = SCRIPT_DIR.parent / "packer" / "output-sutto-demo"
+VM_IMAGE = PACKER_OUTPUT / "sutto-demo.qcow2"
 DEFAULT_SSH_PORT = 2222
 
 
@@ -124,7 +124,7 @@ def main() -> None:
     cmd = build_qemu_command(args)
 
     env = os.environ.copy()
-    env["SNAPPA_DEMO_SESSION"] = args.session
+    env["SUTTO_DEMO_SESSION"] = args.session
 
     print(f"\nRunning: {' '.join(cmd)}\n")
 

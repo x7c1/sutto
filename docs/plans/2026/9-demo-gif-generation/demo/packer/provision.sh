@@ -62,8 +62,8 @@ echo "=== Creating demo scripts directory ==="
 mkdir -p /home/$DEMO_USER/demo
 chown -R "$DEMO_USER:$DEMO_USER" /home/$DEMO_USER/demo
 
-echo "=== Installing snappa extension ==="
-EXTENSION_DIR="/home/$DEMO_USER/.local/share/gnome-shell/extensions/snappa@example.com"
+echo "=== Installing sutto extension ==="
+EXTENSION_DIR="/home/$DEMO_USER/.local/share/gnome-shell/extensions/sutto@example.com"
 mkdir -p "$EXTENSION_DIR"
 chown -R "$DEMO_USER:$DEMO_USER" /home/$DEMO_USER/.local
 

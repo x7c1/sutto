@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes how the snappa backend handles LS (LS) API rate limits. The License API has a limit of 60 requests per minute, which requires caching and rate limiting strategies to support a growing user base.
+This document describes how the sutto backend handles LS (LS) API rate limits. The License API has a limit of 60 requests per minute, which requires caching and rate limiting strategies to support a growing user base.
 
 **Status**: Future consideration. Not implemented in initial release.
 
@@ -15,7 +15,7 @@ This document describes how the snappa backend handles LS (LS) API rate limits. 
 ## Problem Scenario
 
 ```
-Example: 1000 snappa users
+Example: 1000 sutto users
 
 All users start GNOME Shell at similar times (e.g., 9:00 AM workday start):
   → 1000 validation requests within seconds
@@ -43,7 +43,7 @@ Even with caching, if the cache is empty or expired, all users hit the LS API si
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                      snappa Backend                           │
+│                      sutto Backend                           │
 ├──────────────────────────────────────────────────────────────┤
 │                                                               │
 │  Request from client                                          │
@@ -140,7 +140,7 @@ When LS returns 429 (Too Many Requests), the backend can instruct the client to 
 ### Flow
 
 ```
-snappa extension                 snappa backend                    LS API
+sutto extension                 sutto backend                    LS API
       │                               │                               │
       │  POST /validate               │                               │
       │ ─────────────────────────────▶│                               │

@@ -4,7 +4,7 @@ Status: Draft
 
 ## Overview
 
-Create privacy policy and terms of service content for the Snappa website.
+Create privacy policy and terms of service content for the Sutto website.
 
 ## Content
 

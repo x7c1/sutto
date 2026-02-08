@@ -2,11 +2,11 @@
 
 ## Overview
 
-Architecture Decision Record for choosing the automation approach for generating snappa demo GIFs.
+Architecture Decision Record for choosing the automation approach for generating sutto demo GIFs.
 
 ## Context
 
-We need to automatically generate GIF animations demonstrating snappa usage. The solution must:
+We need to automatically generate GIF animations demonstrating sutto usage. The solution must:
 
 - Run without manual GUI interaction
 - Support arbitrary display resolutions and multi-monitor setups

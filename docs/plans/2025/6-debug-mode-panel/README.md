@@ -55,7 +55,7 @@ A control panel displayed alongside the SnapMenu that allows toggling various UI
 **Panel Features:**
 
 #### Toggle Controls
-- **Footer rendering** - Show/hide "Powered by Snappa" footer
+- **Footer rendering** - Show/hide "Powered by Sutto" footer
 - **Test layout groups A, B, C, ...** - Individual toggle for each test group
 - **Miniature display background** - Show/hide miniature display backgrounds (light black background from Issue #7)
 - **Miniature display borders** - Show/hide miniature display borders for size verification
@@ -682,7 +682,7 @@ export function getTestLayoutGroups(): SnapLayoutGroup[] {
 
 The debug configuration is stored as JSON in:
 ```
-~/.local/share/gnome-shell/extensions/snappa@example.com/debug-config.json
+~/.local/share/gnome-shell/extensions/sutto@example.com/debug-config.json
 ```
 
 **Example file content:**

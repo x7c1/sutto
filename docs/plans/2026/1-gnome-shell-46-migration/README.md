@@ -4,7 +4,7 @@ Status: Completed
 
 ## Overview
 
-Migrate the Snappa GNOME Shell extension from **GNOME Shell 42** (Ubuntu 22.04) to **GNOME Shell 46** (Ubuntu 24.04). This is a major migration requiring comprehensive refactoring due to breaking changes introduced in GNOME Shell 45.
+Migrate the Sutto GNOME Shell extension from **GNOME Shell 42** (Ubuntu 22.04) to **GNOME Shell 46** (Ubuntu 24.04). This is a major migration requiring comprehensive refactoring due to breaking changes introduced in GNOME Shell 45.
 
 **Current Environment:** Ubuntu 22.04 LTS + GNOME Shell 42
 **Target Environment:** Ubuntu 24.04 LTS + GNOME Shell 46
@@ -163,7 +163,7 @@ class Extension {
 // After
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-export default class SnappaExtension extends Extension {
+export default class SuttoExtension extends Extension {
   enable() {
     // this.getSettings() available
     // this.metadata available
@@ -185,7 +185,7 @@ function fillPreferencesWindow(window) { /* ... */ }
 // After
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-export default class SnappaPreferences extends ExtensionPreferences {
+export default class SuttoPreferences extends ExtensionPreferences {
   fillPreferencesWindow(window) {
     // this.getSettings() available
     // this.metadata available
@@ -236,13 +236,13 @@ import {Controller} from './app/controller.js';
   ```typescript
   import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-  export default class SnappaExtension extends Extension {
+  export default class SuttoExtension extends Extension {
     enable() {
-      console.log('[Snappa] Extension enabled');
+      console.log('[Sutto] Extension enabled');
     }
 
     disable() {
-      console.log('[Snappa] Extension disabled');
+      console.log('[Sutto] Extension disabled');
     }
   }
   ```
@@ -257,10 +257,10 @@ npm run build
 npm run copy-files
 
 # Enable extension (on Ubuntu 24.04)
-gnome-extensions enable snappa@x7c1.github.io
+gnome-extensions enable sutto@x7c1.github.io
 
 # Check logs
-journalctl -f /usr/bin/gnome-shell | grep Snappa
+journalctl -f /usr/bin/gnome-shell | grep Sutto
 ```
 - ✓ Build succeeds
 - ✓ Extension enables without errors
@@ -470,7 +470,7 @@ npm run dev
   import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
   import {Preferences} from './settings/preferences.js';
 
-  export default class SnappaPreferences extends ExtensionPreferences {
+  export default class SuttoPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
       const prefs = new Preferences(this.metadata);
       prefs.fillWindow(window);
@@ -642,12 +642,12 @@ Resource paths differ between contexts:
 
 ```typescript
 // Legacy (still works as alias)
-log('[Snappa] Message');
+log('[Sutto] Message');
 
 // Modern (recommended)
-console.log('[Snappa] Message');
-console.error('[Snappa] Error');
-console.warn('[Snappa] Warning');
+console.log('[Sutto] Message');
+console.error('[Sutto] Error');
+console.warn('[Sutto] Warning');
 ```
 
 Prefer explicit `console.*` methods for clarity.

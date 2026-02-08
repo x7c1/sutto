@@ -2,7 +2,7 @@
 
 ## Overview
 
-Research findings on how to automate GUI interactions for recording snappa demos. The key challenge is dynamically detecting UI element positions (e.g., settings window) that are outside snappa's control.
+Research findings on how to automate GUI interactions for recording sutto demos. The key challenge is dynamically detecting UI element positions (e.g., settings window) that are outside sutto's control.
 
 ## Solution: Dogtail + AT-SPI
 

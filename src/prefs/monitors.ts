@@ -43,7 +43,7 @@ export function loadMonitorStorage(): MonitorEnvironmentStorage | null {
       }
     }
   } catch (e) {
-    console.log(`[Snappa Prefs] Error loading monitor storage: ${e}`);
+    console.log(`[Sutto Prefs] Error loading monitor storage: ${e}`);
   }
 
   return null;
@@ -120,7 +120,7 @@ export function loadMonitors(rows: SpacesRow[]): Map<string, Monitor> {
   // Fallback 1: Try Gdk detection (works in settings context)
   const gdkMonitors = getMonitorsFromGdk();
   if (gdkMonitors.size > 0) {
-    console.log(`[Snappa Prefs] Using Gdk monitors: ${gdkMonitors.size}`);
+    console.log(`[Sutto Prefs] Using Gdk monitors: ${gdkMonitors.size}`);
     return gdkMonitors;
   }
 
@@ -137,7 +137,7 @@ export function loadMonitors(rows: SpacesRow[]): Map<string, Monitor> {
 
   // If no monitor keys from rows, create at least 1 default monitor
   if (monitorKeys.size === 0) {
-    console.log('[Snappa Prefs] No monitor info available, creating 1 default monitor');
+    console.log('[Sutto Prefs] No monitor info available, creating 1 default monitor');
     monitors.set('0', {
       index: 0,
       geometry: { x: 0, y: 0, width: DEFAULT_MONITOR_WIDTH, height: DEFAULT_MONITOR_HEIGHT },
@@ -250,7 +250,7 @@ export function getMonitorsFromGdk(): Map<string, Monitor> {
       });
     }
   } catch (e) {
-    console.log(`[Snappa Prefs] Error getting monitors from Gdk: ${e}`);
+    console.log(`[Sutto Prefs] Error getting monitors from Gdk: ${e}`);
   }
 
   return monitors;

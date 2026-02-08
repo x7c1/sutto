@@ -5,7 +5,7 @@ autoinstall:
   keyboard:
     layout: us
   identity:
-    hostname: snappa-demo
+    hostname: sutto-demo
     username: demo
     password: "$6$HuyHsHovkoIOMjU5$6xB.9swYMhRf.VWZxe7SDf1eeW1Q5cGXtq1dNQ98URnnmjBmf/OaiTfwKn8WcTa83c8fmRUhWC/zv5FhXKJYk0"
   ssh:

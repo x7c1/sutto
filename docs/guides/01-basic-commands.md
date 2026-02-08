@@ -43,5 +43,5 @@ gnome-extensions info <extension-uuid>
 
 Example:
 ```bash
-gnome-extensions info snappa@x7c1.github.io
+gnome-extensions info sutto@x7c1.github.io
 ```

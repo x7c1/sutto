@@ -128,7 +128,7 @@ interface LayoutGroupCategory {
 
 5. **Create layouts repository** (`src/snap/layouts-repository.ts`)
    - **Role**: Persist layouts (handle import of settings and loading of layouts)
-   - **Storage**: `~/.local/share/gnome-shell/extensions/snappa@snappa.dev/imported-layouts.json`
+   - **Storage**: `~/.local/share/gnome-shell/extensions/sutto@sutto.dev/imported-layouts.json`
    - **Data format**: Serialized `Layout[]` with `id` and `hash` fields
    - **Key Functions**:
      - `importSettings(settings: LayoutCategorySetting[])` - Import settings as layouts
@@ -245,7 +245,7 @@ User clicks button
   - **Current Implementation**: Only use first element `array[0]` (most recent selection)
   - **Future Extension**: Support multiple history levels with gradient highlighting (n=3 or more)
   - **Migration-Free**: No breaking changes needed when adding multi-level support
-- **Storage**: `~/.local/share/gnome-shell/extensions/snappa@snappa.dev/layout-history.json`
+- **Storage**: `~/.local/share/gnome-shell/extensions/sutto@sutto.dev/layout-history.json`
   - Example: `{ "firefox": ["550e8400-e29b-41d4-a716-446655440000"] }` (stores layout UUIDs)
 - **Key Functions**:
   - `loadLayoutHistory()` - Load from disk on extension enable

@@ -29,7 +29,7 @@ SSH_OPTIONS = [
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate demo GIFs for snappa",
+        description="Generate demo GIFs for sutto",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

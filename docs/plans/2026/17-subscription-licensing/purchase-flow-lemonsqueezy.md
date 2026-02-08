@@ -86,7 +86,7 @@ Customers can view their license key at `https://app.lemonsqueezy.com/my-orders`
 Configure a redirect URL with the `[license_key]` placeholder:
 
 ```
-https://snappa.example.com/activate?key=[license_key]
+https://sutto.example.com/activate?key=[license_key]
 ```
 
 After purchase, customer is redirected with the actual key in the URL.
@@ -132,7 +132,7 @@ instance_name=My Desktop
     "store_id": 123,
     "order_id": 456,
     "product_id": 789,
-    "product_name": "snappa Pro",
+    "product_name": "sutto Pro",
     "variant_id": 101,
     "variant_name": "Monthly",
     "customer_id": 202,
@@ -277,7 +277,7 @@ GET /v1/customers/{id}/portal-url
 
 **Note**: PayPal adds +2% to the base fee. International adds +1.5%.
 
-## Implementation for snappa Backend
+## Implementation for sutto Backend
 
 ### Required Backend Endpoints
 
@@ -303,17 +303,17 @@ LEMONSQUEEZY_API_KEY=xxx  # Server-side only (for admin operations)
 
 Note: License API (activate/validate) does not require API key authentication - it uses the license key itself for auth.
 
-### Advantages for snappa
+### Advantages for sutto
 
 1. **Email delivery** - License key sent automatically in receipt
-2. **Redirect URL** - Can redirect to snappa site with key in URL for seamless onboarding
+2. **Redirect URL** - Can redirect to sutto site with key in URL for seamless onboarding
 3. **Established platform** - Larger ecosystem, more documentation
 4. **PayPal support** - See below for details
 5. **Customer portal** - Rich self-service for subscription management
 
 ### Why PayPal Support Matters
 
-PayPal support is a significant advantage for snappa's target audience:
+PayPal support is a significant advantage for sutto's target audience:
 
 **Security perspective:**
 ```
@@ -336,7 +336,7 @@ PayPal:
 **Business impact:**
 - PayPal enables purchases from users who would otherwise not buy
 - The ~10% fee difference ($2.48 vs $2.24) may be offset by increased conversions
-- snappa implementation is identical regardless of payment method - only payout amount differs
+- sutto implementation is identical regardless of payment method - only payout amount differs
 
 ### Considerations
 

@@ -4,13 +4,13 @@ Status: Cancelled
 
 ## Overview
 
-Build a system to automatically generate GIF animations demonstrating snappa usage via scripts. Fully scripted with no manual GUI operation required.
+Build a system to automatically generate GIF animations demonstrating sutto usage via scripts. Fully scripted with no manual GUI operation required.
 
 See [adr.md](./adr.md) for the decision to use a lightweight approach instead of openQA.
 
 ## Background
 
-- Want to include snappa demo GIFs in README and documentation
+- Want to include sutto demo GIFs in README and documentation
 - Manual recording lacks reproducibility and is tedious to update
 - Need to record at display resolutions and multi-monitor setups not physically owned
 
@@ -27,7 +27,7 @@ See [adr.md](./adr.md) for the decision to use a lightweight approach instead of
 
 ### Why VM?
 
-snappa is a GNOME Shell extension that runs on GNOME Shell (Mutter). Xvfb or other X11 servers alone cannot run GNOME Shell, so a VM with a complete GNOME environment is required.
+sutto is a GNOME Shell extension that runs on GNOME Shell (Mutter). Xvfb or other X11 servers alone cannot run GNOME Shell, so a VM with a complete GNOME environment is required.
 
 ### Components
 
@@ -60,7 +60,7 @@ Use Packer to create reproducible VM images. Each developer builds the image loc
   - `ffmpeg`, `gifsicle`
   - `spice-vdagent`
 - Configure GDM auto-login
-- Install snappa
+- Install sutto
 - Configure SSH access for script control
 
 ### Phase 2: Recording Scripts

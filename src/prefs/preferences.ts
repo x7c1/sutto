@@ -26,35 +26,35 @@ const SCREEN_HEIGHT_MARGIN = 100; // Margin for taskbars, panels, etc.
  * Build the preferences UI
  */
 export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.Settings): void {
-  console.log('[Snappa Prefs] Building preferences UI...');
+  console.log('[Sutto Prefs] Building preferences UI...');
 
   // Ensure presets exist for current monitor count
-  console.log('[Snappa Prefs] Ensuring presets...');
+  console.log('[Sutto Prefs] Ensuring presets...');
   try {
     resolvePresetGeneratorOperations().ensurePresetForCurrentMonitors();
-    console.log('[Snappa Prefs] Presets ensured');
+    console.log('[Sutto Prefs] Presets ensured');
   } catch (e) {
-    console.log(`[Snappa Prefs] ERROR ensuring presets: ${e}`);
+    console.log(`[Sutto Prefs] ERROR ensuring presets: ${e}`);
   }
 
   // Load collections and monitors
-  console.log('[Snappa Prefs] Loading collections...');
+  console.log('[Sutto Prefs] Loading collections...');
   let collections: SpaceCollection[] = [];
   try {
     collections = resolveSpaceCollectionOperations().loadAllCollections();
-    console.log(`[Snappa Prefs] Loaded ${collections.length} collections`);
+    console.log(`[Sutto Prefs] Loaded ${collections.length} collections`);
   } catch (e) {
-    console.log(`[Snappa Prefs] ERROR loading collections: ${e}`);
+    console.log(`[Sutto Prefs] ERROR loading collections: ${e}`);
   }
 
   // Load monitors using any available rows (fallback for createSpacesPage)
   const anyRows = collections.length > 0 ? collections[0].rows : [];
   const monitors = loadMonitors(anyRows);
-  console.log(`[Snappa Prefs] Loaded ${monitors.size} monitors`);
+  console.log(`[Sutto Prefs] Loaded ${monitors.size} monitors`);
 
   // Get current active collection ID from settings
   const activeCollectionId = settings.get_string('active-space-collection-id') ?? '';
-  console.log(`[Snappa Prefs] Active collection ID: "${activeCollectionId}"`);
+  console.log(`[Sutto Prefs] Active collection ID: "${activeCollectionId}"`);
 
   // Find the active collection, fallback to first collection
   const activeCollection = collections.find((c) => c.id === activeCollectionId) || collections[0];
@@ -78,19 +78,19 @@ export function buildPreferencesUI(window: Adw.PreferencesWindow, settings: Gio.
   window.add(generalPage);
 
   // Create Spaces page with collection selection
-  console.log('[Snappa Prefs] Creating Spaces page...');
+  console.log('[Sutto Prefs] Creating Spaces page...');
   try {
     const spacesPage = createSpacesPage(monitors, activeCollectionId, (newActiveId) => {
       settings.set_string('active-space-collection-id', newActiveId);
     });
-    console.log('[Snappa Prefs] Spaces page created, adding to window...');
+    console.log('[Sutto Prefs] Spaces page created, adding to window...');
     window.add(spacesPage);
 
     // Set Spaces page as the default visible page
     window.set_visible_page(spacesPage);
-    console.log('[Snappa Prefs] Spaces page set as visible');
+    console.log('[Sutto Prefs] Spaces page set as visible');
   } catch (e) {
-    console.log(`[Snappa Prefs] ERROR creating Spaces page: ${e}`);
+    console.log(`[Sutto Prefs] ERROR creating Spaces page: ${e}`);
   }
 }
 

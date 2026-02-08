@@ -29,7 +29,7 @@ User clicks "Purchase License"
 │  Automatic License Key Generation   │
 │  - Unique key per customer          │
 │  - Customizable prefix (e.g.        │
-│    SNAPPA_XXXXXXXX)                 │
+│    SUTTO_XXXXXXXX)                 │
 └─────────────────┬───────────────────┘
                   │
                   ▼
@@ -64,7 +64,7 @@ Programmatically create dynamic checkout sessions for fully custom flows.
 
 | Feature | Description |
 |---------|-------------|
-| **Custom Prefix** | Keys can be branded (e.g., `SNAPPA_<UUID4>`) |
+| **Custom Prefix** | Keys can be branded (e.g., `SUTTO_<UUID4>`) |
 | **Automatic Expiration** | Expire after N days, months, or years |
 | **Activation Limits** | Limit usage to N devices/IPs/conditions |
 | **Usage Quotas** | Track consumption per key (for metered billing) |
@@ -81,7 +81,7 @@ Programmatically create dynamic checkout sessions for fully custom flows.
 **Request**:
 ```json
 {
-  "key": "SNAPPA_XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+  "key": "SUTTO_XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
   "organization_id": "org_xxx",
   "label": "My Desktop",
   "conditions": {
@@ -110,7 +110,7 @@ Programmatically create dynamic checkout sessions for fully custom flows.
 **Request**:
 ```json
 {
-  "key": "SNAPPA_XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+  "key": "SUTTO_XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
   "organization_id": "org_xxx",
   "activation_id": "act_xxx",
   "conditions": {
@@ -141,7 +141,7 @@ Programmatically create dynamic checkout sessions for fully custom flows.
 **Request**:
 ```json
 {
-  "key": "SNAPPA_XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+  "key": "SUTTO_XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
   "organization_id": "org_xxx",
   "activation_id": "act_xxx"
 }
@@ -201,7 +201,7 @@ The self-service device management is a key advantage - users can free up device
 
 **Note**: Polar does not support PayPal. Lemon Squeezy charges +1.5% for international, +2% for PayPal.
 
-## Implementation for snappa Backend
+## Implementation for sutto Backend
 
 ### Required Backend Endpoints
 
@@ -224,10 +224,10 @@ POLAR_ORGANIZATION_ID=org_xxx
 POLAR_API_KEY=polar_xxx  # Server-side only
 ```
 
-### Advantages for snappa
+### Advantages for sutto
 
 1. **Lower fees** - Better margin on $3/month price point ($2.48 vs $2.35)
-2. **Custom key prefix** - `SNAPPA_xxx` format for brand recognition
+2. **Custom key prefix** - `SUTTO_xxx` format for brand recognition
 3. **Customer self-service** - Users can deactivate devices without support
 4. **Developer-focused** - Aligns with target audience
 5. **Usage quotas** - Flexibility for future metered features
@@ -236,7 +236,7 @@ POLAR_API_KEY=polar_xxx  # Server-side only
 
 1. No automatic email delivery of license key (customers access via portal)
 2. Smaller ecosystem compared to established platforms
-3. **No PayPal support** - This is a significant limitation for snappa's target audience:
+3. **No PayPal support** - This is a significant limitation for sutto's target audience:
    - GNOME users are globally distributed and privacy-conscious
    - Many international users hesitate to enter credit card info on unfamiliar foreign sites
    - PayPal acts as a trusted intermediary, protecting card details

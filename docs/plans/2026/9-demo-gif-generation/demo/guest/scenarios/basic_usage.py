@@ -1,4 +1,4 @@
-"""Basic usage scenario demonstrating snappa window snapping.
+"""Basic usage scenario demonstrating sutto window snapping.
 
 This scenario shows:
 1. Opening a terminal window
@@ -39,7 +39,7 @@ def run() -> None:
     smooth_move(400, 50, duration=0.4)
     time.sleep(0.3)
 
-    # Drag window to left edge to trigger snappa snap
+    # Drag window to left edge to trigger sutto snap
     smooth_move(0, 400, duration=0.6)
     click()
     time.sleep(0.8)

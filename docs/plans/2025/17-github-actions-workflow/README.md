@@ -55,8 +55,8 @@ Add GitHub Actions workflows to automate CI/CD pipeline for the GNOME Shell exte
 - Build extension to `dist/` directory
 - Package **all contents** of `dist/` directory into `.zip` file
   - Naming convention: `<uuid>.v<version>.shell-extension.zip`
-  - UUID from `metadata.json`: `snappa@x7c1.github.io`
-  - Example: `snappa@x7c1.github.io.v2.shell-extension.zip`
+  - UUID from `metadata.json`: `sutto@x7c1.github.io`
+  - Example: `sutto@x7c1.github.io.v2.shell-extension.zip`
 - Upload to GitHub Releases
 - (Future) Automatic upload to extensions.gnome.org
 
@@ -92,7 +92,7 @@ Add GitHub Actions workflows to automate CI/CD pipeline for the GNOME Shell exte
   - Build extension using `npm run build:release` (production build)
   - Package `dist/` directory to zip file with GNOME Extension naming convention
   - Zip file naming: `<uuid>.v<version>.shell-extension.zip`
-    - Example: `snappa@x7c1.github.io.v2.shell-extension.zip`
+    - Example: `sutto@x7c1.github.io.v2.shell-extension.zip`
   - Generate changelog automatically from PRs and commits
   - Create GitHub Release with zip artifact and changelog
 - Use `workflow_run` event to depend on pr.yml:

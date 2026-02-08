@@ -2,7 +2,7 @@
 
 ## Overview
 
-snappa separates concerns into layers with dependencies pointing inward toward the domain. This is closer to Clean Architecture or Onion Architecture than traditional layered architecture, as outer layers (ui, infra) can access inner layers (operations, domain) directly.
+sutto separates concerns into layers with dependencies pointing inward toward the domain. This is closer to Clean Architecture or Onion Architecture than traditional layered architecture, as outer layers (ui, infra) can access inner layers (operations, domain) directly.
 
 ## Layers
 
