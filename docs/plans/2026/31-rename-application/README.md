@@ -1,6 +1,6 @@
 # Rename Application from Snappa to Sutto
 
-Status: Open
+Status: Completed
 
 ## Overview
 
