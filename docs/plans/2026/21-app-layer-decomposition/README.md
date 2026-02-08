@@ -1,5 +1,7 @@
 # App Layer Decomposition
 
+Status: Completed
+
 ## Overview
 
 This plan completes the layer architecture migration by decomposing `src/app/` into appropriate layers and removing the temporary facade layer. Plan 20 introduced the layer architecture but left code in `src/app/facade/` for backward compatibility. This plan eliminates that intermediate state and properly distributes all application code.

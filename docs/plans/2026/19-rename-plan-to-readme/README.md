@@ -1,5 +1,7 @@
 # Rename plan.md to README.md
 
+Status: Completed
+
 ## Overview
 
 Change the planning document filename from `plan.md` to `README.md` across both strata and snappa repositories. This allows GitHub to automatically render the document when viewing a plan directory.

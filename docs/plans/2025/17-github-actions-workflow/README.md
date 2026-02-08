@@ -1,5 +1,7 @@
 # GitHub Actions Workflow Integration
 
+Status: Completed
+
 ## Overview
 Add GitHub Actions workflows to automate CI/CD pipeline for the GNOME Shell extension project. This includes automated checks for pull requests and automated release packaging when merging to main branch.
 

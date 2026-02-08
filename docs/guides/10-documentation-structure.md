@@ -10,7 +10,7 @@ This guide explains the role of each directory under `docs/`.
 
 Planning documents for past and upcoming work. Each plan captures the requirements, technical approach, and implementation steps for a specific task.
 
-Plans are append-only: once a plan is completed, it is not modified. This preserves the context and decisions made at the time of planning, even if the codebase has since changed.
+Each plan's README.md includes a `Status` field immediately after the heading. Valid values: `Draft` (being written), `Open` (reviewed, ready for implementation), `Completed` (fully implemented), `Cancelled` (abandoned). Once a plan is completed, it is not modified. This preserves the context and decisions made at the time of planning, even if the codebase has since changed.
 
 Plans may include ADRs (Architecture Decision Records) that document significant technical decisions and the reasoning behind them.
 

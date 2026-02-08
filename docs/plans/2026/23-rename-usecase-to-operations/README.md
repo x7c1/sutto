@@ -1,5 +1,7 @@
 # Rename usecase to operations
 
+Status: Completed
+
 ## Overview
 
 Rename the `usecase` layer to `operations` to better reflect its actual responsibilities.

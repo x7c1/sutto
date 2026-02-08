@@ -1,5 +1,7 @@
 # Split Controller Responsibilities
 
+Status: Completed
+
 ## Overview
 
 `controller.ts` (~408 lines) handles multiple concerns despite the documented design principle that "Controller should NOT contain business logic." This plan extracts three handler classes — `MonitorChangeHandler`, `LicenseStateHandler`, and `DragCoordinator` — to reduce Controller to a thin event dispatcher that wires components together.

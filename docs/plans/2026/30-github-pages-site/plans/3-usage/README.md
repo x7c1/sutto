@@ -1,5 +1,7 @@
 # Sub-Plan 3: Usage Page
 
+Status: Draft
+
 ## Overview
 
 Create a user-facing usage guide explaining how to use Snappa's core features.

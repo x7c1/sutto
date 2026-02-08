@@ -1,5 +1,7 @@
 # Plan 30: GitHub Pages Site
 
+Status: Draft
+
 ## Overview
 
 Create a user-facing website for Snappa using VitePress, deployed to GitHub Pages via GitHub Actions. The site provides documentation, licensing information, and support content for end users — separate from the developer-facing docs in `docs/`.

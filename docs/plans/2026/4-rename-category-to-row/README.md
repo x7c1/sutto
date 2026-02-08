@@ -1,5 +1,7 @@
 # Rename LayoutCategory to DisplayGroupsRow
 
+Status: Completed
+
 ## Overview
 
 Rename `LayoutCategory` to `DisplayGroupsRow` throughout the codebase to better reflect its actual purpose. The current name "category" is misleading - it represents a horizontal row of DisplayGroups (plural), not a categorical grouping.

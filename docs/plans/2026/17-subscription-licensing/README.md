@@ -1,5 +1,7 @@
 # Plan: Subscription-based Licensing for snappa
 
+Status: Completed
+
 ## Overview
 
 Implement a subscription-based licensing system for snappa. Users will have a 30-day free trial, after which a valid license is required to continue using the extension. The license will be verified via a snappa backend API, which communicates with an external billing provider. This architecture keeps billing service credentials server-side and allows future provider changes without client updates.

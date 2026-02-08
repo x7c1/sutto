@@ -1,5 +1,7 @@
 # Debug Mode and Debug Panel for SnapMenu
 
+Status: Completed
+
 **Status**: Planning
 **Created**: 2025-11-26
 

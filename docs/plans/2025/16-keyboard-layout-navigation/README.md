@@ -1,5 +1,7 @@
 # Keyboard Layout Navigation Feature
 
+Status: Completed
+
 ## Overview
 
 Add keyboard navigation support to the layout selection panel, allowing users to navigate between layout buttons using arrow keys (↑↓←→) and Vim-style keys (hjkl), and select layouts using the Enter key. The focused button will display using the same visual style as mouse hover.

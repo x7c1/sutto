@@ -1,5 +1,7 @@
 # Window Snap Menu Implementation
 
+Status: Completed
+
 ## Overview
 Implement a window management feature that monitors window dragging and displays a snap menu when the cursor reaches screen edges.
 Users can drop windows onto preset buttons to resize and position them automatically.

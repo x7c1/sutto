@@ -1,5 +1,7 @@
 # SpaceCollection Feature
 
+Status: Completed
+
 ## Overview
 
 Introduce the SpaceCollection concept - a container that holds multiple SpacesRow instances. Users can maintain multiple SpaceCollections (e.g., "Work", "Home", "Single Monitor", "Multi Monitor") and switch between them freely. The main panel displays only one active SpaceCollection at a time.

@@ -1,5 +1,7 @@
 # Expand Test Coverage: LicenseOperations
 
+Status: Completed
+
 ## Overview
 
 Add unit tests for `LicenseOperations` to cover the operations layer's license validation logic. Currently all tests are concentrated in the domain layer (11 test files) and infra layer (1 test file), while the operations layer has zero test coverage. This plan focuses on `LicenseOperations` only, as scoped in the proposal — other operations classes are thin wrappers where testing cost outweighs benefit.

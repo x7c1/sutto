@@ -1,5 +1,7 @@
 # Sub-Plan 3: Enforce LayoutId Type Safety
 
+Status: Draft
+
 ## Overview
 
 Replace raw `string` usage for layout IDs with the `LayoutId` domain type across all layers. Currently, `LayoutId` is used at the history repository boundary, but the UI layer, composition callbacks, and miniature display all pass layout IDs as raw `string`. The domain model `Layout.id` is also `string`.

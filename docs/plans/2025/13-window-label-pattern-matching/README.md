@@ -1,5 +1,7 @@
 # Window Label Pattern Matching
 
+Status: Completed
+
 ## Overview
 
 Implement pattern-based window label extraction to maintain layout persistence even when window titles change dynamically (e.g., song changes in YouTube Music, page navigation in browsers).

@@ -1,5 +1,7 @@
 # Space Toggle Visibility
 
+Status: Completed
+
 ## Overview
 
 Add functionality for users to toggle individual Spaces on/off via the Preferences UI. When a Space is toggled off, it will be hidden from the main panel but its configuration data will be preserved.

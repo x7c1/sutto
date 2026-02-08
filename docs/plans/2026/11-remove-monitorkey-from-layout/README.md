@@ -1,5 +1,7 @@
 # Remove monitorKey from Layout
 
+Status: Completed
+
 ## Overview
 
 Refactor Layout to be a pure value object by removing monitorKey and introducing LayoutSelectedEvent for callback chains.

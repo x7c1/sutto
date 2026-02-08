@@ -1,5 +1,7 @@
 # Multi-Monitor Support Implementation Plan
 
+Status: Completed
+
 ## Overview
 
 Add comprehensive multi-monitor support to Snappa GNOME Shell extension, enabling users to:

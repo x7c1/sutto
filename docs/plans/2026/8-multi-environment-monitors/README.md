@@ -1,5 +1,7 @@
 # Multi-Environment Monitor Storage
 
+Status: Completed
+
 ## Overview
 
 Extend `monitors.snappa.json` to store multiple monitor environment configurations, enabling proper display of miniature spaces when switching collections across different monitor setups.

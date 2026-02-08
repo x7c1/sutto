@@ -1,5 +1,7 @@
 # Preset Wide/Standard Split
 
+Status: Completed
+
 ## Overview
 
 Split preset SpaceCollections into two categories based on monitor aspect ratio: wide (ultrawide monitors) and standard. This provides optimized default layouts for different monitor types while ensuring at least two presets always exist (avoiding GTK4 single radio button rendering issue).

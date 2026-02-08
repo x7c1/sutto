@@ -1,5 +1,7 @@
 # Sub-Plan 4: Installation Page
 
+Status: Draft
+
 ## Overview
 
 Create a user-facing installation guide for Snappa.

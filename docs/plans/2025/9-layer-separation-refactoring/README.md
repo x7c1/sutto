@@ -1,5 +1,7 @@
 # Layer Separation Refactoring
 
+Status: Completed
+
 ## Overview
 
 Refactor the snap menu codebase to clearly separate data structures from UI widgets by introducing explicit layer boundaries. This eliminates confusion between data types and UI types, improving code maintainability and clarity.

@@ -1,5 +1,7 @@
 # Sub-Plan 2: Landing Page
 
+Status: Draft
+
 ## Overview
 
 Create the site's landing page with a feature overview and call-to-action for downloading/installing Snappa.

@@ -1,5 +1,7 @@
 # Layout History Highlight Feature
 
+Status: Completed
+
 ## Overview
 
 Implement visual highlighting of previously selected layouts in the snap menu on a per-application basis. When a user opens the snap menu, the layout button that was last selected for that application (identified by WM_CLASS) will be highlighted in blue, providing visual feedback and improving user experience.

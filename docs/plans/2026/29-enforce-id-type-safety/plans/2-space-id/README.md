@@ -1,5 +1,7 @@
 # Sub-Plan 2: Enforce SpaceId Type Safety
 
+Status: Draft
+
 ## Overview
 
 Replace raw `string` usage for space IDs with the `SpaceId` domain type across all layers. Currently, `SpaceId` is defined and used at the repository/infrastructure boundary, but the operations layer accepts raw `string` and converts internally, and the UI layer passes `space.id` (raw string) without type safety.

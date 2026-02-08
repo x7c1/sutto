@@ -1,5 +1,7 @@
 # Layer Architecture Refactoring
 
+Status: Completed
+
 ## Overview
 
 This plan addresses the lack of clear layer separation in the snappa codebase. Currently, external data (from APIs, GSettings, JSON files) flows into the application with minimal validation and no explicit conversion to domain objects. The goal is to introduce clear layer boundaries where:

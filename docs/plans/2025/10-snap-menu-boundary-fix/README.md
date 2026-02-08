@@ -1,5 +1,7 @@
 # Snap Menu Boundary Overflow Prevention
 
+Status: Completed
+
 ## Overview
 
 This issue addresses the problem where the snap menu overflows outside the screen boundaries when displayed near screen edges. The menu currently positions itself directly at the cursor location without boundary checking, causing parts of the menu to be hidden when the cursor is near the right, bottom, or corner edges of the screen.

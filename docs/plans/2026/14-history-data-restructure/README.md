@@ -1,5 +1,7 @@
 # History Data Restructure
 
+Status: Completed
+
 ## Overview
 
 Redesign `history.snappa.jsonl` using an event log approach. Store layout selection events chronologically, build in-memory structures at startup. No backward compatibility required.

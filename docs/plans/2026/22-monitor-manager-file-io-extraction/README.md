@@ -1,5 +1,7 @@
 # Plan 22: MonitorEnvironment Usecase Extraction
 
+Status: Completed
+
 ## Overview
 
 Extract environment management responsibilities from `GnomeShellMonitorProvider` into a dedicated usecase class. The provider should only detect monitors (read-only), while a usecase orchestrates storage and business logic.

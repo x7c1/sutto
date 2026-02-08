@@ -9,9 +9,7 @@
 
 Never duplicate content across files.
 
-### Plan Documents (`docs/plans/`)
-Past plan documents are **historical records** and should NOT be modified.
-They preserve the facts and context at the time of planning, even if terminology or structure has since changed.
+For documentation directory roles and rules, see `docs/guides/10-documentation-structure.md`.
 
 ### Markdown Files (100+ lines)
 - Always include an Overview section at the beginning

@@ -1,5 +1,7 @@
 # Sub-Plan 1: VitePress Setup and GitHub Actions Deployment
 
+Status: Draft
+
 ## Overview
 
 Set up the VitePress project structure and GitHub Actions workflow for deploying to GitHub Pages.

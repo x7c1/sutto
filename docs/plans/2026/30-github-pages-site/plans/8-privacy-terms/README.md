@@ -1,5 +1,7 @@
 # Sub-Plan 8: Privacy and Terms Page
 
+Status: Draft
+
 ## Overview
 
 Create privacy policy and terms of service content for the Snappa website.

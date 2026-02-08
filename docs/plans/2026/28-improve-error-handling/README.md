@@ -1,5 +1,7 @@
 # Improve Error Handling
 
+Status: Draft
+
 ## Overview
 
 Add user-facing error notifications for critical failures using the GNOME Shell notification system. Currently, 41 catch blocks exist in the codebase, but only license UI errors are visible to users — all other errors are silently logged to console. This plan focuses on surfacing important errors that affect user operations, while keeping infrastructure-level errors silent. Also includes a research ADR on error telemetry (server-side error collection) for future consideration.

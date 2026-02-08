@@ -1,5 +1,7 @@
 # Sub-Plan 7: FAQ Page
 
+Status: Draft
+
 ## Overview
 
 Create a frequently asked questions page covering common user questions.

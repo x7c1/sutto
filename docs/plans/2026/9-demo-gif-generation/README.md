@@ -1,5 +1,7 @@
 # Demo GIF Generation
 
+Status: Cancelled
+
 ## Overview
 
 Build a system to automatically generate GIF animations demonstrating snappa usage via scripts. Fully scripted with no manual GUI operation required.

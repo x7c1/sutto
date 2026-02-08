@@ -1,5 +1,7 @@
 # Plan 29: Enforce CollectionId Type Safety
 
+Status: Draft
+
 ## Overview
 
 Replace raw `string` usage for collection IDs with the `CollectionId` domain type across all layers. This fixes a startup crash caused by `MonitorEnvironmentOperations.getDefaultCollectionId()` generating non-UUID strings (`preset-N-monitor`) that fail `CollectionId` validation.

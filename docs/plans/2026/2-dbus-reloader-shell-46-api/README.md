@@ -1,5 +1,7 @@
 # Update D-Bus Reloader to GNOME Shell 46 API
 
+Status: Completed
+
 ## Overview
 
 Update the D-Bus reloader development tool to use proper GNOME Shell 46 ExtensionManager API instead of type-unsafe `as any` workarounds.

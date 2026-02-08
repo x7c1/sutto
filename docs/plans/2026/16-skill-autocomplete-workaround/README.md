@@ -1,5 +1,7 @@
 # Skill Autocomplete Workaround
 
+Status: Cancelled
+
 ## Overview
 
 This document describes workarounds applied to make custom skills appear in Claude Code's slash command autocomplete. These workarounds should be removed once the upstream bugs are fixed.

@@ -1,5 +1,7 @@
 # Rename DisplayGroup to Space
 
+Status: Completed
+
 ## Overview
 
 Rename `DisplayGroup` to `Space` throughout the codebase to better reflect its conceptual meaning. A "Space" represents a virtual desktop or workspace that contains multiple displays (monitors), which aligns with the established "miniature space" feature terminology.

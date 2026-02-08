@@ -1,5 +1,7 @@
 # Gradual Removal of `any` Types from Reloader
 
+Status: Completed
+
 ## Overview
 Remove `any` types from `src/reloader/reloader.ts` gradually and safely to improve type safety without causing runtime errors. The file currently contains 13 instances of `any` that should be replaced with proper types.
 

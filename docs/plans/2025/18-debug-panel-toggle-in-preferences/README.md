@@ -1,5 +1,7 @@
 # Debug Panel Toggle in Preferences
 
+Status: Completed
+
 ## Overview
 
 Add a toggle setting to enable/disable the debug panel in the preferences UI. The toggle will only appear when `__DEV__ === true` (debug builds).

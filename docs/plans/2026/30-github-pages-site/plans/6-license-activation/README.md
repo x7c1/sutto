@@ -1,5 +1,7 @@
 # Sub-Plan 6: License Activation and Troubleshooting Page
 
+Status: Draft
+
 ## Overview
 
 Create a guide for license activation and troubleshooting common licensing issues.

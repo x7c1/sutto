@@ -1,5 +1,7 @@
 # Concept Documentation - Ubiquitous Language
 
+Status: Completed
+
 ## Overview
 
 Create hierarchical concept documentation (`docs/concepts/`) that defines the ubiquitous language for the Snappa project. This documentation will establish core domain concepts and terminology used consistently across code, documentation, and discussions, following Domain-Driven Design (DDD) principles.

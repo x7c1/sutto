@@ -1,5 +1,7 @@
 # Plan 29: Enforce ID Type Safety
 
+Status: Draft
+
 ## Overview
 
 Replace raw `string` usage for domain IDs with their corresponding domain types (`CollectionId`, `SpaceId`, `LayoutId`) across all layers. This ensures compile-time type safety and prevents runtime crashes caused by invalid ID values flowing through the system undetected.

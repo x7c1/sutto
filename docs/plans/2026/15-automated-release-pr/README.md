@@ -1,5 +1,7 @@
 # Automated Release PR Workflow
 
+Status: Completed
+
 ## Overview
 
 Automate the release process by creating a GitHub Actions workflow that automatically generates and maintains a release PR. When code is merged to main, the workflow creates a PR that bumps the version (or updates an existing release PR's description). Users control release timing by merging the PR when ready.

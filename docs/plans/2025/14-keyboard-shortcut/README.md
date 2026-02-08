@@ -1,5 +1,7 @@
 # Keyboard Shortcut for Main Panel
 
+Status: Completed
+
 ## Overview
 
 Implement keyboard shortcut functionality to invoke the main panel without requiring window dragging. This feature will allow users to quickly open the main panel using a configurable keyboard combination, making the extension more accessible and efficient for keyboard-centric workflows.

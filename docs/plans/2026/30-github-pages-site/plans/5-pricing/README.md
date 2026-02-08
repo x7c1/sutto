@@ -1,5 +1,7 @@
 # Sub-Plan 5: Pricing Page
 
+Status: Draft
+
 ## Overview
 
 Create the pricing page that serves as the destination for the "Purchase License" button in the extension. This is the `LICENSE_PURCHASE_URL` target.

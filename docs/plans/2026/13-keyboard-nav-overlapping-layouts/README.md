@@ -1,5 +1,7 @@
 # Keyboard Navigation for Overlapping Layouts
 
+Status: Completed
+
 ## Overview
 
 Arrow key navigation cannot reach overlapping layout buttons (e.g., a chat overlay on top of a game region). The edge-based algorithm requires a target's opposite edge to be beyond the current button's edge, which excludes overlays inside their parent. Rather than modifying the arrow key algorithm (which proved brittle across many overlap patterns), this is solved by adding **Tab/Shift+Tab navigation** that cycles through all buttons in a deterministic order.

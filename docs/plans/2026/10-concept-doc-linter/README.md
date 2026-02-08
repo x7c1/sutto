@@ -1,5 +1,7 @@
 # Concept Doc Linter
 
+Status: Draft
+
 ## Overview
 
 A build-time tool that validates Concept Docs and automatically converts Domain Model terms to markdown links.

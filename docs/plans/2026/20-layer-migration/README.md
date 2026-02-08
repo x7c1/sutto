@@ -1,5 +1,7 @@
 # Layer Migration
 
+Status: Completed
+
 ## Overview
 
 This plan defines the migration strategy for moving existing code from `src/app/service/` and `src/app/repository/` to the new layer architecture established in PR #38. The new layer structure (domain, usecase, infra) is already in place; this plan covers migrating all existing code to appropriate layers and updating consumers.

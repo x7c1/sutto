@@ -1,5 +1,7 @@
 # Snap Menu Layout Groups
 
+Status: Completed
+
 ## Overview
 
 Redesign the snap menu to use a layout group concept where related layouts are visually grouped together. Each layout group displays as a miniature screen preview with layout buttons positioned according to their actual screen positions.
