@@ -12,11 +12,10 @@
  * - Each responsibility should be handled by a single dedicated class
  */
 
-import Meta from 'gi://Meta';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
-import { EdgeDetector, type Position } from '../domain/geometry/index.js';
+import { EdgeDetector } from '../domain/geometry/index.js';
 import type { LayoutSelectedEvent } from '../domain/layout/index.js';
-import { CollectionId, extractLayoutIds } from '../domain/layout/index.js';
+import { extractLayoutIds } from '../domain/layout/index.js';
 import { HttpLicenseApiClient } from '../infra/api/index.js';
 import { HISTORY_FILE_NAME, MONITORS_FILE_NAME } from '../infra/constants.js';
 import {
@@ -36,11 +35,18 @@ import type { LayoutHistoryRepository } from '../operations/history/index.js';
 import { LicenseOperations } from '../operations/licensing/index.js';
 import { MonitorEnvironmentOperations } from '../operations/monitor/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';
-import { DragSignalHandler, EdgeTimerManager, MotionMonitor } from './drag/index.js';
+import {
+  DragCoordinator,
+  DragSignalHandler,
+  EdgeTimerManager,
+  MotionMonitor,
+} from './drag/index.js';
 import {
   resolvePresetGeneratorOperations,
   resolveSpaceCollectionOperations,
 } from './factory/index.js';
+import { LicenseStateHandler } from './licensing/index.js';
+import { MonitorChangeHandler } from './monitor/index.js';
 import { KeyboardShortcutManager } from './shortcuts/index.js';
 import { LayoutApplicator } from './window/index.js';
 
@@ -51,33 +57,23 @@ const EDGE_DELAY = 200; // milliseconds to wait before showing panel
 const MONITOR_INTERVAL = 50; // milliseconds between cursor position checks
 
 export class Controller {
-  private currentWindow: Meta.Window | null = null;
-  private lastDraggedWindow: Meta.Window | null = null;
-  private isDragging: boolean = false;
-  private isAtEdge: boolean = false;
   private mainPanel: MainPanel;
-  private monitorProvider: GnomeShellMonitorProvider;
-  private monitorEnvironmentOperations: MonitorEnvironmentOperations;
-  private edgeDetector: EdgeDetector;
-  private edgeTimerManager: EdgeTimerManager;
-  private motionMonitor: MotionMonitor;
-  private layoutApplicator: LayoutApplicator;
-  private keyboardShortcutManager: KeyboardShortcutManager;
+  private monitorChangeHandler: MonitorChangeHandler;
+  private licenseStateHandler: LicenseStateHandler;
+  private dragCoordinator: DragCoordinator;
   private dragSignalHandler: DragSignalHandler;
+  private keyboardShortcutManager: KeyboardShortcutManager;
+  private layoutApplicator: LayoutApplicator;
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
-  private preferencesRepository: GSettingsPreferencesRepository;
-  private licenseOperations: LicenseOperations;
-  private isLicenseValid: boolean = true;
 
   constructor(preferencesRepository: GSettingsPreferencesRepository, metadata: ExtensionMetadata) {
-    this.preferencesRepository = preferencesRepository;
-    this.monitorProvider = new GnomeShellMonitorProvider();
+    const monitorProvider = new GnomeShellMonitorProvider();
     const monitorEnvironmentRepository = new FileMonitorEnvironmentRepository(
       getExtensionDataPath(MONITORS_FILE_NAME)
     );
-    this.monitorEnvironmentOperations = new MonitorEnvironmentOperations(
-      this.monitorProvider,
+    const monitorEnvironmentOperations = new MonitorEnvironmentOperations(
+      monitorProvider,
       monitorEnvironmentRepository
     );
 
@@ -87,44 +83,53 @@ export class Controller {
       this.getAllValidLayoutIds()
     );
 
-    this.edgeDetector = new EdgeDetector(EDGE_THRESHOLD);
-    this.edgeTimerManager = new EdgeTimerManager(EDGE_DELAY);
-    this.motionMonitor = new MotionMonitor(MONITOR_INTERVAL);
-    this.dragSignalHandler = new DragSignalHandler();
-
-    this.layoutApplicator = new LayoutApplicator(
-      this.monitorProvider,
+    this.monitorChangeHandler = new MonitorChangeHandler(
+      monitorProvider,
+      monitorEnvironmentOperations,
       this.layoutHistoryRepository,
       {
-        onLayoutApplied: (layoutId, monitorKey) => {
-          this.mainPanel.updateSelectedLayoutHighlight(layoutId, monitorKey);
-        },
+        getActiveSpaceCollectionId: () => preferencesRepository.getActiveSpaceCollectionId(),
+        setActiveSpaceCollectionId: (id) => preferencesRepository.setActiveSpaceCollectionId(id),
       }
     );
+
+    this.dragCoordinator = new DragCoordinator(
+      new MotionMonitor(MONITOR_INTERVAL),
+      new EdgeTimerManager(EDGE_DELAY),
+      new EdgeDetector(EDGE_THRESHOLD),
+      monitorProvider,
+      {
+        onEdgeTimerFired: () => this.showMainPanel(),
+        onPanelPositionUpdate: (cursor) => this.mainPanel.updatePosition(cursor),
+        isPanelVisible: () => this.mainPanel.isVisible(),
+      }
+    );
+
+    this.dragSignalHandler = new DragSignalHandler();
+
+    this.layoutApplicator = new LayoutApplicator(monitorProvider, this.layoutHistoryRepository, {
+      onLayoutApplied: (layoutId, monitorKey) => {
+        this.mainPanel.updateSelectedLayoutHighlight(layoutId, monitorKey);
+      },
+    });
 
     this.keyboardShortcutManager = new KeyboardShortcutManager(preferencesRepository);
 
     // Initialize license management
     const licenseRepository = new GSettingsLicenseRepository(preferencesRepository.getGSettings());
     const licenseApiClient = new HttpLicenseApiClient(__LICENSE_API_BASE_URL__);
-    this.licenseOperations = new LicenseOperations(
+    const licenseOperations = new LicenseOperations(
       licenseRepository,
       licenseApiClient,
       new GLibDateProvider(),
       new GioNetworkStateProvider(),
       new SystemDeviceInfoProvider()
     );
-    this.licenseOperations.onStateChange(() => {
-      this.isLicenseValid = this.licenseOperations.shouldExtensionBeEnabled();
-      if (!this.isLicenseValid) {
-        log('[Controller] License invalid, hiding panel');
-        this.mainPanel.hide();
-      }
-    });
+    this.licenseStateHandler = new LicenseStateHandler(licenseOperations);
 
     this.mainPanel = new MainPanel({
       metadata,
-      monitorEnvironment: this.monitorEnvironmentOperations,
+      monitorEnvironment: monitorEnvironmentOperations,
       layoutHistoryRepository: this.layoutHistoryRepository,
       onLayoutSelected: (event) => this.applyLayoutToCurrentWindow(event),
       getOpenPreferencesShortcuts: () => preferencesRepository.getOpenPreferencesShortcut(),
@@ -139,193 +144,58 @@ export class Controller {
     });
   }
 
-  /**
-   * Enable the controller
-   */
   enable(): void {
-    // Initialize license checking
-    this.licenseOperations.initialize().then(() => {
-      this.isLicenseValid = this.licenseOperations.shouldExtensionBeEnabled();
-      if (!this.isLicenseValid) {
-        log('[Controller] License invalid on startup, extension disabled');
-      }
+    this.licenseStateHandler.initialize(() => {
+      log('[Controller] License invalid, hiding panel');
+      this.mainPanel.hide();
     });
 
-    // Sync current active collection from settings
-    const currentCollectionId = this.preferencesRepository.getActiveSpaceCollectionId();
-    if (currentCollectionId) {
-      this.monitorEnvironmentOperations.setActiveCollectionId(currentCollectionId);
-    }
+    this.monitorChangeHandler.initialize();
 
-    // Detect monitors and save environment
-    this.handleMonitorsSaveResult(this.monitorEnvironmentOperations.detectAndSaveMonitors());
-
-    this.monitorProvider.connectToMonitorChanges(() => {
-      const collectionToActivate = this.monitorEnvironmentOperations.detectAndSaveMonitors();
-      this.handleMonitorsSaveResult(collectionToActivate);
-
-      // Re-render panel when monitors change to reflect new configuration
+    this.monitorChangeHandler.connectToMonitorChanges(() => {
       if (this.mainPanel.isVisible()) {
         const cursor = this.getCursorPosition();
-        const window = this.getCurrentWindow();
+        const window = this.dragCoordinator.getCurrentWindow();
         this.mainPanel.show(cursor, window);
       }
     });
 
     this.dragSignalHandler.connect({
-      onDragBegin: (window, op) => this.onGrabOpBegin(window, op),
-      onDragEnd: (window, op) => this.onGrabOpEnd(window, op),
+      onDragBegin: (window, op) => this.dragCoordinator.onGrabOpBegin(window, op),
+      onDragEnd: (window, op) => this.dragCoordinator.onGrabOpEnd(window, op),
     });
 
     this.keyboardShortcutManager.registerShowPanelShortcut(() => this.onShowPanelShortcut());
   }
 
-  /**
-   * Disable the controller
-   */
   disable(): void {
-    this.licenseOperations.clearCallbacks();
-    this.motionMonitor.stop();
+    this.licenseStateHandler.clearCallbacks();
+    this.dragCoordinator.stop();
     this.dragSignalHandler.disconnect();
     this.keyboardShortcutManager.unregisterAll();
-    this.edgeTimerManager.clear();
-    this.resetState();
-    this.monitorProvider.disconnectMonitorChanges();
+    this.monitorChangeHandler.disconnectMonitorChanges();
   }
 
-  /**
-   * Reset controller state
-   */
-  private resetState(): void {
-    this.currentWindow = null;
-    this.isDragging = false;
-    this.isAtEdge = false;
-  }
-
-  /**
-   * Handle result from saveMonitors - activate collection if environment changed
-   */
-  private handleMonitorsSaveResult(collectionToActivate: string | null): void {
-    if (collectionToActivate) {
-      log(`[Controller] Environment changed, activating collection: ${collectionToActivate}`);
-      this.preferencesRepository.setActiveSpaceCollectionId(collectionToActivate);
-      this.monitorEnvironmentOperations.setActiveCollectionId(collectionToActivate);
-      this.syncActiveCollectionToHistory();
-    }
-  }
-
-  /**
-   * Ensure layout history is loaded (lazy loading on first panel display)
-   */
   private ensureHistoryLoaded(): void {
     if (!this.historyLoaded) {
       this.layoutHistoryRepository.restoreHistory();
       this.historyLoaded = true;
     }
-    this.syncActiveCollectionToHistory();
+    this.monitorChangeHandler.syncActiveCollectionToHistory();
   }
 
-  private syncActiveCollectionToHistory(): void {
-    const collectionIdStr = this.preferencesRepository.getActiveSpaceCollectionId();
-    if (collectionIdStr) {
-      const collectionId = new CollectionId(collectionIdStr);
-      this.layoutHistoryRepository.setActiveCollection(collectionId);
-    }
-  }
-
-  /**
-   * Get all valid layout IDs from all collections
-   */
   private getAllValidLayoutIds(): Set<string> {
     const collections = resolveSpaceCollectionOperations().loadAllCollections();
     return extractLayoutIds(collections);
   }
 
-  /**
-   * Handle grab operation begin
-   */
-  private onGrabOpBegin(window: Meta.Window, op: Meta.GrabOp): void {
-    if (op !== Meta.GrabOp.MOVING) {
-      return;
-    }
-
-    this.currentWindow = window;
-    this.lastDraggedWindow = window;
-    this.isDragging = true;
-
-    this.motionMonitor.start(() => {
-      if (!this.isDragging) {
-        return false;
-      }
-      this.onMotion();
-      return true;
-    });
-  }
-
-  /**
-   * Handle grab operation end
-   */
-  private onGrabOpEnd(window: Meta.Window, op: Meta.GrabOp): void {
-    if (op !== Meta.GrabOp.MOVING || window !== this.currentWindow) {
-      return;
-    }
-
-    this.isDragging = false;
-    this.currentWindow = null;
-    this.isAtEdge = false;
-
-    this.motionMonitor.stop();
-    this.edgeTimerManager.clear();
-
-    // Panel stays visible until user selects a layout
-  }
-
-  /**
-   * Handle cursor motion during drag
-   */
-  private onMotion(): void {
-    const cursor = this.getCursorPosition();
-    const monitor = this.monitorProvider.getCurrentMonitor();
-    const atEdge = monitor ? this.edgeDetector.isAtEdge(cursor, monitor.geometry) : false;
-
-    if (atEdge && !this.isAtEdge) {
-      this.isAtEdge = true;
-      this.edgeTimerManager.start(() => {
-        if (this.isAtEdge && this.isDragging) {
-          this.showMainPanel();
-        }
-      });
-    } else if (!atEdge && this.isAtEdge && !this.mainPanel.isVisible()) {
-      this.isAtEdge = false;
-      this.edgeTimerManager.clear();
-    }
-    // Keep isAtEdge=true while panel is visible to prevent accidental dismissal
-
-    if (this.mainPanel.isVisible()) {
-      this.mainPanel.updatePosition(cursor);
-    }
-  }
-
-  /**
-   * Get current cursor position
-   */
-  private getCursorPosition(): Position {
+  private getCursorPosition(): { x: number; y: number } {
     const [x, y] = global.get_pointer();
     return { x, y };
   }
 
-  /**
-   * Get current window
-   */
-  private getCurrentWindow(): Meta.Window | null {
-    return this.currentWindow || this.lastDraggedWindow;
-  }
-
-  /**
-   * Show main panel at cursor position
-   */
   private showMainPanel(): void {
-    if (!this.isLicenseValid) {
+    if (!this.licenseStateHandler.isValid()) {
       log('[Controller] Cannot show panel: license invalid');
       return;
     }
@@ -335,19 +205,15 @@ export class Controller {
     }
 
     this.ensureHistoryLoaded();
-    this.handleMonitorsSaveResult(this.monitorEnvironmentOperations.detectAndSaveMonitors());
+    this.monitorChangeHandler.detectAndActivate();
 
     const cursor = this.getCursorPosition();
-    const window = this.getCurrentWindow();
+    const window = this.dragCoordinator.getCurrentWindow();
     this.mainPanel.show(cursor, window);
   }
 
-  /**
-   * Apply layout to currently dragged window (called when panel button is clicked)
-   */
   private applyLayoutToCurrentWindow(event: LayoutSelectedEvent): void {
-    // currentWindow is null after drag ends, so fallback to lastDraggedWindow
-    const targetWindow = this.currentWindow || this.lastDraggedWindow;
+    const targetWindow = this.dragCoordinator.getCurrentWindow();
     if (!targetWindow) {
       log('[Controller] No window to apply layout to');
       return;
@@ -355,13 +221,10 @@ export class Controller {
     this.layoutApplicator.applyLayout(targetWindow, event);
   }
 
-  /**
-   * Handle keyboard shortcut to show main panel
-   */
   private onShowPanelShortcut(): void {
     log('[Controller] ===== KEYBOARD SHORTCUT TRIGGERED =====');
 
-    if (!this.isLicenseValid) {
+    if (!this.licenseStateHandler.isValid()) {
       log('[Controller] License invalid, ignoring shortcut');
       return;
     }
@@ -383,18 +246,13 @@ export class Controller {
 
     this.ensureHistoryLoaded();
 
-    // Track window reference for layout application
-    this.currentWindow = focusWindow;
-    this.lastDraggedWindow = focusWindow;
+    this.dragCoordinator.setCurrentWindow(focusWindow);
 
     log('[Controller] Showing main panel...');
     this.mainPanel.showAtWindowCenter(focusWindow);
     log('[Controller] Main panel shown');
   }
 
-  /**
-   * Handle keyboard shortcut to hide main panel
-   */
   private onHidePanelShortcut(): void {
     log('[Controller] ===== HIDE PANEL SHORTCUT TRIGGERED =====');
 
