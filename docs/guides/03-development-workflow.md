@@ -21,6 +21,8 @@ This command builds, copies files, and reloads the extension via D-Bus.
 | `npm run check` | Run both linter and formatter |
 | `npm run test` | Run tests in watch mode |
 | `npm run test:run` | Run tests once |
+| `npm run site:dev` | Start local preview of the website |
+| `npm run site:build` | Build the website for production |
 
 ## Viewing Logs
 
