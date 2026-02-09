@@ -2,12 +2,10 @@ import Gio from 'gi://Gio';
 
 import {
   CollectionId,
-  type CollectionId as CollectionIdType,
   LayoutId,
   type Space,
   type SpaceCollection,
   SpaceId,
-  type SpaceId as SpaceIdType,
 } from '../../domain/layout/index.js';
 import type { UUIDGenerator } from '../../libs/uuid/index.js';
 import type { SpaceCollectionRepository } from '../../operations/layout/space-collection-repository.js';
@@ -92,7 +90,7 @@ export class FileSpaceCollectionRepository implements SpaceCollectionRepository 
     return newCollection;
   }
 
-  deleteCustomCollection(collectionId: CollectionIdType): boolean {
+  deleteCustomCollection(collectionId: CollectionId): boolean {
     const collections = this.loadCustomCollections();
     const index = collections.findIndex((c) => c.id.equals(collectionId));
 
@@ -108,16 +106,12 @@ export class FileSpaceCollectionRepository implements SpaceCollectionRepository 
     return true;
   }
 
-  findCollectionById(collectionId: CollectionIdType): SpaceCollection | undefined {
+  findCollectionById(collectionId: CollectionId): SpaceCollection | undefined {
     const all = this.loadAllCollections();
     return all.find((c) => c.id.equals(collectionId));
   }
 
-  updateSpaceEnabled(
-    collectionId: CollectionIdType,
-    spaceId: SpaceIdType,
-    enabled: boolean
-  ): boolean {
+  updateSpaceEnabled(collectionId: CollectionId, spaceId: SpaceId, enabled: boolean): boolean {
     const presets = this.loadPresetCollections();
     const presetSpace = this.findSpace(presets, collectionId, spaceId);
     if (presetSpace) {
@@ -275,8 +269,8 @@ export class FileSpaceCollectionRepository implements SpaceCollectionRepository 
 
   private findSpace(
     collections: SpaceCollection[],
-    collectionId: CollectionIdType,
-    spaceId: SpaceIdType
+    collectionId: CollectionId,
+    spaceId: SpaceId
   ): Space | null {
     const collection = collections.find((c) => c.id.equals(collectionId));
     if (!collection) return null;

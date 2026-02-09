@@ -6,7 +6,7 @@
  * and preferences to keep the active collection in sync with the monitor setup.
  */
 
-import { CollectionId, type CollectionId as CollectionIdType } from '../../domain/layout/index.js';
+import { CollectionId } from '../../domain/layout/index.js';
 import type { GnomeShellMonitorProvider } from '../../infra/monitor/gnome-shell-monitor-provider.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 import type { MonitorEnvironmentOperations } from '../../operations/monitor/index.js';
@@ -42,7 +42,7 @@ export class MonitorChangeHandler {
     });
   }
 
-  private handleMonitorsSaveResult(collectionToActivate: CollectionIdType | null): void {
+  private handleMonitorsSaveResult(collectionToActivate: CollectionId | null): void {
     if (collectionToActivate) {
       log(
         `[MonitorChangeHandler] Environment changed, activating collection: ${collectionToActivate.toString()}`
@@ -68,7 +68,7 @@ export class MonitorChangeHandler {
     this.monitorProvider.disconnectMonitorChanges();
   }
 
-  private parseCollectionIdFromSettings(): CollectionIdType | null {
+  private parseCollectionIdFromSettings(): CollectionId | null {
     const str = this.callbacks.getActiveSpaceCollectionId();
     if (!str) return null;
     try {
