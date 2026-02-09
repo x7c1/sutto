@@ -3,7 +3,7 @@ import GLib from 'gi://GLib';
 import { LayoutEvent, type WindowIdentifier } from '../../domain/history/index.js';
 import { type CollectionId, LayoutId } from '../../domain/layout/index.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
-import { toRawLayoutEvent } from './layout-event-serializer.js';
+import { toRawLayoutEvent } from './raw-layout-event.js';
 
 declare function log(message: string): void;
 

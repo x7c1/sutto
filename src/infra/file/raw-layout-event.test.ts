@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LayoutEvent } from '../../domain/history/index.js';
 import { CollectionId } from '../../domain/layout/collection-id.js';
 import { LayoutId } from '../../domain/layout/layout-id.js';
-import { toRawLayoutEvent } from './layout-event-serializer.js';
+import { toRawLayoutEvent } from './raw-layout-event.js';
 
 describe('toRawLayoutEvent', () => {
   it('converts LayoutEvent to raw object', () => {

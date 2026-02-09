@@ -6,7 +6,7 @@ import {
   deserializeMonitorEnvironmentStorage,
   type RawMonitorEnvironmentStorage,
   serializeMonitorEnvironmentStorage,
-} from './monitor-environment-serializer.js';
+} from './raw-monitor-environment-storage.js';
 
 const log = (message: string): void => console.log(message);
 
