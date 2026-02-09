@@ -2,46 +2,19 @@ import Gio from 'gi://Gio';
 
 import {
   CollectionId,
-  LayoutId,
   type Space,
   type SpaceCollection,
-  SpaceId,
+  type SpaceId,
 } from '../../domain/layout/index.js';
 import type { UUIDGenerator } from '../../libs/uuid/index.js';
 import type { SpaceCollectionRepository } from '../../operations/layout/space-collection-repository.js';
+import {
+  deserializeSpaceCollection,
+  isValidRawSpaceCollectionArray,
+  serializeSpaceCollection,
+} from './raw-space-collection.js';
 
 const log = (message: string): void => console.log(message);
-
-interface RawSpaceCollection {
-  id: string;
-  name: string;
-  rows: RawSpacesRow[];
-}
-
-interface RawSpacesRow {
-  spaces: RawSpace[];
-}
-
-interface RawSpace {
-  id: string;
-  enabled: boolean;
-  displays: {
-    [monitorKey: string]: RawLayoutGroup;
-  };
-}
-
-interface RawLayoutGroup {
-  name: string;
-  layouts: RawLayout[];
-}
-
-interface RawLayout {
-  id: string;
-  hash: string;
-  label: string;
-  position: { x: string; y: string };
-  size: { width: string; height: string };
-}
 
 /**
  * File-based implementation of SpaceCollectionRepository
@@ -157,12 +130,12 @@ export class FileSpaceCollectionRepository implements SpaceCollectionRepository 
       const contentsString = new TextDecoder('utf-8').decode(contents);
       const data: unknown = JSON.parse(contentsString);
 
-      if (!this.isValidRawSpaceCollectionArray(data)) {
+      if (!isValidRawSpaceCollectionArray(data)) {
         log(`[SpaceCollectionRepository] Invalid data format in: ${filePath}`);
         return [];
       }
 
-      return data.map((raw) => this.deserializeCollection(raw));
+      return data.map((raw) => deserializeSpaceCollection(raw));
     } catch (e) {
       log(`[SpaceCollectionRepository] Error loading file ${filePath}: ${e}`);
       return [];
@@ -178,7 +151,7 @@ export class FileSpaceCollectionRepository implements SpaceCollectionRepository 
         parent.make_directory_with_parents(null);
       }
 
-      const rawCollections = collections.map((c) => this.serializeCollection(c));
+      const rawCollections = collections.map((c) => serializeSpaceCollection(c));
       const json = JSON.stringify(rawCollections, null, 2);
       file.replace_contents(json, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
@@ -186,85 +159,6 @@ export class FileSpaceCollectionRepository implements SpaceCollectionRepository 
     } catch (e) {
       log(`[SpaceCollectionRepository] Error saving to ${filePath}: ${e}`);
     }
-  }
-
-  private deserializeCollection(raw: RawSpaceCollection): SpaceCollection {
-    return {
-      id: new CollectionId(raw.id),
-      name: raw.name,
-      rows: raw.rows.map((row) => ({
-        spaces: row.spaces.map((space) => ({
-          id: new SpaceId(space.id),
-          enabled: space.enabled,
-          displays: Object.fromEntries(
-            Object.entries(space.displays).map(([key, group]) => [
-              key,
-              {
-                name: group.name,
-                layouts: group.layouts.map((layout) => ({
-                  id: new LayoutId(layout.id),
-                  hash: layout.hash,
-                  label: layout.label,
-                  position: layout.position,
-                  size: layout.size,
-                })),
-              },
-            ])
-          ),
-        })),
-      })),
-    };
-  }
-
-  private serializeCollection(collection: SpaceCollection): RawSpaceCollection {
-    return {
-      id: collection.id.toString(),
-      name: collection.name,
-      rows: collection.rows.map((row) => ({
-        spaces: row.spaces.map((space) => ({
-          id: space.id.toString(),
-          enabled: space.enabled,
-          displays: Object.fromEntries(
-            Object.entries(space.displays).map(([key, group]) => [
-              key,
-              {
-                name: group.name,
-                layouts: group.layouts.map((layout) => ({
-                  id: layout.id.toString(),
-                  hash: layout.hash,
-                  label: layout.label,
-                  position: layout.position,
-                  size: layout.size,
-                })),
-              },
-            ])
-          ),
-        })),
-      })),
-    };
-  }
-
-  private isValidRawSpaceCollectionArray(data: unknown): data is RawSpaceCollection[] {
-    if (!Array.isArray(data)) {
-      return false;
-    }
-
-    for (const item of data) {
-      if (typeof item !== 'object' || item === null) {
-        return false;
-      }
-      if (!('id' in item) || typeof item.id !== 'string') {
-        return false;
-      }
-      if (!('name' in item) || typeof item.name !== 'string') {
-        return false;
-      }
-      if (!('rows' in item) || !Array.isArray(item.rows)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   private findSpace(
