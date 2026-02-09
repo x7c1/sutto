@@ -1,6 +1,6 @@
 # Sub-Plan 3: Usage Page
 
-Status: Open
+Status: Completed
 
 ## Overview
 

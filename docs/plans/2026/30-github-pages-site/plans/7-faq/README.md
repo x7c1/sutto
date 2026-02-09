@@ -1,6 +1,6 @@
 # Sub-Plan 7: FAQ Page
 
-Status: Open
+Status: Completed
 
 ## Overview
 

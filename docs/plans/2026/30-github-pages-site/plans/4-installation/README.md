@@ -1,6 +1,6 @@
 # Sub-Plan 4: Installation Page
 
-Status: Open
+Status: Completed
 
 ## Overview
 

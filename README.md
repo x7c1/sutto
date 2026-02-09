@@ -18,7 +18,7 @@ See [Installation](docs/guides/02-installation.md) for prerequisites and setup i
 
 ## Usage
 
-See [Usage Guide](docs/guides/11-usage.md) for how to use the extension.
+See [Usage Guide](https://x7c1.github.io/sutto/usage) for how to use the extension.
 
 ## Development
 

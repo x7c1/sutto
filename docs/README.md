@@ -12,7 +12,6 @@
 - [Release Workflow](guides/08-release-workflow.md)
 - [Architecture](guides/09-architecture.md)
 - [Documentation Structure](guides/10-documentation-structure.md)
-- [Usage](guides/11-usage.md)
 
 ## Directory Structure
 

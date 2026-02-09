@@ -1,6 +1,6 @@
 # Sub-Plan 8: Privacy and Terms Page
 
-Status: Open
+Status: Completed
 
 ## Overview
 

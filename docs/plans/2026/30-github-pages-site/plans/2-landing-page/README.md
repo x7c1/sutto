@@ -1,6 +1,6 @@
 # Sub-Plan 2: Landing Page
 
-Status: Open
+Status: Completed
 
 ## Overview
 

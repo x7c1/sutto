@@ -1,6 +1,6 @@
 # Sub-Plan 5: Pricing Page
 
-Status: Open
+Status: Completed
 
 ## Overview
 
