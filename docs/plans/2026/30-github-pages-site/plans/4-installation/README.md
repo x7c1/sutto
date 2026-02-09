@@ -1,6 +1,6 @@
 # Sub-Plan 4: Installation Page
 
-Status: Draft
+Status: Open
 
 ## Overview
 
@@ -20,6 +20,7 @@ Create a user-facing installation guide for Sutto.
 
 - Page renders correctly in local preview
 - Installation steps are accurate
+- Supported GNOME Shell version matches `docs/guides/02-installation.md`
 
 ## Estimate
 

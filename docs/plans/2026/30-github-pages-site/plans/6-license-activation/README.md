@@ -1,6 +1,6 @@
 # Sub-Plan 6: License Activation and Troubleshooting Page
 
-Status: Draft
+Status: Open
 
 ## Overview
 

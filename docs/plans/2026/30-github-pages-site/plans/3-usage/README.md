@@ -1,6 +1,6 @@
 # Sub-Plan 3: Usage Page
 
-Status: Draft
+Status: Open
 
 ## Overview
 
@@ -16,6 +16,7 @@ Create a user-facing usage guide explaining how to use Sutto's core features.
 ## Cleanup
 
 - Update the Usage link in root `README.md` to point to the GitHub Pages site instead of `docs/guides/11-usage.md`
+- Search for all internal references to `docs/guides/11-usage.md` and update or remove them
 - Delete `docs/guides/11-usage.md` (content is now on the site)
 - Remove the entry from `docs/README.md`
 

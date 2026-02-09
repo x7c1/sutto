@@ -1,6 +1,6 @@
 # Sub-Plan 2: Landing Page
 
-Status: Draft
+Status: Open
 
 ## Overview
 
@@ -15,7 +15,7 @@ Create the site's landing page with a feature overview and call-to-action for do
   - Visual layout preview
   - Multi-monitor support
   - Customizable preferences
-- Screenshots of the Main Panel and preferences UI
+- Screenshots of the Main Panel and preferences UI (placeholder images — actual screenshots will be provided separately)
 - Call-to-action: link to Installation page
 - Link to GitHub repository
 

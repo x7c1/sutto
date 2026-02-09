@@ -20,7 +20,10 @@
     "check:strict": "biome check --error-on-warnings .",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "site:dev": "vitepress dev site",
+    "site:build": "vitepress build site",
+    "site:preview": "vitepress preview site"
   },
   "repository": {
     "type": "git",
@@ -51,6 +54,7 @@
     "@girs/st-14": "14.0.0-4.0.0-beta.12",
     "esbuild": "^0.27.0",
     "typescript": "^5.9.3",
+    "vitepress": "^1.6.4",
     "vitest": "^4.0.14"
   },
   "overrides": {

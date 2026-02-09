@@ -89,15 +89,6 @@ Both VitePress and Astro + Starlight generate static HTML/CSS/JS that can be dep
 
 If the site will only ever be documentation, VitePress is simpler. If there may be non-documentation pages later, Astro's flexibility is an advantage.
 
-## Recommendation
-
-No recommendation — this decision depends on preference for ecosystem alignment vs. simplicity.
-
-- **Minimal effort**: Jekyll (Option B) — native support, no Actions needed
-- **Docs-focused, JS ecosystem**: VitePress (Option D) — minimal setup for documentation
-- **Flexible, JS ecosystem**: Astro/Starlight (Option E) — expandable beyond docs
-- **Simplest for now**: Plain Markdown (Option A) — but will not scale
-
 ## Decision
 
 **Option D: VitePress**

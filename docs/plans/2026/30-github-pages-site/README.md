@@ -1,6 +1,6 @@
 # Plan 30: GitHub Pages Site
 
-Status: Draft
+Status: Open
 
 ## Overview
 

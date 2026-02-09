@@ -1,6 +1,6 @@
 # Sub-Plan 5: Pricing Page
 
-Status: Draft
+Status: Open
 
 ## Overview
 
@@ -18,6 +18,11 @@ Create the pricing page that serves as the destination for the "Purchase License
 
 - The actual payment flow is handled by an external service — this page links to it
 - May need custom Vue components for pricing cards/CTA styling
+
+## Cleanup
+
+- Update `LICENSE_PURCHASE_URL` in `.envrc.example` to point to the actual GitHub Pages pricing URL (`https://x7c1.github.io/sutto/pricing`)
+- Update the `LICENSE_PURCHASE_URL` GitHub Secret to the production URL
 
 ## Verification
 

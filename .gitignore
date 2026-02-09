@@ -41,6 +41,10 @@ target
 .envrc
 .claude/settings.local.json
 
+# VitePress build output
+site/.vitepress/dist/
+site/.vitepress/cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

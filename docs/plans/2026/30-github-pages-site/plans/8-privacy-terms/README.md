@@ -1,6 +1,6 @@
 # Sub-Plan 8: Privacy and Terms Page
 
-Status: Draft
+Status: Open
 
 ## Overview
 
@@ -17,7 +17,6 @@ Create privacy policy and terms of service content for the Sutto website.
 ### Terms of Service
 - License terms: subscription-based, up to 3 device activations
 - Trial terms: 30 usage days free
-- Refund policy (TBD)
 - Limitation of liability
 
 ## Notes
