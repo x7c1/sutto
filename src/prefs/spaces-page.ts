@@ -535,7 +535,7 @@ function createCollectionRow(
       const deleted = resolveSpaceCollectionOperations().deleteCustomCollection(collection.id);
       if (deleted) {
         // If this was the active collection, select first preset
-        if (state.activeCollectionId && state.activeCollectionId.equals(collection.id)) {
+        if (state.activeCollectionId?.equals(collection.id)) {
           const presets = resolveSpaceCollectionOperations().loadPresetCollections();
           if (presets.length > 0) {
             state.activeCollectionId = presets[0].id;
