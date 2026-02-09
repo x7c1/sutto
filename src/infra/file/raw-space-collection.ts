@@ -17,31 +17,6 @@ export interface RawSpaceCollection {
   rows: RawSpacesRow[];
 }
 
-interface RawSpacesRow {
-  spaces: RawSpace[];
-}
-
-interface RawSpace {
-  id: string;
-  enabled: boolean;
-  displays: {
-    [monitorKey: string]: RawLayoutGroup;
-  };
-}
-
-interface RawLayoutGroup {
-  name: string;
-  layouts: RawLayout[];
-}
-
-interface RawLayout {
-  id: string;
-  hash: string;
-  label: string;
-  position: { x: string; y: string };
-  size: { width: string; height: string };
-}
-
 export function deserializeSpaceCollection(raw: RawSpaceCollection): SpaceCollection {
   return {
     id: new CollectionId(raw.id),
@@ -119,4 +94,29 @@ export function isValidRawSpaceCollectionArray(data: unknown): data is RawSpaceC
   }
 
   return true;
+}
+
+interface RawSpacesRow {
+  spaces: RawSpace[];
+}
+
+interface RawSpace {
+  id: string;
+  enabled: boolean;
+  displays: {
+    [monitorKey: string]: RawLayoutGroup;
+  };
+}
+
+interface RawLayoutGroup {
+  name: string;
+  layouts: RawLayout[];
+}
+
+interface RawLayout {
+  id: string;
+  hash: string;
+  label: string;
+  position: { x: string; y: string };
+  size: { width: string; height: string };
 }

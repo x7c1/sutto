@@ -9,13 +9,6 @@ import type { MonitorEnvironment, MonitorEnvironmentStorage } from '../../domain
 
 const log = (message: string): void => console.log(message);
 
-interface RawMonitorEnvironment {
-  id: string;
-  monitors: MonitorEnvironment['monitors'];
-  lastActiveCollectionId: string;
-  lastActiveAt: number;
-}
-
 export interface RawMonitorEnvironmentStorage {
   environments: RawMonitorEnvironment[];
   current: string;
@@ -47,6 +40,13 @@ export function serializeMonitorEnvironmentStorage(
     })),
     current: storage.current,
   };
+}
+
+interface RawMonitorEnvironment {
+  id: string;
+  monitors: MonitorEnvironment['monitors'];
+  lastActiveCollectionId: string;
+  lastActiveAt: number;
 }
 
 function parseCollectionId(value: string): CollectionId | null {
