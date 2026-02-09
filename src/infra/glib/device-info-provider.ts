@@ -3,6 +3,8 @@ import GLib from 'gi://GLib';
 import { DeviceId } from '../../domain/licensing/index.js';
 import type { DeviceInfoProvider } from '../../operations/licensing/index.js';
 
+const log = (message: string): void => console.log(message);
+
 /**
  * DeviceInfoProvider implementation reading system files.
  */
@@ -43,10 +45,9 @@ export class SystemDeviceInfoProvider implements DeviceInfoProvider {
         }
       }
     } catch {
-      // machine-info may not exist
+      // /etc/machine-info is optional and only present when the user has set a pretty hostname.
+      // Fall through to return null, which triggers the GLib.get_host_name() fallback.
     }
     return null;
   }
 }
-
-const log = (message: string): void => console.log(message);
