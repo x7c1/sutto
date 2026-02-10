@@ -21,7 +21,7 @@ You can set a keyboard shortcut to open the layout panel without dragging:
 
 1. Open preferences:
    - Click the settings icon in the main panel footer, **OR**
-   - Right-click the extension in GNOME Extensions app → Preferences
+   - Open GNOME Extensions app → click the settings icon on Sutto
 2. Click "Disabled" to set a keyboard shortcut
 3. Press your desired key combination (e.g., `Super+Space`)
 4. Press the shortcut to open the main panel for the focused window
@@ -30,4 +30,6 @@ Keyboard shortcut is disabled by default to avoid conflicts with existing keybin
 
 ## Layout Customization
 
-You can customize available layouts in the Spaces page of preferences. This lets you configure which layout options appear in the panel for each workspace.
+Layouts are defined in JSON format, giving you full control over window positions and sizes. You can create your own layout collections tailored to your monitor setup and workflow.
+
+See the [example collections](https://github.com/x7c1/sutto/tree/main/docs/examples) for reference configurations including single-monitor, dual-monitor, ultrawide, and streaming setups.

@@ -5,6 +5,9 @@ hero:
   name: Sutto
   text: Window Snapping for GNOME
   tagline: Drag windows to screen edges for quick, visual layout snapping.
+  image:
+    src: /image.png
+    alt: Sutto Main Panel
   actions:
     - theme: brand
       text: Get Started
@@ -22,8 +25,6 @@ features:
     details: See exactly where your window will be placed before committing. Choose from predefined layouts with a single click.
   - title: Multi-Monitor Support
     details: Works seamlessly across multiple displays. Each monitor gets its own layout options.
-  - title: Customizable Preferences
-    details: Configure keyboard shortcuts and layout options through a native GNOME preferences UI.
+  - title: Customizable Layouts
+    details: Define your own layouts in JSON for full control over window positions and sizes. Configure keyboard shortcuts in the preferences UI.
 ---
-
-<!-- Screenshots will be added separately -->

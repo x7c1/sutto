@@ -1,6 +1,6 @@
 # Sub-Plan 5: Pricing Page
 
-Status: Completed
+Status: Open
 
 ## Overview
 
@@ -23,6 +23,10 @@ Create the pricing page that serves as the destination for the "Purchase License
 
 - Update `LICENSE_PURCHASE_URL` in `.envrc.example` to point to the actual GitHub Pages pricing URL (`https://x7c1.github.io/sutto/pricing`)
 - Update the `LICENSE_PURCHASE_URL` GitHub Secret to the production URL
+
+## Remaining Items
+
+- Replace placeholder purchase URL (`https://sutto.example.com/purchase`) in `site/pricing.md` with the actual Lemon Squeezy checkout URL
 
 ## Verification
 

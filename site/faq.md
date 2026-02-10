@@ -8,15 +8,13 @@ A trial day is an actual usage day, not a calendar day. A day is counted when th
 
 Yes. A licensed subscription supports up to **3 device activations**. If you activate on a 4th device, the oldest activation is automatically deactivated.
 
-During the free trial, Sutto is limited to 1 device.
-
 ## What happens when my trial expires?
 
 The extension is disabled until you purchase a license. Your preferences and configuration are preserved — once you activate a license, everything works as before.
 
 ## Do I need internet to use Sutto?
 
-Internet is required for license validation, but the extension works offline for up to **7 days** after the last successful validation. After 7 days without connectivity, an internet connection is needed to re-validate your license.
+Internet is needed for license activation and validation, but the extension works offline for up to **7 days** after the last successful validation.
 
 ## Which GNOME Shell versions are supported?
 

@@ -1,0 +1,7 @@
+.VPHero .image-container {
+  transform: none;
+}
+
+.VPHero .VPImage.image-src {
+  max-width: 420px;
+}

@@ -4,7 +4,7 @@
 
 1. Open Sutto preferences:
    - Click the settings icon in the main panel footer, **OR**
-   - Right-click the extension in GNOME Extensions app → Preferences
+   - Open GNOME Extensions app → click the settings icon on Sutto
 2. Go to the **License** section
 3. Enter your license key and click Activate
 4. After successful activation, the status shows your "Valid until" date
@@ -21,7 +21,7 @@ Your subscription period has ended. Renew your subscription to continue using Su
 
 ### "Subscription was cancelled"
 
-Your subscription has been cancelled. If this is unexpected, please contact support via [GitHub Issues](https://github.com/x7c1/sutto/issues).
+Your subscription has been cancelled and is no longer active. To continue using Sutto, [purchase a new license](/pricing).
 
 ### "No internet connection"
 
@@ -29,14 +29,12 @@ License validation requires an internet connection. Check your network connectio
 
 ### "License server unavailable"
 
-The license server is temporarily unavailable. This is usually a temporary issue — please try again in a few minutes.
+The license server could not be reached. Try again later. If the problem persists, the server may no longer be operational. Sutto continues to work normally regardless of server availability.
 
 ### Device Limit
 
 Each license supports up to **3 device activations**. If you activate on a 4th device, the oldest activation is automatically deactivated.
 
-To check which devices are active, review the License section in preferences.
-
 ### Offline Usage
 
-After a successful license validation, Sutto works offline for up to **7 days**. After 7 days without a successful validation, the extension will require an internet connection to verify your license.
+Sutto works offline for up to **7 days** after the last successful license validation. After that, an internet connection is needed to re-validate your license.

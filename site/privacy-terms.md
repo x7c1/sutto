@@ -2,22 +2,7 @@
 
 ## Privacy Policy
 
-### Data We Collect
-
-Sutto collects only the minimum data necessary for license validation:
-
-- **Device activation ID**: A unique identifier generated on your device, used to track active device slots for your license
-- **License key**: Sent to the license server to verify your subscription status
-
-### Data We Do Not Collect
-
-- No usage analytics or telemetry
-- No personal information beyond what is required for licensing
-- No browsing history, window contents, or workspace data
-
-### How Your Data Is Used
-
-All collected data is used exclusively for license validation. Device activation IDs and license keys are sent to the Sutto license server to verify subscription status and manage device activations.
+Device activation IDs and license keys are sent to the Sutto license server to verify subscription status and manage device activations.
 
 ### Third-Party Services
 

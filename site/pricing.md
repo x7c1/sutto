@@ -24,7 +24,7 @@ After the trial, a subscription unlocks continued access to all features:
 |---|---|---|
 | All features | Yes | Yes |
 | Duration | 30 usage days | Subscription period |
-| Device activations | 1 | Up to 3 |
+| Device activations | — | Up to 3 |
 
 ## Questions?
 
