@@ -5,6 +5,10 @@ export default defineConfig({
   description: 'A GNOME Shell extension for window snapping',
   base: '/sutto/',
 
+  rewrites: {
+    'en/:path*': ':path*',
+  },
+
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
