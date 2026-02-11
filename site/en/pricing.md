@@ -15,7 +15,7 @@ After the trial, a subscription unlocks continued access to all features:
 - Ongoing updates and improvements
 
 ::: tip Ready to subscribe?
-[Purchase a License](https://sutto.example.com/purchase) to continue using Sutto after your trial ends.
+[Purchase a License](https://haco-studio.lemonsqueezy.com/) to continue using Sutto after your trial ends.
 :::
 
 ## Trial vs. Licensed
