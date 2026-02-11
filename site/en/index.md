@@ -47,4 +47,10 @@ features:
   <source src="/layout-horizontal.webm" type="video/webm">
 </video>
 
+### Selecting a Custom Collection
+
+<video controls muted loop width="100%">
+  <source src="/change-layout.webm" type="video/webm">
+</video>
+
 </div>
