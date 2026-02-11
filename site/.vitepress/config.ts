@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  appearance: 'dark',
   title: 'Sutto',
   description: 'A GNOME Shell extension for window snapping',
   base: '/sutto/',
