@@ -5,6 +5,12 @@ export default defineConfig({
   description: 'A GNOME Shell extension for window snapping',
   base: '/sutto/',
 
+  vite: {
+    define: {
+      __STORE_URL__: JSON.stringify(requireEnv('STORE_URL')),
+    },
+  },
+
   rewrites: {
     'en/:path*': ':path*',
   },
@@ -46,3 +52,11 @@ export default defineConfig({
     ],
   },
 })
+
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`)
+  }
+  return value
+}

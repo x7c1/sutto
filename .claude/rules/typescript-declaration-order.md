@@ -1,6 +1,7 @@
 ---
 paths:
   - "src/**/*.ts"
+  - "site/**/*.ts"
 ---
 
 Place exported (public) declarations before non-exported (private) ones.

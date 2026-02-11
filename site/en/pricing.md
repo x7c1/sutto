@@ -1,3 +1,7 @@
+<script setup>
+const storeUrl = __STORE_URL__
+</script>
+
 # Pricing
 
 ## Free Trial
@@ -15,7 +19,7 @@ After the trial, a subscription unlocks continued access to all features:
 - Ongoing updates and improvements
 
 ::: tip Ready to subscribe?
-[Purchase a License](https://haco-studio.lemonsqueezy.com/) to continue using Sutto after your trial ends.
+<a :href="storeUrl">Purchase a License</a> to continue using Sutto after your trial ends.
 :::
 
 ## Trial vs. Licensed

@@ -37,6 +37,8 @@ jobs:
 
       - name: Build site
         run: npx vitepress build site
+        env:
+          STORE_URL: ${{ vars.STORE_URL }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
