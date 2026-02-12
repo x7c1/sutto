@@ -12,6 +12,10 @@ A GNOME Shell extension for window snapping. See the [project website](https://x
 - **Multi-monitor support**: Works across multiple displays
 - **Customizable layouts**: Define your own layouts in JSON for full control over window positions and sizes
 
+## Demo
+
+<video src="site/public/layout-vertical.webm" controls muted loop width="600"></video>
+
 ## Documentation
 
 - [Installation](docs/guides/02-installation.md)
