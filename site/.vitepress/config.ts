@@ -51,6 +51,10 @@ export default defineConfig({
     socialLinks: [
       { icon: 'github', link: 'https://github.com/x7c1/sutto' },
     ],
+
+    footer: {
+      message: '<a href="/sutto/legal-ja.html">Legal (Japanese)</a>',
+    },
   },
 })
 
