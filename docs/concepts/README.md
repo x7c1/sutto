@@ -94,6 +94,10 @@ Verbs that are used with this Domain Model:
 - apply (a Layout Group to a Display)
 - switch (between Spaces)
 
+## Domain Rules (optional)
+
+Domain rules that govern this concept (e.g., usage limits, behavioral policies).
+
 ## Technical Constraints (optional)
 
 If technical limitations affect this concept's design or scope, explain them here.
