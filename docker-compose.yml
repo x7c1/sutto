@@ -1,21 +1,64 @@
 services:
+  toolbox:
+    build: .
+    container_name: sutto-toolbox
+    working_dir: /projects/sutto
+    command: ["sleep", "infinity"]
+    volumes:
+      - .:/projects/sutto
+
   claude-code:
     build: .
-    container_name: claude-code-${ROLE}
-    volumes:
-      - .:/projects/${ROLE}
-      - ./claude.local/shared:/home/developer/.claude
-      - ./claude.local/shared/.claude.json:/home/developer/.claude.json
-      - ./claude.local/${ROLE}/.bash_history:/home/developer/.bash_history
-      - ~/.claude/CLAUDE.md:/home/developer/.claude/CLAUDE.md
-      - ~/.claude/.credentials.json:/home/developer/.claude/.credentials.json
-      - ~/.config/git:/home/developer/.config/git
-      - ~/.config/gh:/home/developer/.config/gh
-      - ~/.ssh:/home/developer/.ssh:ro
-      - ./claude.local/shared/.npm-global:/home/developer/.npm-global
-      - ./claude.local/shared/.local:/home/developer/.local
-      - ./vendor:/workspace/vendor
     stdin_open: true
     tty: true
-    working_dir: /projects/${ROLE}
-    command: bash -c "/projects/${ROLE}/vendor/strata/scripts/start-claude-code.sh; exec bash"
+    working_dir: /projects/sutto
+    command: /projects/sutto/scripts/start-claude-code.sh
+    volumes:
+      - .:/projects/sutto
+      - ./claude.local/.claude:/home/developer/.claude
+      - ./claude.local/.npm-global:/home/developer/.npm-global
+      - ./claude.local/.local:/home/developer/.local
+      # Short-form: allows auto-creation because the dir may not exist
+      # until poll-usage.sh runs for the first time.
+      - ~/.claude/token-logs:/home/developer/.claude/token-logs
+      - type: bind
+        source: ./claude.local/.claude.json
+        target: /home/developer/.claude.json
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./claude.local/.bash_history
+        target: /home/developer/.bash_history
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ~/.claude/CLAUDE.md
+        target: /home/developer/.claude/CLAUDE.md
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ~/.claude/.credentials.json
+        target: /home/developer/.claude/.credentials.json
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ~/.claude/settings.json
+        target: /home/developer/.claude/settings.json
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ~/.config/git
+        target: /home/developer/.config/git
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ~/.config/gh
+        target: /home/developer/.config/gh
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ~/.ssh
+        target: /home/developer/.ssh
+        read_only: true
+        bind:
+          create_host_path: false
