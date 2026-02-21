@@ -1,4 +1,12 @@
 services:
+  toolbox:
+    build: .
+    container_name: sutto-toolbox
+    volumes:
+      - .:/projects/sutto
+    working_dir: /projects/sutto
+    command: ["sleep", "infinity"]
+
   claude-code:
     build: .
     container_name: claude-code-${ROLE}
@@ -9,13 +17,13 @@ services:
       - ./claude.local/${ROLE}/.bash_history:/home/developer/.bash_history
       - ~/.claude/CLAUDE.md:/home/developer/.claude/CLAUDE.md
       - ~/.claude/.credentials.json:/home/developer/.claude/.credentials.json
+      - ~/.claude/settings.json:/home/developer/.claude/settings.json
       - ~/.config/git:/home/developer/.config/git
       - ~/.config/gh:/home/developer/.config/gh
       - ~/.ssh:/home/developer/.ssh:ro
       - ./claude.local/shared/.npm-global:/home/developer/.npm-global
       - ./claude.local/shared/.local:/home/developer/.local
-      - ./vendor:/workspace/vendor
     stdin_open: true
     tty: true
     working_dir: /projects/${ROLE}
-    command: bash -c "/projects/${ROLE}/vendor/strata/scripts/start-claude-code.sh; exec bash"
+    command: /projects/${ROLE}/scripts/start-claude-code.sh
