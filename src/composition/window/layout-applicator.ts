@@ -5,7 +5,7 @@
  * Handles layout expression evaluation, window positioning, and history recording.
  */
 
-import type Meta from 'gi://Meta';
+import Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { LayoutId, LayoutSelectedEvent } from '../../domain/layout/index.js';
 import { evaluate, parse } from '../../domain/layout-expression/index.js';
@@ -70,9 +70,11 @@ export class LayoutApplicator {
       `[LayoutApplicator] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`
     );
 
-    if (window.get_maximized()) {
+    if (window.is_maximized()) {
       log('[LayoutApplicator] Unmaximizing window');
-      window.unmaximize(3); // Both horizontally and vertically
+      // Shell 50 split unmaximize: set direction flags first, then call unmaximize().
+      window.set_unmaximize_flags(Meta.MaximizeFlags.BOTH);
+      window.unmaximize();
     }
 
     // Apply position and size

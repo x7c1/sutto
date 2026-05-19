@@ -3,7 +3,7 @@
   "name": "Sutto",
   "description": "Window snapping extension for GNOME Shell",
   "shell-version": [
-    "46"
+    "50"
   ],
   "url": "https://github.com/x7c1/sutto",
   "version": 7

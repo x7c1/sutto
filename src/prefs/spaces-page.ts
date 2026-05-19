@@ -771,7 +771,6 @@ function showImportDialog(state: SpacesPageState): void {
   const toplevel = state.previewContainer.get_root();
   const window = toplevel instanceof Gtk.Window ? toplevel : null;
 
-  // @ts-expect-error - GTK4 FileDialog.open_multiple accepts callback as third argument
   dialog.open_multiple(window, null, (_source: unknown, result: Gio.AsyncResult) => {
     try {
       const files = dialog.open_multiple_finish(result);

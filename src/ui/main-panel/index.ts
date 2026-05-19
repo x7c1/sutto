@@ -6,7 +6,7 @@
  */
 
 import Gio from 'gi://Gio';
-import Meta from 'gi://Meta';
+import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -19,6 +19,7 @@ import type {
   SpaceCollection,
   SpacesRow,
 } from '../../domain/layout/index.js';
+import { safeAddChrome } from '../../libs/shell/safe-add-chrome.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 import type { MonitorEnvironmentOperations } from '../../operations/monitor/index.js';
 import { AUTO_HIDE_DELAY_MS } from '../constants.js';
@@ -162,10 +163,10 @@ export class MainPanel {
     container.set_position(adjusted.x, adjusted.y);
 
     // Add to chrome and adjust for actual size
-    Main.layoutManager.addChrome(container, {
-      affectsInputRegion: true,
-      trackFullscreen: false,
-    });
+    // Shell 50's addChrome is not atomic; safeAddChrome destroys the actor
+    // on failure so a future regression cannot leave an orphaned chrome
+    // actor that captures pointer events session-wide.
+    safeAddChrome(container, { trackFullscreen: false });
     this.adjustContainerPosition(container, cursor, panelDimensions, centerVertically);
 
     // Setup interactions
@@ -179,9 +180,6 @@ export class MainPanel {
    * Hide the main panel
    */
   hide(): void {
-    // Reset cursor to default when hiding panel
-    global.display.set_cursor(Meta.Cursor.DEFAULT);
-
     if (this.container) {
       // Cleanup auto-hide
       this.autoHide.cleanup();

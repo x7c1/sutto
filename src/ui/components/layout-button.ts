@@ -1,4 +1,3 @@
-import Meta from 'gi://Meta';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { Layout, LayoutSelectedEvent } from '../../domain/layout/index.js';
@@ -120,7 +119,7 @@ export function createLayoutButton(
   buttonWithMeta._buttonHeight = buttonHeight;
   buttonWithMeta._monitorKey = monitorKey;
 
-  // Add hover effect
+  // Add hover effect (background-color only; Shell 50 dropped the cursor-shape API)
   const enterEventId = button.connect('enter-event', () => {
     // Only apply hover style if not keyboard-focused
     if (!buttonWithMeta._isFocused) {
@@ -128,7 +127,6 @@ export function createLayoutButton(
         getButtonStyle(true, buttonWithMeta._isSelected ?? false, buttonWidth, buttonHeight)
       );
     }
-    global.display.set_cursor(Meta.Cursor.POINTING_HAND);
     return false; // Clutter.EVENT_PROPAGATE
   });
 
@@ -139,7 +137,6 @@ export function createLayoutButton(
         getButtonStyle(false, buttonWithMeta._isSelected ?? false, buttonWidth, buttonHeight)
       );
     }
-    global.display.set_cursor(Meta.Cursor.DEFAULT);
     return false; // Clutter.EVENT_PROPAGATE
   });
 

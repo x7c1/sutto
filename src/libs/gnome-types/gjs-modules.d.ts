@@ -3,13 +3,14 @@
  * Allows TypeScript to recognize gi:// and resource:// module paths
  *
  * This file uses triple-slash directives to import ambient types from @girs packages
- * GNOME Shell 46 specific type definitions
+ * GNOME Shell 50 specific type definitions
  */
 
-/// <reference types="@girs/st-14/st-14-ambient" />
-/// <reference types="@girs/meta-14/meta-14-ambient" />
-/// <reference types="@girs/clutter-14/clutter-14-ambient" />
-/// <reference types="@girs/shell-14/shell-14-ambient" />
+/// <reference types="@girs/st-18/st-18-ambient" />
+/// <reference types="@girs/meta-18/meta-18-ambient" />
+/// <reference types="@girs/mtk-18/mtk-18-ambient" />
+/// <reference types="@girs/clutter-18/clutter-18-ambient" />
+/// <reference types="@girs/shell-18/shell-18-ambient" />
 /// <reference types="@girs/gio-2.0/gio-2.0-ambient" />
 /// <reference types="@girs/glib-2.0/glib-2.0-ambient" />
 /// <reference types="@girs/adw-1/adw-1-ambient" />
@@ -19,23 +20,28 @@
 
 // GI imports
 declare module 'gi://St' {
-  export * from '@girs/st-14/st-14';
-  export { default } from '@girs/st-14/st-14';
+  export * from '@girs/st-18/st-18';
+  export { default } from '@girs/st-18/st-18';
 }
 
 declare module 'gi://Meta' {
-  export * from '@girs/meta-14/meta-14';
-  export { default } from '@girs/meta-14/meta-14';
+  export * from '@girs/meta-18/meta-18';
+  export { default } from '@girs/meta-18/meta-18';
+}
+
+declare module 'gi://Mtk' {
+  export * from '@girs/mtk-18/mtk-18';
+  export { default } from '@girs/mtk-18/mtk-18';
 }
 
 declare module 'gi://Clutter' {
-  export * from '@girs/clutter-14/clutter-14';
-  export { default } from '@girs/clutter-14/clutter-14';
+  export * from '@girs/clutter-18/clutter-18';
+  export { default } from '@girs/clutter-18/clutter-18';
 }
 
 declare module 'gi://Shell' {
-  export * from '@girs/shell-14/shell-14';
-  export { default } from '@girs/shell-14/shell-14';
+  export * from '@girs/shell-18/shell-18';
+  export { default } from '@girs/shell-18/shell-18';
 }
 
 declare module 'gi://Gio' {
@@ -93,6 +99,11 @@ declare namespace Soup {
 // GNOME Shell resource imports
 declare module 'resource:///org/gnome/shell/extensions/extension.js' {
   export * from '@girs/gnome-shell/dist/extensions/extension';
+  // ExtensionMetadata is not re-exported by upstream extension.d.ts (Shell 50),
+  // but is the actual runtime type returned by Extension.metadata; the upstream
+  // declaration narrows it to the JSON-only subset (MetadataJson). Re-exporting
+  // it here lets sutto code import it from the same resource:// module path.
+  export type { ExtensionMetadata } from '@girs/gnome-shell/dist/types/extension-metadata';
 }
 
 declare module 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js' {

@@ -2,7 +2,8 @@
 
 ## Prerequisites
 
-- GNOME Shell 46
+- GNOME Shell 50 (Ubuntu 26.04 or equivalent). Older Shell versions are not supported — sutto targets Shell 50 only.
+- A **Wayland** session. GNOME Shell 50 dropped the X11 fallback, and sutto follows suit.
 - Node.js and npm
 
 ## Install Dependencies
@@ -30,14 +31,7 @@ This builds the TypeScript code and copies files to the extension directory.
 
 ### 2. Restart GNOME Shell (First Time Only)
 
-#### For X11 Session:
-```bash
-killall -3 gnome-shell
-```
-
-#### For Wayland Session:
-- Logout and login again
-- Or reboot
+GNOME Shell 50 runs on Wayland only, so restarting the running session requires logging out and back in (or rebooting).
 
 ### 3. Enable the Extension
 

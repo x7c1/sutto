@@ -8,18 +8,8 @@ gnome-shell --version
 
 Example output:
 ```
-GNOME Shell 42.9
+GNOME Shell 50.1
 ```
-
-## Check Session Type (X11 or Wayland)
-
-```bash
-echo $XDG_SESSION_TYPE
-```
-
-Output will be either:
-- `x11` - X11 session
-- `wayland` - Wayland session
 
 ## Check Distribution Information
 
