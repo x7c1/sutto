@@ -220,8 +220,7 @@ If your logs don't appear in journalctl:
 
 1. Check that GNOME Shell is running: `ps aux | grep gnome-shell`
 2. Verify the extension is enabled: `gnome-extensions list --enabled`
-3. Try restarting GNOME Shell: `Alt+F2` → `r` → Enter (X11 only)
-4. Check for JavaScript errors in Looking Glass: `Alt+F2` → `lg`
+3. Check for JavaScript errors in Looking Glass: `Alt+F2` → `lg`
 
 ## See Also
 

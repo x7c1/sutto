@@ -14,58 +14,21 @@ With sutto's **self-reload feature**, you rarely need to restart GNOME Shell:
 
 See [Development Workflow](03-development-workflow.md) for details.
 
-## Check Your Session Type First
+## Restart Method
 
-```bash
-echo $XDG_SESSION_TYPE
-```
-
-## Restart Methods
-
-### X11 Session
-
-#### Using the restart script (Recommended)
-
-```bash
-./scripts/restart-gnome-shell-x11.sh
-```
-
-This script automates the Alt+F2 `r` method using `xdotool`, with a D-Bus fallback.
-
-#### Other methods
-
-These are the underlying commands if you need them manually:
-
-```bash
-# Using killall
-killall -3 gnome-shell
-
-# Using busctl
-busctl --user call org.gnome.Shell /org/gnome/Shell org.gnome.Shell Eval s 'Meta.restart("Restarting…")'
-
-# Or press Alt+F2, type 'r', then press Enter
-```
-
-### Wayland Session
-
-**Wayland does not support restarting GNOME Shell without logging out.**
+GNOME Shell 50 runs on Wayland only, and Wayland does not support restarting GNOME Shell without ending the session.
 
 You must:
-- Logout and login again
+
+- Log out and log back in
 - Or reboot the system
-
-## Summary
-
-| Session Type | Restart Command | Need Logout? |
-|--------------|----------------|--------------|
-| X11 | `./scripts/restart-gnome-shell-x11.sh` | No |
-| Wayland | N/A | Yes |
 
 ## For Extension Development
 
-**Good news:** After the initial installation, `npm run dev` allows you to reload the extension instantly without restarting GNOME Shell!
+**Good news:** After the initial installation, `npm run dev` allows you to reload the extension instantly without restarting GNOME Shell.
 
-The methods described above are only needed for:
+The full session restart described above is only needed for:
+
 - Initial installation
 - System updates
 - Troubleshooting severe errors
