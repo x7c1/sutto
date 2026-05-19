@@ -2,7 +2,8 @@
 
 ## Prerequisites
 
-- GNOME Shell 46
+- GNOME Shell 50 (Ubuntu 26.04 or equivalent). Older Shell versions are not supported — sutto targets Shell 50 only.
+- A **Wayland** session. GNOME Shell 50 dropped the X11 fallback, and sutto follows suit.
 - Node.js and npm
 
 ## Install Dependencies

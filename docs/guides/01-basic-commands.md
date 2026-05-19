@@ -8,7 +8,7 @@ gnome-shell --version
 
 Example output:
 ```
-GNOME Shell 42.9
+GNOME Shell 50.1
 ```
 
 ## Check Distribution Information

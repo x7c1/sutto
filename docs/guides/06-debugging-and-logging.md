@@ -32,7 +32,7 @@ Add this declaration at the top of files that use logging:
 declare function log(message: string): void;
 ```
 
-Or add it to your global type definitions file (e.g., `src/types/gnome-shell-42.d.ts`):
+Or add it to a hand-written stub under `src/libs/gnome-types/` (e.g., a small global declarations file you create alongside the existing stubs):
 
 ```typescript
 declare function log(message: string): void;
