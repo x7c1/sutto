@@ -12,10 +12,8 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import type {
-  ExtensionManager,
-  ExtensionObject,
-} from '@girs/gnome-shell/dist/ui/extensionSystem.js';
+import type { ExtensionObject } from '@girs/gnome-shell/dist/types/extension-object.js';
+import type { ExtensionManager } from '@girs/gnome-shell/dist/ui/extensionSystem.js';
 
 // Declare TextEncoder/TextDecoder for TypeScript
 declare class TextDecoder {

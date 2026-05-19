@@ -6,7 +6,7 @@
  */
 
 import Gio from 'gi://Gio';
-import Meta from 'gi://Meta';
+import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -179,9 +179,6 @@ export class MainPanel {
    * Hide the main panel
    */
   hide(): void {
-    // Reset cursor to default when hiding panel
-    global.display.set_cursor(Meta.Cursor.DEFAULT);
-
     if (this.container) {
       // Cleanup auto-hide
       this.autoHide.cleanup();

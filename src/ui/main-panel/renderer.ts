@@ -1,4 +1,5 @@
-import Meta from 'gi://Meta';
+import Clutter from 'gi://Clutter';
+import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { Layout, LayoutSelectedEvent, SpacesRow } from '../../domain/layout/index.js';
@@ -82,7 +83,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
     style: `
       margin-top: ${FOOTER_MARGIN_TOP}px;
     `,
-    vertical: false,
+    orientation: Clutter.Orientation.HORIZONTAL,
     y_align: 2, // CENTER (vertically align children)
   });
 
@@ -134,7 +135,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
     return true; // Clutter.EVENT_STOP
   });
 
-  // Hover effect
+  // Hover effect (background-color only; Shell 50 dropped the cursor-shape API)
   settingsButton.connect('enter-event', () => {
     log('[Renderer] Settings button hover enter');
     settingsButton.style = `
@@ -143,7 +144,6 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
       border-radius: ${SETTINGS_BORDER_RADIUS}px;
       background-color: rgba(255, 255, 255, 0.1);
     `;
-    global.display.set_cursor(Meta.Cursor.POINTING_HAND);
   });
 
   settingsButton.connect('leave-event', () => {
@@ -152,7 +152,6 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
       padding: ${SETTINGS_PADDING_VERTICAL}px ${SETTINGS_PADDING_HORIZONTAL}px;
       border-radius: ${SETTINGS_BORDER_RADIUS}px;
     `;
-    global.display.set_cursor(Meta.Cursor.DEFAULT);
   });
 
   footerBox.add_child(leftSpacer);
@@ -176,7 +175,7 @@ export function createSpacesRowView(
 ): SpacesRowView {
   const rowsContainer = new St.BoxLayout({
     style_class: 'snap-rows-container',
-    vertical: true, // Vertical layout: stack rows
+    orientation: Clutter.Orientation.VERTICAL,
     x_expand: false,
     y_expand: false,
   });
@@ -198,7 +197,7 @@ export function createSpacesRowView(
     // Create a horizontal container for this row's spaces
     const rowBox = new St.BoxLayout({
       style_class: 'snap-row-box',
-      vertical: false, // Horizontal layout: spaces side by side
+      orientation: Clutter.Orientation.HORIZONTAL,
       x_expand: false,
       y_expand: false,
       style: `spacing: ${SPACE_SPACING}px;`,
@@ -248,7 +247,7 @@ export function createPanelContainer(): St.BoxLayout {
       border-radius: 8px;
       padding: ${PANEL_PADDING}px ${PANEL_PADDING}px ${PANEL_PADDING / 2}px ${PANEL_PADDING}px;
     `,
-    vertical: true,
+    orientation: Clutter.Orientation.VERTICAL,
     visible: true,
     reactive: true,
     can_focus: true,

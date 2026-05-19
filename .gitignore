@@ -30,6 +30,7 @@ src/dist/
 
 # Exception: manually written GNOME type stubs
 !src/libs/gnome-types/
+!src/libs/gnome-types/**/*.d.ts
 
 # Rust artifacts
 target
