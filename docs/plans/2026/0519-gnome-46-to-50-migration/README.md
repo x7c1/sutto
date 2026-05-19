@@ -84,24 +84,34 @@ Items not covered by the table or the indirect-exposure list, but relevant to th
 - `Meta.KeyBindingFlags.NONE` (`src/composition/shortcuts/keyboard-shortcut-manager.ts:37,60`) — stable, no impact.
 - `global.display.connect('grab-op-begin' | 'grab-op-end', ...)` (`src/composition/drag/drag-signal-handler.ts:24,31`) — signals are still supported on Shell 50; no rename detected in upstream notes.
 
+## Migration approach
+
+**All phases land in a single PR.** The dependency bump in Phase 1 immediately invalidates the entire codebase's type-checks (the old `@girs/gnome-shell@46` types disappear), so phases 2–4 must complete on the same branch before the build passes again. Phases are a logical grouping for review, not commit boundaries.
+
 ## Migration Phases
 
 ### Phase 1 — Tooling and metadata
 
 **Goal:** Get the type system aligned with the target shell series before touching application code.
 
-**Assumption:** the dependency bumps below happen as a single step. If Open Question 5 ("phasing of dependency bumps") is resolved otherwise, split this phase per package.
-
-- Bump `@girs/gnome-shell` from `46.0.2` to the highest published version. As of writing, the latest published is the `49.x` series; `@girs/gnome-shell@50` is **not yet on npm**, so pin 49 and add hand-written augmentation in `src/libs/gnome-types/` only if Shell-50-specific symbols are actually consumed.
+- Bump `@girs/gnome-shell` from `46.0.2` to the highest published version. As of writing, the latest published is the `49.x` series; `@girs/gnome-shell@50` is **not yet on npm**. Pin 49 and rely on hand-written augmentation for any Shell-50-only symbol the build complains about (see ".d.ts augmentation strategy" below).
 - Bump the `@girs/clutter-*`, `@girs/meta-*`, `@girs/st-*`, `@girs/shell-*`, and `@girs/cally-*` overrides from the `14.0.0-4.0.0-beta.12` (GNOME 46) series to the matching Shell-49 series (the major version moves with mutter; check the latest `4.x-beta` line). The package name suffix changes with the series (`-14` for GNOME 46 → likely `-16` or `-17` for Shell 49); update both the dependency keys in `devDependencies` and the matching keys in the `overrides` block of `package.json`.
-- Add `@girs/mtk-*` (introduced for Shell 49) so `Mtk.Rectangle` resolves. The npm package name includes the GIR version suffix (e.g., `@girs/mtk-16`); pick the one that matches the chosen `@girs/meta-*` series.
+- Add `@girs/mtk-*` (introduced for Shell 49) so `Mtk.Rectangle` resolves. The npm package name includes the GIR version suffix (e.g., `@girs/mtk-16`); pick the one that matches the chosen `@girs/meta-*` series. If the right version is not published, hand-write the minimal `Mtk.Rectangle` shape into the augmentation file.
 - Run `npm install` and commit the updated `package-lock.json` alongside the manifest changes.
 - Update `dist/metadata.json`:
-  - `"shell-version"` — two options to decide in **Open Questions** below:
-    - Recommended: `["49", "50"]` (drop 46–48 — anyone on those is already past LTS for Sutto's use case)
-    - Conservative: `["46", "47", "48", "49", "50"]` (maintain dual-target; requires runtime conditionals)
-  - `"version"` — bump from `6` to `7` (GNOME extension registry expects monotonic integer; required for a re-release).
-- Confirm `npm run build && npm run check && npm run test:run` still passes with the new types in place. Type errors are expected at this point and will be resolved in subsequent phases.
+  - `"shell-version": ["50"]` — Shell 50 only. The development host runs Shell 50, GNOME 46 support is intentionally dropped (see "Resolved Decisions" below).
+  - `"version"` — bump from `6` to `7` (GNOME extension registry expects a monotonic integer; required for a re-release).
+
+The build will fail at this point until phases 2–4 are applied. That is expected; the phases close out the type errors the dependency bump exposed.
+
+### .d.ts augmentation strategy
+
+`@girs/gnome-shell@50` is not yet on npm, so any Shell-50-only symbol the code references must be declared by hand. Based on the impact survey, sutto consumes no Shell-50-only APIs, so this should reduce to:
+
+- A possibly-empty `src/libs/gnome-types/gnome-shell-50.d.ts` (create only if the build actually reports a missing symbol).
+- A possibly-empty `Mtk.Rectangle` augmentation (only if `@girs/mtk-*` for the chosen series turns out not to exist on npm).
+
+Approach: bump dependencies first, then run the canonical check. For each missing symbol the compiler reports, add a **minimal** declaration to `src/libs/gnome-types/` that mirrors the upstream GIR signature. Estimated surface: under ~50 lines total, possibly zero.
 
 ### Phase 2 — Shell 47 / 48 mechanical changes
 
@@ -142,23 +152,22 @@ Items not covered by the table or the indirect-exposure list, but relevant to th
 
 **Goal:** Close any remaining gaps and clear up residual legacy artefacts.
 
-- No X11 / `is_wayland_compositor` / restart-signal / `holdKeyboard` references were found, so this phase is mostly housekeeping:
-  - Update `dist/metadata.json` `"shell-version"` to include `"50"` if not already done in Phase 1.
-  - **Conditional on Open Question 4:** remove the legacy `declare namespace imports.ui.panel` block and the `Main` interface augmentation in `src/libs/gnome-types/panel.d.ts` (lines 5–40 and 45–47), and migrate any consumer to typed shell-extension imports. If Open Question 4 is resolved as "split into a separate cleanup PR", skip this step.
-- If the dependency bump in Phase 1 only reached Shell 49 types, add a small `src/libs/gnome-types/gnome-shell-50.d.ts` augmentation file for Shell-50-only symbols that the code actually references (likely none, given the survey).
+- No X11 / `is_wayland_compositor` / restart-signal / `holdKeyboard` references were found in the source, so the substantive Shell-50 work is empty. Phase 4 reduces to housekeeping:
+  - Confirm `dist/metadata.json` `"shell-version": ["50"]` is in place from Phase 1.
+  - Remove the legacy `declare namespace imports.ui.panel` block and the `Main` interface augmentation in `src/libs/gnome-types/panel.d.ts` (lines 5–40 and 45–47), and migrate any consumer to typed shell-extension imports. This is unrelated to Shell 50 but is a pre-ESM survivor that should not be carried forward; cleaning it up here keeps the type-shim directory consistent with the new series.
+  - If the build reports any Shell-50-only symbol that's missing from `@girs/gnome-shell@49`, add it to `src/libs/gnome-types/gnome-shell-50.d.ts` per the ".d.ts augmentation strategy" above. Expect this file to be empty given the survey results.
 
 ### Phase 5 — Validation
 
 **Goal:** Verify the migrated extension runs cleanly on the Shell 50 host.
 
-The dev machine is already on Shell 50, so primary validation happens there. Backward-compat to Shell 46–48 cannot be exercised on this host and requires a separate VM if the conservative `shell-version` range was retained in Phase 1.
+The dev machine is already on Shell 50, so all validation happens there. Backward-compat to Shell 46–49 is intentionally out of scope (see "Resolved Decisions" below).
 
 - Clean checks: `npm run build && npm run check && npm run test:run` (canonical command from CLAUDE.md). Also run `npm run check:strict` to catch new biome warnings from the dependency bump.
 - Manual install on the Ubuntu 26.04 host (Shell 50):
   - `npm run dev` to build, copy, and reload via D-Bus.
   - Smoke-test the canonical user journeys: drag-to-edge → panel appears, layout button click → window snaps (covers `is_maximized` / `unmaximize` rework), multi-monitor layout selection (covers the monitor-provider rework), keyboard navigation, preferences window opens.
   - Tail logs: `journalctl -f /usr/bin/gnome-shell | grep -i sutto`.
-- Optional Ubuntu 24.04 + Shell 46 VM regression check, only if Phase 1 chose the conservative `shell-version` range. Skip otherwise — claiming support for an untested range is worse than dropping it.
 
 ## Success Criteria
 
@@ -167,27 +176,26 @@ The dev machine is already on Shell 50, so primary validation happens there. Bac
 - [ ] Extension installs and enables on Ubuntu 26.04 + GNOME Shell 50 (`gnome-extensions enable sutto@x7c1.github.io`).
 - [ ] All canonical user journeys work on the Shell 50 host: drag-to-edge → panel appears, layout button click → window snaps, multi-monitor layout selection, keyboard navigation, preferences window opens.
 - [ ] No errors in `journalctl -f /usr/bin/gnome-shell | grep -i sutto` during normal operation.
-- [ ] `dist/metadata.json` `"shell-version"` matches the agreed strategy (drop or maintain) and `"version"` is incremented.
+- [ ] `dist/metadata.json` `"shell-version": ["50"]` and `"version"` is incremented.
 - [ ] All `@girs/*` overrides resolve to the chosen series and `package-lock.json` is committed.
 
 ## Rollback Plan
 
 If critical regressions surface during validation:
 
-- Revert the migration commits on `main` (the entire branch is the unit of rollback; partial revert is unsafe because dependency bumps and code changes are coupled).
-- The previous extension build on the Shell 46 metadata is still usable on Ubuntu 24.04. Users on the Shell 50 host can fall back to the previous `dist/` artifacts if they pinned the release tag.
+- Revert the migration PR on `main` (the entire PR is the unit of rollback; partial revert is unsafe because dependency bumps and code changes are coupled).
 - Document the failure mode in this plan's "Other findings" before re-attempting, so the second attempt does not rediscover the same blocker.
 
-## Open Questions
+## Resolved Decisions
 
-1. **Drop support for GNOME Shell 46/47/48, or maintain dual-target?**
-   - Drop: simpler code, smaller `shell-version` array, no runtime conditionals. Loses Ubuntu 24.04 LTS users.
-   - Maintain: needs runtime conditionals around `is_maximized` vs `get_maximized`, the monitor API, and any `Mtk` vs `Meta.Rectangle` usage. More effort, broader audience.
-2. **Pin `@girs/gnome-shell@49` and augment for Shell 50, or wait for the `@girs/gnome-shell@50` npm release?**
-   - The survey shows no Shell-50-only API consumed, so 49 + a thin augmentation should be sufficient today.
-3. **Are `Meta.Cursor.*` and `global.display.set_cursor(...)` still the recommended way to drive the cursor on Shell 50?** Upstream has discussed moving cursor control to the backend. Confirm before relying on the five existing call sites.
-4. **Should the legacy `declare namespace imports.ui.panel` in `src/libs/gnome-types/panel.d.ts` be deleted as part of this plan, or split into a separate cleanup PR?** It is unrelated to Shell 50 but is a clear pre-ESM survivor.
-5. **Phasing of dependency bumps:** bump all `@girs/*` packages together in Phase 1, or stage them per phase to minimise blast radius?
+1. **Drop support for GNOME 46–49. Target Shell 50 only.** The development host runs Shell 50 and primary validation happens there; dual-target adds runtime conditionals and wrapper layers around every changed API touchpoint, against an under-developed user base that has a clear upgrade path. `dist/metadata.json` `"shell-version": ["50"]`.
+2. **Pin `@girs/gnome-shell@49.x` (latest npm) and augment by hand for any Shell-50-only symbol the build complains about.** The survey shows no Shell-50-only API consumed by sutto, so the augmentation is expected to be empty or near-empty. See ".d.ts augmentation strategy" in Phase 1.
+3. **All phases land in a single PR.** Dependency bumps and code changes are coupled (the new `@girs/*` series removes old API types); separating them would leave the branch in a non-building intermediate state. Logical phases inside the PR are a review aid, not a sequence of mergeable commits.
+4. **The legacy `declare namespace imports.ui.panel` cleanup ships with this migration** (Phase 4), not as a separate PR. It is a pre-ESM survivor and removing it keeps `src/libs/gnome-types/` consistent with the new series.
+
+## Open Questions (still to resolve)
+
+1. **Are `Meta.Cursor.*` and `global.display.set_cursor(...)` still the recommended way to drive the cursor on Shell 50?** Upstream has discussed moving cursor control to the backend. Confirm against the Shell 50 release notes and the live host before relying on the five existing call sites (`src/ui/components/layout-button.ts:131,142`, `src/ui/main-panel/index.ts:183`, `src/ui/main-panel/renderer.ts:146,155`). If relocated, the fix scope is local — wrap the calls in a helper that the migration can update in one place.
 
 ## References
 
@@ -216,6 +224,5 @@ If critical regressions surface during validation:
 
 ## Next Steps
 
-1. User review of this draft, especially the **Open Questions** section.
-2. Decide the `shell-version` strategy (drop vs. maintain) — this gates Phase 1.
-3. Begin Phase 1 once decisions are made.
+1. Verify the remaining open question (cursor API stability on Shell 50) — either by reading the Shell 50 release notes or by attempting `global.display.set_cursor()` once on the host.
+2. Begin Phase 1.
