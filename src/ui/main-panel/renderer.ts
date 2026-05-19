@@ -109,9 +109,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
     y_align: 2, // CENTER (vertically center the label)
   });
 
-  // Settings icon button. `cursor_type` is the Shell 50 / Clutter 18
-  // replacement for the removed `global.display.set_cursor(...)` — Clutter
-  // applies it automatically on pointer enter/leave, no event handlers needed.
+  // Settings icon button
   const settingsButton = new St.Button({
     style_class: 'sutto-settings-icon',
     style: `
@@ -138,7 +136,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
     return true; // Clutter.EVENT_STOP
   });
 
-  // Hover effect (background color; cursor shape handled by cursor_type above)
+  // Hover effect
   settingsButton.connect('enter-event', () => {
     log('[Renderer] Settings button hover enter');
     settingsButton.style = `

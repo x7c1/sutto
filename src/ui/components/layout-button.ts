@@ -100,10 +100,7 @@ export function createLayoutButton(
     resolveLayoutValue(layout.size.height, displayHeight, workArea.height) -
     BUTTON_BORDER_WIDTH * 2;
 
-  // Create button with initial style (not hovered, but might be selected).
-  // `cursor_type` is the Shell 50 / Clutter 18 replacement for the removed
-  // `global.display.set_cursor(Meta.Cursor.POINTING_HAND)` — Clutter applies it
-  // automatically on pointer enter/leave, no event handlers needed.
+  // Create button with initial style (not hovered, but might be selected)
   const button = new St.Button({
     style_class: 'snap-layout-button',
     style: getButtonStyle(false, isSelected, buttonWidth, buttonHeight),
@@ -124,7 +121,7 @@ export function createLayoutButton(
   buttonWithMeta._buttonHeight = buttonHeight;
   buttonWithMeta._monitorKey = monitorKey;
 
-  // Add hover effect (background color; cursor shape handled by cursor_type above)
+  // Add hover effect
   const enterEventId = button.connect('enter-event', () => {
     // Only apply hover style if not keyboard-focused
     if (!buttonWithMeta._isFocused) {
