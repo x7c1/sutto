@@ -1,9 +1,9 @@
 import Clutter from 'gi://Clutter';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { Layout, LayoutSelectedEvent, SpacesRow } from '../../domain/layout/index.js';
 import type { Monitor } from '../../domain/monitor/index.js';
+import { safeAddChrome } from '../../libs/shell/safe-add-chrome.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 import { createMiniatureSpaceView } from '../components/miniature-space.js';
 import {
@@ -52,12 +52,11 @@ export function createBackground(onClickOutside: () => void): BackgroundView {
     height: global.screen_height,
   });
 
-  // Add background first (behind panel). Shell 50's LayoutManager dropped
-  // `affectsInputRegion` from the addChrome options — chrome actors now
-  // participate in the input region unconditionally.
-  Main.layoutManager.addChrome(background, {
-    trackFullscreen: false,
-  });
+  // Add background first (behind panel). Shell 50's addChrome is not atomic
+  // (see safeAddChrome); the wrapper destroys the actor on failure so a
+  // future regression cannot orphan a full-screen reactive surface that
+  // steals all pointer events.
+  safeAddChrome(background, { trackFullscreen: false });
 
   // Connect click on background to close panel
   const clickOutsideId = background.connect('button-press-event', () => {

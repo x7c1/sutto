@@ -19,6 +19,7 @@ import type {
   SpaceCollection,
   SpacesRow,
 } from '../../domain/layout/index.js';
+import { safeAddChrome } from '../../libs/shell/safe-add-chrome.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 import type { MonitorEnvironmentOperations } from '../../operations/monitor/index.js';
 import { AUTO_HIDE_DELAY_MS } from '../constants.js';
@@ -162,9 +163,10 @@ export class MainPanel {
     container.set_position(adjusted.x, adjusted.y);
 
     // Add to chrome and adjust for actual size
-    Main.layoutManager.addChrome(container, {
-      trackFullscreen: false,
-    });
+    // Shell 50's addChrome is not atomic; safeAddChrome destroys the actor
+    // on failure so a future regression cannot leave an orphaned chrome
+    // actor that captures pointer events session-wide.
+    safeAddChrome(container, { trackFullscreen: false });
     this.adjustContainerPosition(container, cursor, panelDimensions, centerVertically);
 
     // Setup interactions
