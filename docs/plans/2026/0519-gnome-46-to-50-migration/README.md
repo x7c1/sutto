@@ -61,6 +61,8 @@ Grep targets ran across `src/` only (excluding `dist/`, `node_modules/`, `site/`
 | 50 | `Meta.is_wayland_compositor` / X11 / Xorg code paths | 0 | — |
 | 50 | `RunDialog._restart` / `display.connect('restart', ...)` | 0 | — |
 | 50 | `keyboardManager.holdKeyboard` / `releaseKeyboard` | 0 | — |
+| 50 | `Meta.Cursor` enum (removed — verified via host introspection) | 5 | `src/ui/components/layout-button.ts:131,142`, `src/ui/main-panel/renderer.ts:146,155`, `src/ui/main-panel/index.ts:183` |
+| 50 | `global.display.set_cursor(...)` (removed — verified via host introspection) | 5 | same 5 sites as above |
 
 **Indirect `Mtk.Rectangle` exposure (Shell 49):** even though no explicit `Meta.Rectangle` reference exists in source, the return-type of these calls flips to `Mtk.Rectangle`:
 
@@ -80,7 +82,7 @@ The `Meta.Rectangle` and `Mtk.Rectangle` interfaces are structurally identical f
 
 Items not covered by the table or the indirect-exposure list, but relevant to the migration:
 
-- `global.display.set_cursor(Meta.Cursor.*)` is used in 5 places (`src/ui/components/layout-button.ts:131,142`, `src/ui/main-panel/index.ts:183`, `src/ui/main-panel/renderer.ts:146,155`). The `Meta.Cursor` enum is unchanged across 47–50, but verify on a Shell 49+ runtime that `global.display.set_cursor` still exists (it has been discussed for relocation onto the cursor tracker).
+- `global.display.set_cursor(Meta.Cursor.*)` is used in 5 places (`src/ui/components/layout-button.ts:131,142`, `src/ui/main-panel/index.ts:183`, `src/ui/main-panel/renderer.ts:146,155`). **Verified on the dev host (Shell 50 / Mutter 18) via `gjs` introspection: both `Meta.Cursor` and `Meta.Display.prototype.set_cursor` are `undefined`.** The public API for extensions to drive the system cursor shape was removed; `Meta.CursorTracker` on Shell 50 exposes only visibility (`inhibit_cursor_visibility` / `uninhibit_cursor_visibility`) and sprite-read methods, not shape selection. All five call sites are pure hover-feedback styling (background-color hover is already in place), so the planned resolution is **deletion**, not relocation. See Phase 4a for the cleanup.
 - `Meta.KeyBindingFlags.NONE` (`src/composition/shortcuts/keyboard-shortcut-manager.ts:37,60`) — stable, no impact.
 - `global.display.connect('grab-op-begin' | 'grab-op-end', ...)` (`src/composition/drag/drag-signal-handler.ts:24,31`) — signals are still supported on Shell 50; no rename detected in upstream notes.
 
@@ -152,7 +154,22 @@ Approach: bump dependencies first, then run the canonical check. For each missin
 
 **Goal:** Close any remaining gaps and clear up residual legacy artefacts.
 
-- No X11 / `is_wayland_compositor` / restart-signal / `holdKeyboard` references were found in the source, so the substantive Shell-50 work is empty. Phase 4 reduces to housekeeping:
+**4a. Cursor API removal (`Meta.Cursor` / `global.display.set_cursor`):**
+
+`Meta.Cursor` enum and `Meta.Display.set_cursor()` are removed in Shell 50 (verified via host `gjs` introspection — see "Other findings" above). There is no replacement extension API for driving the system cursor shape, so the five hover-feedback call sites are deleted outright:
+
+- `src/ui/components/layout-button.ts:131` — delete `global.display.set_cursor(Meta.Cursor.POINTING_HAND);` in the `enter-event` handler.
+- `src/ui/components/layout-button.ts:142` — delete `global.display.set_cursor(Meta.Cursor.DEFAULT);` in the `leave-event` handler.
+- `src/ui/main-panel/renderer.ts:146` — same, `enter-event`.
+- `src/ui/main-panel/renderer.ts:155` — same, `leave-event`.
+- `src/ui/main-panel/index.ts:183` — leave-event reset.
+- After deletion, prune any `Meta` imports that are no longer referenced by the affected files (re-check each file before removing the import — `Meta` may still be needed for other symbols).
+
+Background-color hover styling already provides the visual feedback for these buttons, so the user-visible regression is limited to the pointer-shape change being lost. No replacement API exists on Shell 50.
+
+**4b. Housekeeping:**
+
+- No X11 / `is_wayland_compositor` / restart-signal / `holdKeyboard` references were found in the source, so the rest of phase 4 reduces to:
   - Confirm `dist/metadata.json` `"shell-version": ["50"]` is in place from Phase 1.
   - Remove the legacy `declare namespace imports.ui.panel` block and the `Main` interface augmentation in `src/libs/gnome-types/panel.d.ts` (lines 5–40 and 45–47), and migrate any consumer to typed shell-extension imports. This is unrelated to Shell 50 but is a pre-ESM survivor that should not be carried forward; cleaning it up here keeps the type-shim directory consistent with the new series.
   - If the build reports any Shell-50-only symbol that's missing from `@girs/gnome-shell@49`, add it to `src/libs/gnome-types/gnome-shell-50.d.ts` per the ".d.ts augmentation strategy" above. Expect this file to be empty given the survey results.
@@ -191,11 +208,12 @@ If critical regressions surface during validation:
 1. **Drop support for GNOME 46–49. Target Shell 50 only.** The development host runs Shell 50 and primary validation happens there; dual-target adds runtime conditionals and wrapper layers around every changed API touchpoint, against an under-developed user base that has a clear upgrade path. `dist/metadata.json` `"shell-version": ["50"]`.
 2. **Pin `@girs/gnome-shell@49.x` (latest npm) and augment by hand for any Shell-50-only symbol the build complains about.** The survey shows no Shell-50-only API consumed by sutto, so the augmentation is expected to be empty or near-empty. See ".d.ts augmentation strategy" in Phase 1.
 3. **All phases land in a single PR.** Dependency bumps and code changes are coupled (the new `@girs/*` series removes old API types); separating them would leave the branch in a non-building intermediate state. Logical phases inside the PR are a review aid, not a sequence of mergeable commits.
-4. **The legacy `declare namespace imports.ui.panel` cleanup ships with this migration** (Phase 4), not as a separate PR. It is a pre-ESM survivor and removing it keeps `src/libs/gnome-types/` consistent with the new series.
+4. **The legacy `declare namespace imports.ui.panel` cleanup ships with this migration** (Phase 4b), not as a separate PR. It is a pre-ESM survivor and removing it keeps `src/libs/gnome-types/` consistent with the new series.
+5. **`Meta.Cursor` and `global.display.set_cursor()` are removed on Shell 50; the five hover-feedback call sites are deleted rather than relocated.** Verified on the dev host via `gjs` introspection (`typeof Meta.Cursor === 'undefined'`, `typeof Meta.Display.prototype.set_cursor === 'undefined'`). `Meta.CursorTracker` on Shell 50 exposes only visibility and sprite-read APIs — no replacement for extension-driven cursor shape exists. Background-color hover already covers the visual feedback for these buttons. See Phase 4a.
 
 ## Open Questions (still to resolve)
 
-1. **Are `Meta.Cursor.*` and `global.display.set_cursor(...)` still the recommended way to drive the cursor on Shell 50?** Upstream has discussed moving cursor control to the backend. Confirm against the Shell 50 release notes and the live host before relying on the five existing call sites (`src/ui/components/layout-button.ts:131,142`, `src/ui/main-panel/index.ts:183`, `src/ui/main-panel/renderer.ts:146,155`). If relocated, the fix scope is local — wrap the calls in a helper that the migration can update in one place.
+_None remaining. The cursor API question was resolved on 2026-05-19 — see Resolved Decision #5._
 
 ## References
 
@@ -224,5 +242,4 @@ If critical regressions surface during validation:
 
 ## Next Steps
 
-1. Verify the remaining open question (cursor API stability on Shell 50) — either by reading the Shell 50 release notes or by attempting `global.display.set_cursor()` once on the host.
-2. Begin Phase 1.
+1. Begin Phase 1.
