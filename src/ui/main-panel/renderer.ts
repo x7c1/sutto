@@ -52,9 +52,10 @@ export function createBackground(onClickOutside: () => void): BackgroundView {
     height: global.screen_height,
   });
 
-  // Add background first (behind panel)
+  // Add background first (behind panel). Shell 50's LayoutManager dropped
+  // `affectsInputRegion` from the addChrome options — chrome actors now
+  // participate in the input region unconditionally.
   Main.layoutManager.addChrome(background, {
-    affectsInputRegion: true,
     trackFullscreen: false,
   });
 

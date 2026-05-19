@@ -163,7 +163,6 @@ export class MainPanel {
 
     // Add to chrome and adjust for actual size
     Main.layoutManager.addChrome(container, {
-      affectsInputRegion: true,
       trackFullscreen: false,
     });
     this.adjustContainerPosition(container, cursor, panelDimensions, centerVertically);
