@@ -1,3 +1,4 @@
+import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { Layout, LayoutSelectedEvent } from '../../domain/layout/index.js';
@@ -106,6 +107,7 @@ export function createLayoutButton(
     reactive: true,
     can_focus: true,
     track_hover: true,
+    cursor_type: Clutter.CursorType.POINTER,
   });
 
   // Set position
@@ -119,7 +121,7 @@ export function createLayoutButton(
   buttonWithMeta._buttonHeight = buttonHeight;
   buttonWithMeta._monitorKey = monitorKey;
 
-  // Add hover effect (background-color only; Shell 50 dropped the cursor-shape API)
+  // Add hover effect
   const enterEventId = button.connect('enter-event', () => {
     // Only apply hover style if not keyboard-focused
     if (!buttonWithMeta._isFocused) {

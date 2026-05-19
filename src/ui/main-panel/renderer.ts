@@ -118,6 +118,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
       border-radius: ${SETTINGS_BORDER_RADIUS}px;
     `,
     track_hover: true,
+    cursor_type: Clutter.CursorType.POINTER,
     y_align: 2, // CENTER (vertically center the button)
   });
 
@@ -135,7 +136,7 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
     return true; // Clutter.EVENT_STOP
   });
 
-  // Hover effect (background-color only; Shell 50 dropped the cursor-shape API)
+  // Hover effect
   settingsButton.connect('enter-event', () => {
     log('[Renderer] Settings button hover enter');
     settingsButton.style = `
