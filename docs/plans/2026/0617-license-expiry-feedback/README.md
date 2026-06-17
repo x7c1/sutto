@@ -16,6 +16,11 @@ state** that explains what happened and offers a one-tap path to resolution. In
 addition, the extension **warns the user before the trial expires** so the lapse
 is never a surprise.
 
+The design decisions an implementer would otherwise have to guess have been
+settled up front — see [Design](#design) and
+[Settled decisions](#settled-decisions) — so the implementation can proceed with
+minimal back-and-forth.
+
 ## Background
 
 ### Current behavior
@@ -55,7 +60,7 @@ looking.
 
 ## Design
 
-Two complementary surfaces, chosen for this plan:
+Two complementary surfaces.
 
 ### 1. Locked panel on the failing trigger (primary)
 
@@ -83,20 +88,25 @@ easily missed — which is exactly the "I couldn't tell what happened" failure t
 plan exists to fix. The locked panel puts the explanation and the call to action
 in the user's line of sight, at the moment of highest intent.
 
+**Dismissal:** the locked panel reuses the **normal panel's show lifecycle**
+(positioning + auto-hide when the cursor leaves, `AUTO_HIDE_DELAY_MS`). No
+special dismissal handling is added — only the body rendering differs. To click
+"Open Preferences" the user keeps the cursor over the panel, which keeps it open.
+
 The body and call to action vary by reason:
 
-| Reason | Condition | Message (draft) | Action |
+| Reason | Condition | Message (final copy) | Action |
 |---|---|---|---|
 | `trial-expired` | `status === 'trial'` and trial expired | "Your Sutto trial has ended. Activate a license to keep snapping windows." | Open Preferences |
 | `license-expired` | `status === 'expired'` | "Your Sutto license has expired. Re-activate it to continue." | Open Preferences |
 | `license-invalid` | `status === 'invalid'` | "Your Sutto license is no longer valid. Re-activate it to continue." | Open Preferences |
-| `offline-grace-exceeded` | `status === 'valid'`, offline, grace exceeded | "Sutto couldn't verify your license. Reconnect to the internet to continue." | (no purchase CTA; informational — recovers automatically when back online) |
+| `offline-grace-exceeded` | `status === 'valid'`, offline, grace exceeded | "Sutto couldn't verify your license. Reconnect to the internet to continue." | none (informational; recovers automatically once back online and re-validated) |
 
 ### 2. Pre-expiry trial warning (proactive)
 
 The lapse should never be a surprise. While in trial, warn the user as the end
-approaches using a GNOME Shell notification — e.g. when `trialDaysRemaining`
-crosses a threshold such as 3 days and 1 day:
+approaches using a GNOME Shell notification when `trialDaysRemaining` first
+crosses **3 days** and **1 day** remaining:
 
 ```
   ┌ Sutto ─────────────────────┐
@@ -106,119 +116,133 @@ crosses a threshold such as 3 days and 1 day:
   └────────────────────────────┘
 ```
 
-This is the one place a notification is the right surface: it is proactive,
-low-frequency, and not tied to a specific in-context gesture. Notify at most once
-per threshold per trial (track the last-warned day so login does not re-fire it).
+Final copy: "Your Sutto trial ends in {n} day(s). Activate a license to keep
+using it." (`{n}` is `3` or `1`, with correct singular/plural).
+
+This is the one place a notification is the right surface: proactive,
+low-frequency, not tied to a specific in-context gesture. Each threshold fires at
+most once per trial (see [Pre-expiry warning](#pre-expiry-warning)).
+
+This applies to **trial only**. Hard expiry (`expired` / `invalid`) has no
+pre-warning notification — it is surfaced solely through the locked panel on the
+next trigger (see [Settled decisions](#settled-decisions)).
 
 ### Explicitly out of this plan's surfaces
 
 A persistent top-bar indicator and a preferences-page status banner were
-considered and **deferred**. The locked panel plus the pre-expiry warning cover
-the "tell me what happened" and "don't surprise me" needs; an ambient indicator
-can be revisited later if the locked panel proves insufficient.
+considered and **deferred**. The locked panel plus the pre-expiry trial warning
+cover the "tell me what happened" and "don't surprise me" needs; an ambient
+indicator can be revisited later if the locked panel proves insufficient.
 
-## Scope
+## Settled decisions
 
-### In Scope
+Decisions made up front so implementation does not stall on them:
 
-- Render the Main Panel in a locked "license required" state when a panel-show
-  attempt (edge drag or shortcut) runs while the license is invalid, instead of
-  suppressing it silently.
-- Tailor the locked-state message and call to action to the reason (trial ended /
-  license expired / license invalid / offline-validation-stale).
-- An "Open Preferences" action in the locked panel that opens the extension
-  preferences (so the user can activate a license).
-- Pre-expiry trial warning notifications at defined thresholds, fired at most once
-  per threshold per trial.
-- Handle the runtime transition: if the panel is open when the license becomes
-  invalid, switch it to the locked state (rather than only hiding it).
-
-### Out of Scope
-
-- Changing license validation logic, trial length, or grace-period rules.
-- Changing the license activation flow itself (the preferences License UI already
-  handles activation).
-- A persistent top-bar indicator and a preferences-page status banner (deferred —
-  see "Explicitly out of this plan's surfaces").
-- General error notifications unrelated to licensing (covered by plan 028,
-  `docs/plans/2026/028-improve-error-handling`).
+- **Trial warning thresholds:** 3 days and 1 day remaining.
+- **Locked panel dismissal:** identical to the normal panel (auto-hide on cursor
+  leave); no bespoke dismissal logic.
+- **Hard expiry (expired/invalid):** locked panel only — **no** startup/login
+  notification.
+- **Offline-grace-exceeded:** locked panel with an informational message and no
+  action button; recovers automatically on reconnect + re-validation.
+- **Panel API shape:** add `MainPanel.showLocked(reason)`; do not add a mode
+  branch inside the existing `show(cursor, window)`. `showLocked` reuses the same
+  internal show/positioning/auto-hide lifecycle and only swaps the rendered body.
+- **Reason source:** add `LicenseOperations.getDisabledReason(): DisabledReason | null`
+  (`null` = enabled) as the single source of truth; reimplement
+  `shouldExtensionBeEnabled()` as `getDisabledReason() === null`. Expose the
+  reason through `LicenseStateHandler` so the Controller does not recompute it.
+- **NotificationService:** introduce a minimal version in this plan (do not block
+  on plan 028). It is used only for the pre-expiry warning. Align the interface
+  with plan 028 so 028 can later generalize/replace it.
+- **Warning check timing:** check on `enable()`/startup only (the trial day count
+  advances at startup, so no in-session timer is needed).
+- **Test scope:** unit-test the pure logic (reason mapping, warning
+  threshold/once-only). GNOME-dependent rendering is covered by the manual
+  verification step, not unit tests.
 
 ## Technical Approach
 
 ### Reason mapping
 
-Add a helper that maps the current `LicenseState` to a user-facing *reason*
-(`trial-expired` | `license-expired` | `license-invalid` |
-`offline-grace-exceeded`) plus its message and whether an "Open Preferences"
-action applies. Expose the reason from `LicenseStateHandler` / `LicenseOperations`
-rather than recomputing it inside the Controller or the renderer.
+`DisabledReason` is the union `'trial-expired' | 'license-expired' |
+'license-invalid' | 'offline-grace-exceeded'`. `LicenseOperations.getDisabledReason()`
+computes it from the current `LicenseState` (returning `null` when the extension
+should be enabled). A small pure helper maps a `DisabledReason` to its user-facing
+message and whether an "Open Preferences" action applies; this helper is the unit
+under test for copy/logic.
 
 ### Locked panel rendering
 
 - `src/ui/main-panel/renderer.ts` gains a locked-state variant that renders the
-  reason message and (when applicable) an "Open Preferences" button, in place of
+  reason message and, when applicable, an "Open Preferences" button, in place of
   the layout picker.
-- `MainPanel` (`src/ui/main-panel/`) gains a way to be shown in locked mode —
-  e.g. `showLocked(reason)` alongside the existing `show(cursor, window)`, or a
-  mode argument threaded into `show()`.
+- `MainPanel` (`src/ui/main-panel/`) gains `showLocked(reason)` alongside
+  `show(cursor, window)`, reusing the existing positioning and auto-hide
+  lifecycle (only the body render differs).
 - `src/composition/controller.ts`:
-  - `showMainPanel()` — when `!licenseStateHandler.isValid()`, call
+  - `showMainPanel()` — when the license is invalid, resolve the reason and call
     `mainPanel.showLocked(reason)` instead of returning early.
   - `onShowPanelShortcut()` — same.
   - `enable()` `onBecameInvalid` callback — if the panel is currently visible,
-    switch it to the locked state; otherwise leave it hidden until the next
+    switch it to the locked state; if hidden, leave it hidden until the next
     trigger.
 
 ### Opening preferences from the locked panel
 
 The panel runs in the shell process. Wire an `onOpenPreferences` callback from the
 entry point (`src/extension.ts`, which holds the `Extension` instance) down to the
-panel, using the extension's `openPreferences()`. The callback is invoked by the
-locked panel's button.
+panel, calling the extension's `openPreferences()`. The locked panel's button
+invokes this callback.
 
 ### Pre-expiry warning
 
-- A small notifier checks `trialDaysRemaining` on startup/enable and fires a
-  notification when a threshold (e.g. 3, 1) is newly crossed.
-- Use a `NotificationService` abstraction (operations-layer interface +
-  GNOME-Shell infra implementation). This is the only notification surface in
-  this plan; align it with plan 028's proposed `NotificationService` (reuse if
-  028 lands first, otherwise introduce a minimal version here).
-- Persist the last-warned threshold/day (a GSettings key) so repeated logins do
-  not re-fire the same warning.
+- On `enable()`/startup, if `status === 'trial'` and not expired, evaluate the
+  thresholds `[3, 1]` against `trialDaysRemaining`.
+- Fire the notification for the most urgent threshold `T` where
+  `trialDaysRemaining <= T` and `T` has not already been warned for this trial.
+- Persist the last-warned threshold in a new GSettings key (e.g.
+  `trial-warning-last-threshold`, int, default `0` meaning "none warned") so a
+  threshold fires at most once and re-login does not re-fire it. Because
+  `trialDaysRemaining` only decreases, the stored threshold only decreases. Reset
+  it when the status leaves `trial` (e.g. on activation).
+- Notifications go through the minimal `NotificationService`.
 
 ### Integration points
 
 - `src/composition/controller.ts` — locked-panel wiring on the three paths above.
-- `src/ui/main-panel/renderer.ts` (+ `MainPanel`) — locked-state rendering.
+- `src/ui/main-panel/renderer.ts` (+ `MainPanel`) — locked-state rendering and
+  `showLocked`.
+- `src/operations/licensing/license-operations.ts` — `getDisabledReason()`;
+  `shouldExtensionBeEnabled()` becomes a thin wrapper.
 - `src/composition/licensing/license-state-handler.ts` — expose the reason.
 - `src/extension.ts` — `onOpenPreferences` wiring; pre-expiry warning on enable.
-- New: reason-mapping helper, `NotificationService` (interface + GNOME impl).
-
-## Open questions
-
-- Exact warning thresholds (3 / 1 days? also 7?).
-- Whether the locked panel should auto-dismiss like the normal panel (cursor
-  leaves) or stay until clicked, given it now carries an actionable button.
+- New schema key in `org.gnome.shell.extensions.sutto.gschema.xml` for the
+  last-warned threshold.
+- New: `DisabledReason` + reason→message helper, `NotificationService` (interface
+  + GNOME impl).
 
 ## Tasks
 
-- [ ] Add a reason mapping from `LicenseState` to message + action applicability.
-- [ ] Add a locked-state variant to `renderer.ts` and a `showLocked(reason)` path
-      on `MainPanel`.
+- [ ] Add `DisabledReason` and `LicenseOperations.getDisabledReason()`; rewrite
+      `shouldExtensionBeEnabled()` as a thin wrapper; expose the reason via
+      `LicenseStateHandler`.
+- [ ] Add the reason→message helper (message + action applicability).
+- [ ] Add a locked-state variant to `renderer.ts` and `MainPanel.showLocked(reason)`
+      reusing the existing show/auto-hide lifecycle.
 - [ ] Wire the locked panel into `showMainPanel()` and `onShowPanelShortcut()` in
       `controller.ts` (replace the silent returns).
 - [ ] Switch a visible panel to the locked state on the runtime `onBecameInvalid`
-      transition.
+      transition; leave a hidden panel hidden.
 - [ ] Wire an `onOpenPreferences` callback from `extension.ts` to the locked
-      panel's button.
-- [ ] Introduce / reuse `NotificationService` (operations interface + GNOME infra
-      implementation), aligned with plan 028.
-- [ ] Add the pre-expiry trial warning (threshold check + once-per-threshold
-      persistence via a GSettings key).
-- [ ] Add unit tests for the reason mapping and the warning threshold/once-only
-      logic.
+      panel's button (via `Extension.openPreferences()`).
+- [ ] Add a minimal `NotificationService` (operations interface + GNOME infra
+      implementation), interface aligned with plan 028.
+- [ ] Add the `trial-warning-last-threshold` GSettings key and the pre-expiry
+      warning logic (thresholds 3 and 1; once per threshold; reset on activation).
+- [ ] Unit tests: reason mapping/copy, and warning threshold/once-only logic.
 - [ ] Run `npm run build && npm run check && npm run test:run`.
 - [ ] Manual verification: set `license-status` to `expired` via `dconf`, drag a
       window to a screen edge, and confirm the locked panel appears with the
-      correct message and a working "Open Preferences" button.
+      correct message and a working "Open Preferences" button; verify it auto-hides
+      like the normal panel.
