@@ -1,6 +1,6 @@
 # License Expiry Feedback
 
-Status: Draft
+Status: Open
 
 ## Overview
 
