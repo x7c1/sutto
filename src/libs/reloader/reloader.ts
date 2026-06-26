@@ -14,6 +14,11 @@ import GLib from 'gi://GLib';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { ExtensionObject } from '@girs/gnome-shell/dist/types/extension-object.js';
 import type { ExtensionManager } from '@girs/gnome-shell/dist/ui/extensionSystem.js';
+import { GioShellExtensionSettings } from './gio-shell-extension-settings.js';
+import {
+  pruneStaleReloadUuidsFromSettings,
+  type ShellExtensionSettingsPort,
+} from './prune-stale-uuids.js';
 
 // Declare TextEncoder/TextDecoder for TypeScript
 declare class TextDecoder {
@@ -38,16 +43,25 @@ export class Reloader {
   private originalUuid: string;
   private currentUuid: string;
   private extensionDir: string;
+  private shellExtensionSettings: ShellExtensionSettingsPort;
 
   /**
    * Create a new Reloader instance
    * @param uuid The extension UUID (e.g., 'my-extension@example.com')
    * @param currentUuid Optional current UUID (used internally for reloaded instances)
+   * @param shellExtensionSettings Optional port for reading/writing the
+   *   `org.gnome.shell` extension GSettings arrays. Defaults to a Gio-backed
+   *   implementation; tests inject an in-memory fake.
    */
-  constructor(uuid: string, currentUuid?: string) {
+  constructor(
+    uuid: string,
+    currentUuid?: string,
+    shellExtensionSettings?: ShellExtensionSettingsPort
+  ) {
     this.originalUuid = uuid;
     this.currentUuid = currentUuid || uuid;
     this.extensionDir = `${GLib.get_home_dir()}/.local/share/gnome-shell/extensions/${this.originalUuid}`;
+    this.shellExtensionSettings = shellExtensionSettings ?? new GioShellExtensionSettings();
   }
 
   /**
@@ -102,6 +116,10 @@ export class Reloader {
       if (!enableSuccess) {
         throw new Error(`Failed to enable extension ${newUuid}`);
       }
+
+      // Prune stale reload UUIDs from GSettings. Must run AFTER the new UUID
+      // has been enabled so we never accidentally prune ourselves.
+      this.pruneStaleReloadUuidsFromGSettings(newUuid);
 
       // Clean up old files and extension
       this.cleanupTempDirs(tmpDir);
@@ -257,6 +275,24 @@ export class Reloader {
       }
     } catch (e: unknown) {
       console.log(`[Reloader] Error unloading: ${getErrorMessage(e)}`);
+    }
+  }
+
+  /**
+   * Remove stale `<originalUuid>-reload-<digits>` entries that previous
+   * reload cycles left behind in GNOME Shell's `enabled-extensions` and
+   * `disabled-extensions` GSettings arrays. The canonical UUID and the
+   * currently-running reload UUID are preserved.
+   */
+  private pruneStaleReloadUuidsFromGSettings(currentReloadUuid: string): void {
+    try {
+      pruneStaleReloadUuidsFromSettings(
+        this.shellExtensionSettings,
+        this.originalUuid,
+        currentReloadUuid
+      );
+    } catch (e: unknown) {
+      console.log(`[Reloader] Failed to prune stale reload UUIDs: ${getErrorMessage(e)}`);
     }
   }
 
