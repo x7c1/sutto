@@ -76,6 +76,27 @@ export class Reloader {
       // Clean up old instances
       this.cleanupOldInstances(extensionManager);
 
+      // Disable old extension first to unregister D-Bus interface.
+      // This runs BEFORE any tmp-dir creation so that an aborted reload
+      // leaves no orphan files behind.
+      console.log('[Reloader] Disabling old extension...');
+      const disableSuccess = extensionManager.disableExtension(this.currentUuid);
+      if (!disableSuccess) {
+        console.error(
+          `[Reloader] Aborting reload: extensionManager.disableExtension('${this.currentUuid}') returned false.`
+        );
+        console.error(
+          '[Reloader] The previous extension instance may still be holding the D-Bus interface name.'
+        );
+        console.error(
+          '[Reloader] Recovery: logout/login required (Wayland cannot restart gnome-shell).'
+        );
+        throw new Error(`disableExtension failed for ${this.currentUuid}`);
+      }
+
+      // Wait for D-Bus interface to fully unregister
+      await this.waitAsync(100);
+
       // Prepare new UUID and directory
       const timestamp = GLib.get_real_time();
       const newUuid = `${this.originalUuid}-reload-${timestamp}`;
@@ -84,16 +105,6 @@ export class Reloader {
       // Copy files and update metadata
       const tmpDirFile = this.copyFilesToTemp(tmpDir);
       this.updateMetadata(tmpDirFile, newUuid);
-
-      // Disable old extension first to unregister D-Bus interface
-      console.log('[Reloader] Disabling old extension...');
-      const disableSuccess = extensionManager.disableExtension(this.currentUuid);
-      if (!disableSuccess) {
-        console.warn(`[Reloader] Failed to disable extension ${this.currentUuid}`);
-      }
-
-      // Wait for D-Bus interface to fully unregister
-      await this.waitAsync(100);
 
       // Create extension object (returns void in Shell 46)
       extensionManager.createExtensionObject(

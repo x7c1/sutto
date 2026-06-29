@@ -5,6 +5,7 @@ import { Controller } from './composition/controller.js';
 import { EXTENSION_UUID } from './infra/constants.js';
 import { GSettingsPreferencesRepository } from './infra/glib/index.js';
 import { DBusReloader } from './libs/reloader/index.js';
+import { safeDisable } from './libs/safe-disable.js';
 
 export default class SuttoExtension extends Extension {
   private dbusReloader: DBusReloader | null = null;
@@ -23,13 +24,14 @@ export default class SuttoExtension extends Extension {
   disable() {
     console.log('[Sutto] Extension disabled');
 
-    // Clean up controller
-    this.controller?.disable();
-    this.controller = null;
-
-    // Clean up D-Bus reloader
-    this.dbusReloader?.disable();
+    // Tear down the D-Bus surface FIRST so the bus name is released even if a
+    // later sibling teardown throws. Each sibling is wrapped in `safeDisable`
+    // so a throw in one cannot strand the others — see safe-disable.ts.
+    safeDisable('dbusReloader', () => this.dbusReloader?.disable());
     this.dbusReloader = null;
+
+    safeDisable('controller', () => this.controller?.disable());
+    this.controller = null;
   }
 
   private initializeDBusReloader(): DBusReloader | null {
