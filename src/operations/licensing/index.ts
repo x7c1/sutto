@@ -8,3 +8,4 @@ export type {
 } from './license-operations.js';
 export { LicenseOperations } from './license-operations.js';
 export type { LicenseRepository } from './license-repository.js';
+export { TrialWarningOperations } from './trial-warning-operations.js';

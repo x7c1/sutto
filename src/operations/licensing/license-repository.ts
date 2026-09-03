@@ -27,6 +27,17 @@ export interface LicenseRepository {
   saveTrialPeriod(trial: TrialPeriod): void;
 
   /**
+   * Get the trial pre-expiry warning threshold (in remaining days) that has
+   * already been warned about. Returns NO_TRIAL_WARNING when none has.
+   */
+  getTrialWarningThreshold(): number;
+
+  /**
+   * Store the trial pre-expiry warning threshold that has been warned about.
+   */
+  setTrialWarningThreshold(threshold: number): void;
+
+  /**
    * Get the current license status
    */
   getStatus(): LicenseStatus;

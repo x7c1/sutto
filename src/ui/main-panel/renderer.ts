@@ -2,6 +2,8 @@ import Clutter from 'gi://Clutter';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import type { Layout, LayoutSelectedEvent, SpacesRow } from '../../domain/layout/index.js';
+import type { DisabledReason } from '../../domain/licensing/index.js';
+import { describeDisabledReason } from '../../domain/licensing/index.js';
 import type { Monitor } from '../../domain/monitor/index.js';
 import { safeAddChrome } from '../../libs/shell/safe-add-chrome.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
@@ -9,6 +11,10 @@ import { createMiniatureSpaceView } from '../components/miniature-space.js';
 import {
   FOOTER_MARGIN_TOP,
   FOOTER_TEXT_COLOR,
+  LOCKED_ACTION_BG_COLOR,
+  LOCKED_ACTION_BG_COLOR_HOVER,
+  LOCKED_MESSAGE_TEXT_COLOR,
+  LOCKED_PANEL_WIDTH,
   PANEL_BG_COLOR,
   PANEL_BORDER_COLOR,
   PANEL_PADDING,
@@ -36,6 +42,11 @@ export interface BackgroundView {
 export interface SpacesRowView {
   rowsContainer: St.BoxLayout;
   layoutButtons: Map<St.Button, Layout>;
+  buttonEvents: PanelEventIds['buttonEvents'];
+}
+
+export interface LockedPanelView {
+  element: St.BoxLayout;
   buttonEvents: PanelEventIds['buttonEvents'];
 }
 
@@ -160,6 +171,102 @@ export function createFooter(onSettingsClick: () => void): St.BoxLayout {
   footerBox.add_child(settingsButton);
 
   return footerBox;
+}
+
+/**
+ * Create the locked panel body shown while the license is invalid.
+ *
+ * Replaces the layout picker with the reason the extension is disabled and,
+ * where the user can act on it, a button that opens the preferences window.
+ */
+export function createLockedView(
+  reason: DisabledReason,
+  onOpenPreferences: () => void
+): LockedPanelView {
+  const LOCK_ICON_SIZE = 24;
+  const MESSAGE_MARGIN_TOP = 10;
+  const ACTION_MARGIN_TOP = 14;
+  const ACTION_PADDING_VERTICAL = 6;
+  const ACTION_PADDING_HORIZONTAL = 14;
+  const ACTION_BORDER_RADIUS = 6;
+
+  const { headline, instruction, canOpenPreferences } = describeDisabledReason(reason);
+
+  const container = new St.BoxLayout({
+    style_class: 'sutto-locked-panel',
+    style: `width: ${LOCKED_PANEL_WIDTH - PANEL_PADDING * 2}px;`,
+    orientation: Clutter.Orientation.VERTICAL,
+    x_expand: false,
+    y_expand: false,
+    x_align: Clutter.ActorAlign.CENTER,
+  });
+
+  const icon = new St.Icon({
+    icon_name: 'changes-prevent-symbolic',
+    icon_size: LOCK_ICON_SIZE,
+    style: `color: ${LOCKED_MESSAGE_TEXT_COLOR};`,
+    x_align: Clutter.ActorAlign.CENTER,
+  });
+  container.add_child(icon);
+
+  // One sentence per line so the break never lands mid-sentence
+  const label = new St.Label({
+    text: `${headline}\n${instruction}`,
+    style: `
+      font-size: 13px;
+      color: ${LOCKED_MESSAGE_TEXT_COLOR};
+      text-align: center;
+      margin-top: ${MESSAGE_MARGIN_TOP}px;
+    `,
+    x_expand: true,
+    x_align: Clutter.ActorAlign.CENTER,
+  });
+  // Fallback wrap for locales where a sentence outgrows the panel
+  label.clutter_text.line_wrap = true;
+  container.add_child(label);
+
+  const buttonEvents: PanelEventIds['buttonEvents'] = [];
+
+  if (canOpenPreferences) {
+    const actionStyle = (backgroundColor: string): string => `
+      margin-top: ${ACTION_MARGIN_TOP}px;
+      padding: ${ACTION_PADDING_VERTICAL}px ${ACTION_PADDING_HORIZONTAL}px;
+      border-radius: ${ACTION_BORDER_RADIUS}px;
+      background-color: ${backgroundColor};
+      color: ${LOCKED_MESSAGE_TEXT_COLOR};
+      font-size: 13px;
+    `;
+
+    const actionButton = new St.Button({
+      style_class: 'sutto-locked-action',
+      label: 'Open Preferences',
+      style: actionStyle(LOCKED_ACTION_BG_COLOR),
+      track_hover: true,
+      can_focus: true,
+      reactive: true,
+      cursor_type: Clutter.CursorType.POINTER,
+      x_align: Clutter.ActorAlign.CENTER,
+    });
+
+    const clickEventId = actionButton.connect('clicked', () => {
+      log('[Renderer] Locked panel "Open Preferences" clicked');
+      onOpenPreferences();
+      return true; // Clutter.EVENT_STOP
+    });
+    const enterEventId = actionButton.connect('enter-event', () => {
+      actionButton.style = actionStyle(LOCKED_ACTION_BG_COLOR_HOVER);
+      return false; // Clutter.EVENT_PROPAGATE
+    });
+    const leaveEventId = actionButton.connect('leave-event', () => {
+      actionButton.style = actionStyle(LOCKED_ACTION_BG_COLOR);
+      return false; // Clutter.EVENT_PROPAGATE
+    });
+
+    container.add_child(actionButton);
+    buttonEvents.push({ button: actionButton, enterEventId, leaveEventId, clickEventId });
+  }
+
+  return { element: container, buttonEvents };
 }
 
 /**

@@ -51,6 +51,11 @@
       <summary>Trial last used date</summary>
       <description>Last date the extension was used in trial mode (ISO 8601 format, e.g., "2026-01-31").</description>
     </key>
+    <key name="trial-warning-last-threshold" type="i">
+      <default>0</default>
+      <summary>Trial warning last threshold</summary>
+      <description>Remaining-day threshold (3 or 1) the trial pre-expiry warning was last shown for, so each threshold warns at most once. 0 means no warning has been shown yet.</description>
+    </key>
     <key name="license-status" type="s">
       <default>'trial'</default>
       <summary>License status</summary>

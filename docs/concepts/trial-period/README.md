@@ -17,6 +17,10 @@ Usage days are counted based on actual usage — only days when the user uses th
 - record (a usage day in the Trial Period) — count a day of usage
 - reset (a Trial Period) — restore the Trial Period to its initial state
 
+## Domain Rules
+
+- **Pre-expiry warning**: The user is notified when the remaining days first drop to 3 or fewer, and again when they drop to 1, so the end of the Trial Period is never a surprise. Each of the two thresholds notifies at most once, including across logins; a threshold already passed when the first notification fires is never notified about afterwards.
+
 ## Related Concepts
 
 - See [License](../license/) for the subscription-based authorization that follows the Trial Period

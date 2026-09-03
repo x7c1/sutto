@@ -61,7 +61,7 @@ export default class SuttoExtension extends Extension {
       return null;
     }
     try {
-      return new Controller(preferencesRepository, this.metadata);
+      return new Controller(preferencesRepository, () => this.openPreferences());
     } catch (e) {
       console.log(`[Sutto] ERROR: Failed to initialize controller: ${e}`);
       return null;

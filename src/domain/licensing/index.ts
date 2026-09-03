@@ -2,6 +2,8 @@ export { ActivationId, InvalidActivationIdError } from './activation-id.js';
 export type { ActivationError, ActivationSuccessData } from './activation-result.js';
 export { ActivationResult } from './activation-result.js';
 export { DeviceId, InvalidDeviceIdError } from './device-id.js';
+export type { DisabledReason, DisabledReasonDescription } from './disabled-reason.js';
+export { DISABLED_REASONS, describeDisabledReason } from './disabled-reason.js';
 export type { LicenseProps } from './license.js';
 export { InvalidLicenseError, License } from './license.js';
 export { InvalidLicenseKeyError, LicenseKey } from './license-key.js';
@@ -19,3 +21,10 @@ export { isValidNetworkState, NETWORK_STATES } from './network-state.js';
 export { InvalidTrialDaysError, TrialDays } from './trial-days.js';
 export type { TrialPeriodProps } from './trial-period.js';
 export { TrialPeriod } from './trial-period.js';
+export type { TrialWarningDecision, TrialWarningInput } from './trial-warning.js';
+export {
+  evaluateTrialWarning,
+  formatTrialWarningMessage,
+  NO_TRIAL_WARNING,
+  TRIAL_WARNING_THRESHOLDS,
+} from './trial-warning.js';

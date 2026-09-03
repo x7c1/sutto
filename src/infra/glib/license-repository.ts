@@ -68,6 +68,14 @@ export class GSettingsLicenseRepository implements LicenseRepository {
     this.settings.set_string('trial-last-used-date', trial.lastUsedDate);
   }
 
+  getTrialWarningThreshold(): number {
+    return this.settings.get_int('trial-warning-last-threshold');
+  }
+
+  setTrialWarningThreshold(threshold: number): void {
+    this.settings.set_int('trial-warning-last-threshold', threshold);
+  }
+
   getStatus(): LicenseStatus {
     const statusStr = this.settings.get_string('license-status');
     try {

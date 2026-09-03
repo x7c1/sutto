@@ -72,16 +72,19 @@ is invalid, render the Main Panel in a locked state instead of suppressing it:
 ```
 Drag to edge / press shortcut → panel appears, but the body is locked
 
-┌──────────────────────────────┐
-│  Sutto                       │
-│                              │
-│    🔒  Trial ended           │
-│    Activate a license to     │
-│    keep snapping windows.    │
-│                              │
-│      [ Open Preferences ]    │
-└──────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Sutto                                       │
+│                                              │
+│                     🔒                       │
+│         Your Sutto trial has ended.          │
+│  Activate a license to keep snapping windows.│
+│                                              │
+│              [ Open Preferences ]            │
+└──────────────────────────────────────────────┘
 ```
+
+Each message is two sentences — what happened, then what to do — rendered one
+per line so the line break never falls mid-sentence.
 
 Rationale for choosing this over a transient toast: a notification fades and is
 easily missed — which is exactly the "I couldn't tell what happened" failure this
@@ -112,12 +115,19 @@ crosses **3 days** and **1 day** remaining:
   ┌ Sutto ─────────────────────┐
   │ Your trial ends in 3 days. │
   │ Activate to keep using it. │
-  │            [Open Prefs]    │
   └────────────────────────────┘
 ```
 
 Final copy: "Your Sutto trial ends in {n} day(s). Activate a license to keep
-using it." (`{n}` is `3` or `1`, with correct singular/plural).
+using it." (`{n}` is the *actual* `trialDaysRemaining`, not the threshold — trial
+days are usage days, so a user who skips a few days can cross the 3-day threshold
+with 2 days left, and the message must not claim otherwise. Singular/plural is
+matched to `{n}`.)
+
+The notification carries no action button: the minimal `NotificationService`
+below wraps `Main.notify`, which only takes a title and a body. The user's path to
+resolution is the preferences window they already know, and the locked panel once
+the trial actually ends.
 
 This is the one place a notification is the right surface: proactive,
 low-frequency, not tied to a specific in-context gesture. Each threshold fires at
@@ -215,8 +225,10 @@ invokes this callback.
   `showLocked`.
 - `src/operations/licensing/license-operations.ts` — `getDisabledReason()`;
   `shouldExtensionBeEnabled()` becomes a thin wrapper.
-- `src/composition/licensing/license-state-handler.ts` — expose the reason.
-- `src/extension.ts` — `onOpenPreferences` wiring; pre-expiry warning on enable.
+- `src/composition/licensing/license-state-handler.ts` — expose the reason, and
+  run the pre-expiry warning check once the license state has been initialized on
+  enable.
+- `src/extension.ts` — `onOpenPreferences` wiring (passed into the `Controller`).
 - New schema key in `org.gnome.shell.extensions.sutto.gschema.xml` for the
   last-warned threshold.
 - New: `DisabledReason` + reason→message helper, `NotificationService` (interface
@@ -224,25 +236,31 @@ invokes this callback.
 
 ## Tasks
 
-- [ ] Add `DisabledReason` and `LicenseOperations.getDisabledReason()`; rewrite
+- [x] Add `DisabledReason` and `LicenseOperations.getDisabledReason()`; rewrite
       `shouldExtensionBeEnabled()` as a thin wrapper; expose the reason via
       `LicenseStateHandler`.
-- [ ] Add the reason→message helper (message + action applicability).
-- [ ] Add a locked-state variant to `renderer.ts` and `MainPanel.showLocked(reason)`
+- [x] Add the reason→message helper (message + action applicability).
+- [x] Add a locked-state variant to `renderer.ts` and `MainPanel.showLocked(reason)`
       reusing the existing show/auto-hide lifecycle.
-- [ ] Wire the locked panel into `showMainPanel()` and `onShowPanelShortcut()` in
+- [x] Wire the locked panel into `showMainPanel()` and `onShowPanelShortcut()` in
       `controller.ts` (replace the silent returns).
-- [ ] Switch a visible panel to the locked state on the runtime `onBecameInvalid`
+- [x] Switch a visible panel to the locked state on the runtime `onBecameInvalid`
       transition; leave a hidden panel hidden.
-- [ ] Wire an `onOpenPreferences` callback from `extension.ts` to the locked
+- [x] Wire an `onOpenPreferences` callback from `extension.ts` to the locked
       panel's button (via `Extension.openPreferences()`).
-- [ ] Add a minimal `NotificationService` (operations interface + GNOME infra
+- [x] Add a minimal `NotificationService` (operations interface + GNOME infra
       implementation), interface aligned with plan 028.
-- [ ] Add the `trial-warning-last-threshold` GSettings key and the pre-expiry
+- [x] Add the `trial-warning-last-threshold` GSettings key and the pre-expiry
       warning logic (thresholds 3 and 1; once per threshold; reset on activation).
-- [ ] Unit tests: reason mapping/copy, and warning threshold/once-only logic.
-- [ ] Run `npm run build && npm run check && npm run test:run`.
-- [ ] Manual verification: set `license-status` to `expired` via `dconf`, drag a
-      window to a screen edge, and confirm the locked panel appears with the
-      correct message and a working "Open Preferences" button; verify it auto-hides
-      like the normal panel.
+- [x] Unit tests: reason mapping/copy, and warning threshold/once-only logic.
+- [x] Run `npm run build && npm run check && npm run test:run`.
+- [ ] Manual verification: set `license-status` to `expired` via `dconf` and
+      restart GNOME Shell (the reason is resolved on enable and then cached, so an
+      external `dconf` write is not picked up mid-session), then drag a window to a
+      screen edge and confirm the locked panel appears with the correct message and
+      a working "Open Preferences" button; verify it auto-hides like the normal
+      panel.
+- [ ] Manual verification: set `trial-days-used` to `27` and
+      `trial-warning-last-threshold` to `0` via `dconf`, restart GNOME Shell, and
+      confirm the "Trial ending soon" notification appears once; restart again and
+      confirm it does not reappear.
