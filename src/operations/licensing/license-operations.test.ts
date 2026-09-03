@@ -66,11 +66,13 @@ function createMockRepository(
     status: LicenseStatus;
     license: License | null;
     trialPeriod: TrialPeriod;
+    trialWarningThreshold: number;
   }>
 ): LicenseRepository {
   let status = overrides?.status ?? 'trial';
   let license = overrides?.license ?? null;
   let trialPeriod = overrides?.trialPeriod ?? TrialPeriod.initial();
+  let trialWarningThreshold = overrides?.trialWarningThreshold ?? 0;
 
   return {
     getStatus: () => status,
@@ -84,6 +86,10 @@ function createMockRepository(
     loadTrialPeriod: () => trialPeriod,
     saveTrialPeriod: (t: TrialPeriod) => {
       trialPeriod = t;
+    },
+    getTrialWarningThreshold: () => trialWarningThreshold,
+    setTrialWarningThreshold: (threshold: number) => {
+      trialWarningThreshold = threshold;
     },
     clearLicense: () => {
       license = null;
@@ -246,74 +252,90 @@ describe('LicenseOperations', () => {
     });
   });
 
-  describe('shouldExtensionBeEnabled', () => {
-    it('returns true when trial is not expired', () => {
+  describe('getDisabledReason', () => {
+    it('returns null when the trial is not expired', () => {
       const repository = createMockRepository({
         status: 'trial',
         trialPeriod: createMockTrialPeriod(10),
       });
-      const ops = createOperations({ repository });
 
-      expect(ops.shouldExtensionBeEnabled()).toBe(true);
+      expect(createOperations({ repository }).getDisabledReason()).toBeNull();
     });
 
-    it('returns false when trial is expired', () => {
+    it('returns trial-expired when the trial is expired', () => {
       const repository = createMockRepository({
         status: 'trial',
         trialPeriod: createMockTrialPeriod(30),
       });
-      const ops = createOperations({ repository });
 
-      expect(ops.shouldExtensionBeEnabled()).toBe(false);
+      expect(createOperations({ repository }).getDisabledReason()).toBe('trial-expired');
     });
 
-    it('returns true when valid and online', () => {
+    it('returns null when valid and online', () => {
       const repository = createMockRepository({
         status: 'valid',
         license: createMockLicense(),
       });
       const networkStateProvider = createMockNetworkStateProvider('online');
-      const ops = createOperations({ repository, networkStateProvider });
 
-      expect(ops.shouldExtensionBeEnabled()).toBe(true);
+      expect(createOperations({ repository, networkStateProvider }).getDisabledReason()).toBeNull();
     });
 
-    it('returns true when valid and offline within grace period', () => {
+    it('returns null when valid and offline within the grace period', () => {
       const recentlyValidated = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
       const repository = createMockRepository({
         status: 'valid',
         license: createMockLicense({ lastValidated: recentlyValidated }),
       });
       const networkStateProvider = createMockNetworkStateProvider('offline');
-      const ops = createOperations({ repository, networkStateProvider });
 
-      expect(ops.shouldExtensionBeEnabled()).toBe(true);
+      expect(createOperations({ repository, networkStateProvider }).getDisabledReason()).toBeNull();
     });
 
-    it('returns false when valid and offline beyond grace period (7+ days)', () => {
+    it('returns offline-grace-exceeded when valid and offline beyond the grace period', () => {
       const longAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
       const repository = createMockRepository({
         status: 'valid',
         license: createMockLicense({ lastValidated: longAgo }),
       });
       const networkStateProvider = createMockNetworkStateProvider('offline');
-      const ops = createOperations({ repository, networkStateProvider });
 
-      expect(ops.shouldExtensionBeEnabled()).toBe(false);
+      expect(createOperations({ repository, networkStateProvider }).getDisabledReason()).toBe(
+        'offline-grace-exceeded'
+      );
     });
 
-    it('returns false when status is expired', () => {
+    it('returns license-expired when status is expired', () => {
       const repository = createMockRepository({ status: 'expired' });
-      const ops = createOperations({ repository });
 
-      expect(ops.shouldExtensionBeEnabled()).toBe(false);
+      expect(createOperations({ repository }).getDisabledReason()).toBe('license-expired');
     });
 
-    it('returns false when status is invalid', () => {
+    it('returns license-invalid when status is invalid', () => {
       const repository = createMockRepository({ status: 'invalid' });
-      const ops = createOperations({ repository });
 
-      expect(ops.shouldExtensionBeEnabled()).toBe(false);
+      expect(createOperations({ repository }).getDisabledReason()).toBe('license-invalid');
+    });
+  });
+
+  // Thin wrapper over getDisabledReason(), which owns the per-status cases above.
+  describe('shouldExtensionBeEnabled', () => {
+    it('returns true when there is no disabled reason', () => {
+      const repository = createMockRepository({
+        status: 'trial',
+        trialPeriod: createMockTrialPeriod(10),
+      });
+
+      expect(createOperations({ repository }).shouldExtensionBeEnabled()).toBe(true);
+    });
+
+    it('returns false when there is a disabled reason', () => {
+      const repository = createMockRepository({
+        status: 'trial',
+        trialPeriod: createMockTrialPeriod(30),
+      });
+
+      expect(createOperations({ repository }).shouldExtensionBeEnabled()).toBe(false);
     });
   });
 

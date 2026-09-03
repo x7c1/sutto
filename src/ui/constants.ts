@@ -10,6 +10,13 @@ export const DISPLAY_SPACING_HORIZONTAL = 12; // Horizontal spacing between disp
 export const BUTTON_BORDER_WIDTH = 1; // Border width for layout buttons
 export const FOOTER_MARGIN_TOP = 3; // Margin above footer
 
+// Locked panel (shown instead of the layout picker while the license is invalid)
+export const LOCKED_PANEL_WIDTH = 320; // Estimated width, refined from the actual rendered size
+export const LOCKED_PANEL_HEIGHT = 150; // Estimated height, refined from the actual rendered size
+export const LOCKED_MESSAGE_TEXT_COLOR = 'rgba(255, 255, 255, 0.9)';
+export const LOCKED_ACTION_BG_COLOR = 'rgba(100, 150, 250, 0.7)';
+export const LOCKED_ACTION_BG_COLOR_HOVER = 'rgba(120, 170, 255, 0.9)';
+
 // Colors
 export const PANEL_BG_COLOR = 'rgba(40, 40, 40, 0.9)'; // Main panel background
 export const PANEL_BORDER_COLOR = 'rgba(255, 255, 255, 0.2)'; // Main panel border

@@ -1,6 +1,7 @@
 import type {
   ActivationId,
   DeviceId,
+  DisabledReason,
   LicenseKey,
   LicenseState,
   NetworkState,
@@ -119,24 +120,38 @@ export class LicenseOperations {
   }
 
   /**
+   * Resolve why the extension is currently disabled.
+   * Returns null when the extension should be enabled.
+   *
+   * This is the single source of truth for license gating: it drives both
+   * `shouldExtensionBeEnabled()` and the message shown in the locked panel.
+   */
+  getDisabledReason(): DisabledReason | null {
+    const state = this.getState();
+
+    switch (state.status) {
+      case 'trial': {
+        const trial = this.repository.loadTrialPeriod();
+        return trial.isExpired() ? 'trial-expired' : null;
+      }
+      case 'valid': {
+        const graceExceeded =
+          state.networkState === 'offline' &&
+          state.daysSinceLastValidation >= OFFLINE_GRACE_PERIOD_DAYS;
+        return graceExceeded ? 'offline-grace-exceeded' : null;
+      }
+      case 'expired':
+        return 'license-expired';
+      case 'invalid':
+        return 'license-invalid';
+    }
+  }
+
+  /**
    * Check if the extension should be enabled based on license status
    */
   shouldExtensionBeEnabled(): boolean {
-    const state = this.getState();
-
-    if (state.status === 'trial') {
-      const trial = this.repository.loadTrialPeriod();
-      return !trial.isExpired();
-    }
-
-    if (state.status === 'valid') {
-      if (state.networkState === 'offline') {
-        return state.daysSinceLastValidation < OFFLINE_GRACE_PERIOD_DAYS;
-      }
-      return true;
-    }
-
-    return false;
+    return this.getDisabledReason() === null;
   }
 
   /**

@@ -5,10 +5,8 @@
  * The panel appears at the cursor position when the user drags a window to a screen edge.
  */
 
-import Gio from 'gi://Gio';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
-import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { Position, Size } from '../../domain/geometry/index.js';
 import type {
@@ -19,10 +17,11 @@ import type {
   SpaceCollection,
   SpacesRow,
 } from '../../domain/layout/index.js';
+import type { DisabledReason } from '../../domain/licensing/index.js';
 import { safeAddChrome } from '../../libs/shell/safe-add-chrome.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 import type { MonitorEnvironmentOperations } from '../../operations/monitor/index.js';
-import { AUTO_HIDE_DELAY_MS } from '../constants.js';
+import { AUTO_HIDE_DELAY_MS, LOCKED_PANEL_HEIGHT, LOCKED_PANEL_WIDTH } from '../constants.js';
 import { MainPanelAutoHide } from './auto-hide.js';
 import { MainPanelKeyboardNavigator } from './keyboard-navigator.js';
 import { LayoutButtonStyleUpdater } from './layout-button-style-updater.js';
@@ -31,6 +30,7 @@ import type { PanelEventIds } from './renderer.js';
 import {
   createBackground,
   createFooter,
+  createLockedView,
   createPanelContainer,
   createSpacesRowView,
 } from './renderer.js';
@@ -39,7 +39,6 @@ import { MainPanelState } from './state.js';
 declare function log(message: string): void;
 
 export interface MainPanelOptions {
-  metadata: ExtensionMetadata;
   monitorEnvironment: MonitorEnvironmentOperations;
   layoutHistoryRepository: LayoutHistoryRepository;
   getActiveSpaceCollectionId: () => CollectionId | null;
@@ -47,8 +46,28 @@ export interface MainPanelOptions {
   getOpenPreferencesShortcuts: () => string[];
   ensurePresetForCurrentMonitors: () => void;
   getActiveSpaceCollection: (activeId: CollectionId | null) => SpaceCollection | undefined;
+  onOpenPreferences: () => void;
   onPanelShown: () => void;
   onPanelHidden: () => void;
+}
+
+/** What the panel body renders: the layout picker, or a license-required notice. */
+interface PanelBody {
+  element: St.BoxLayout | St.Label;
+  buttonEvents: PanelEventIds['buttonEvents'];
+  /**
+   * Rough size used to place the panel before it is rendered; the position is
+   * corrected from the actual size once the container is on screen.
+   */
+  estimatedDimensions: Size;
+}
+
+function windowCenter(window: Meta.Window): Position {
+  const frameRect = window.get_frame_rect();
+  return {
+    x: frameRect.x + frameRect.width / 2,
+    y: frameRect.y + frameRect.height / 2,
+  };
 }
 
 export class MainPanel {
@@ -56,7 +75,6 @@ export class MainPanel {
   private background: St.BoxLayout | null = null;
   private layoutButtons: Map<St.Button, Layout> = new Map();
   private rendererEventIds: PanelEventIds | null = null;
-  private readonly metadata: ExtensionMetadata;
   private readonly monitorEnvironment: MonitorEnvironmentOperations;
   private readonly layoutHistoryRepository: LayoutHistoryRepository;
   private readonly getActiveSpaceCollectionId: () => CollectionId | null;
@@ -66,6 +84,7 @@ export class MainPanel {
   private readonly getActiveSpaceCollection: (
     activeId: CollectionId | null
   ) => SpaceCollection | undefined;
+  private readonly onOpenPreferences: () => void;
   private readonly onPanelShownCallback: () => void;
   private readonly onPanelHiddenCallback: () => void;
 
@@ -77,7 +96,6 @@ export class MainPanel {
   private keyboardNavigator: MainPanelKeyboardNavigator = new MainPanelKeyboardNavigator();
 
   constructor(options: MainPanelOptions) {
-    this.metadata = options.metadata;
     this.monitorEnvironment = options.monitorEnvironment;
     this.layoutHistoryRepository = options.layoutHistoryRepository;
     this.getActiveSpaceCollectionId = options.getActiveSpaceCollectionId;
@@ -85,6 +103,7 @@ export class MainPanel {
     this.getOpenPreferencesShortcuts = options.getOpenPreferencesShortcuts;
     this.ensurePresetForCurrentMonitors = options.ensurePresetForCurrentMonitors;
     this.getActiveSpaceCollection = options.getActiveSpaceCollection;
+    this.onOpenPreferences = options.onOpenPreferences;
     this.onPanelShownCallback = options.onPanelShown;
     this.onPanelHiddenCallback = options.onPanelHidden;
 
@@ -99,15 +118,15 @@ export class MainPanel {
    * Calculates the center position of the given window and shows the panel there
    */
   showAtWindowCenter(window: Meta.Window): void {
-    // Get window frame rectangle to position panel at window center
-    const frameRect = window.get_frame_rect();
-    const windowCenter: Position = {
-      x: frameRect.x + frameRect.width / 2,
-      y: frameRect.y + frameRect.height / 2,
-    };
-
     // Show main panel at window center position with vertical centering
-    this.show(windowCenter, window, true);
+    this.show(windowCenter(window), window, true);
+  }
+
+  /**
+   * Show the locked "license required" panel at the center of the given window
+   */
+  showLockedAtWindowCenter(reason: DisabledReason, window: Meta.Window): void {
+    this.showLocked(reason, windowCenter(window), true);
   }
 
   /**
@@ -115,65 +134,21 @@ export class MainPanel {
    */
   show(cursor: Position, window: Meta.Window | null = null, centerVertically = false): void {
     this.hide();
+    this.prepareShow(cursor, window);
+    this.present(this.createLayoutPickerBody(window), cursor, centerVertically);
+  }
 
-    // Initialize state
-    this.state.updateOriginalCursor(cursor);
-    this.state.setCurrentWindow(window);
-    this.autoHide.resetHoverStates();
-
-    // Ensure preset exists for current monitor count
-    this.ensurePresetForCurrentMonitors();
-
-    // Load active SpaceCollection and filter disabled Spaces
-    const activeId = this.getActiveSpaceCollectionId();
-    const activeCollection = this.getActiveSpaceCollection(activeId);
-    const allRows = activeCollection?.rows ?? [];
-    const rows = this.filterEnabledSpaces(allRows);
-    this.state.setSpacesRows(rows);
-    log(
-      `[MainPanel] Using SpaceCollection: ${activeCollection?.name ?? 'none'}, rows: ${rows.length} (filtered from ${allRows.length})`
-    );
-
-    const panelDimensions = this.positionManager.calculatePanelDimensions(
-      rows,
-      true // showFooter
-    );
-    this.state.setPanelDimensions(panelDimensions);
-
-    const adjusted = this.positionManager.adjustPosition(cursor, panelDimensions, centerVertically);
-    this.state.updatePanelPosition(adjusted);
-
-    // Create UI elements
-    const { background, clickOutsideId } = createBackground(() => this.hide());
-    this.background = background;
-
-    const { element: rowsElement, buttonEvents } = this.createRowsElement(rows, window);
-
-    const footer = createFooter(() => {
-      log('[MainPanel] Settings button clicked');
-      this.openPreferences();
-      this.hide();
-    });
-
-    // Build and position container
-    const container = createPanelContainer();
-    this.container = container;
-    container.add_child(rowsElement);
-    container.add_child(footer);
-    container.set_position(adjusted.x, adjusted.y);
-
-    // Add to chrome and adjust for actual size
-    // Shell 50's addChrome is not atomic; safeAddChrome destroys the actor
-    // on failure so a future regression cannot leave an orphaned chrome
-    // actor that captures pointer events session-wide.
-    safeAddChrome(container, { trackFullscreen: false });
-    this.adjustContainerPosition(container, cursor, panelDimensions, centerVertically);
-
-    // Setup interactions
-    this.setupPanelInteractions(container, clickOutsideId, buttonEvents);
-
-    // Notify
-    this.onPanelShownCallback();
+  /**
+   * Show the main panel in its locked state at the specified position.
+   *
+   * The license is invalid, so the layout picker is replaced by an explanation
+   * of what happened. Positioning and auto-hide behave exactly as in `show()`.
+   */
+  showLocked(reason: DisabledReason, cursor: Position, centerVertically = false): void {
+    log(`[MainPanel] Showing locked panel: ${reason}`);
+    this.hide();
+    this.prepareShow(cursor, null);
+    this.present(this.createLockedBody(reason), cursor, centerVertically);
   }
 
   /**
@@ -277,37 +252,104 @@ export class MainPanel {
   }
 
   /**
-   * Open preferences window
+   * Reset per-show state shared by every panel variant
    */
-  private openPreferences(): void {
-    // Use actual UUID from metadata (supports reloader suffix in development mode)
-    const uuid = this.metadata.uuid;
-    log(`[MainPanel] Opening preferences for UUID: ${uuid}`);
+  private prepareShow(cursor: Position, window: Meta.Window | null): void {
+    this.state.updateOriginalCursor(cursor);
+    this.state.setCurrentWindow(window);
+    this.autoHide.resetHoverStates();
+  }
 
-    // Try multiple methods to open preferences
-    const commands = [
-      // GNOME 42+ command
-      ['gnome-extensions', 'prefs', uuid],
-      // Legacy command for older GNOME versions
-      ['gnome-shell-extension-prefs', uuid],
-    ];
+  /**
+   * Build, position and wire up the panel around the given body.
+   * Shared by every panel variant so they behave identically once shown.
+   */
+  private present(body: PanelBody, cursor: Position, centerVertically: boolean): void {
+    this.state.setPanelDimensions(body.estimatedDimensions);
 
-    let success = false;
-    for (const cmd of commands) {
-      try {
-        Gio.Subprocess.new(cmd, Gio.SubprocessFlags.NONE);
-        log(`[MainPanel] Opening preferences with: ${cmd.join(' ')}`);
-        success = true;
-        break;
-      } catch (e) {
-        log(`[MainPanel] Failed with ${cmd[0]}: ${e}`);
-      }
-    }
+    const adjusted = this.positionManager.adjustPosition(
+      cursor,
+      body.estimatedDimensions,
+      centerVertically
+    );
+    this.state.updatePanelPosition(adjusted);
 
-    if (!success) {
-      log('[MainPanel] ERROR: Could not open preferences with any method');
-      log('[MainPanel] Please open preferences manually from Extensions app');
-    }
+    const { background, clickOutsideId } = createBackground(() => this.hide());
+    this.background = background;
+
+    const footer = createFooter(() => {
+      log('[MainPanel] Settings button clicked');
+      this.openPreferencesAndHide();
+    });
+
+    // Build and position container
+    const container = createPanelContainer();
+    this.container = container;
+    container.add_child(body.element);
+    container.add_child(footer);
+    container.set_position(adjusted.x, adjusted.y);
+
+    // Add to chrome and adjust for actual size
+    // Shell 50's addChrome is not atomic; safeAddChrome destroys the actor
+    // on failure so a future regression cannot leave an orphaned chrome
+    // actor that captures pointer events session-wide.
+    safeAddChrome(container, { trackFullscreen: false });
+    this.adjustContainerPosition(container, cursor, body.estimatedDimensions, centerVertically);
+
+    // Setup interactions
+    this.setupPanelInteractions(container, clickOutsideId, body.buttonEvents);
+
+    // Notify
+    this.onPanelShownCallback();
+  }
+
+  private openPreferencesAndHide(): void {
+    this.onOpenPreferences();
+    this.hide();
+  }
+
+  /**
+   * Build the normal panel body: the layout picker for the active SpaceCollection
+   */
+  private createLayoutPickerBody(window: Meta.Window | null): PanelBody {
+    // Ensure preset exists for current monitor count
+    this.ensurePresetForCurrentMonitors();
+
+    // Load active SpaceCollection and filter disabled Spaces
+    const activeId = this.getActiveSpaceCollectionId();
+    const activeCollection = this.getActiveSpaceCollection(activeId);
+    const allRows = activeCollection?.rows ?? [];
+    const rows = this.filterEnabledSpaces(allRows);
+    this.state.setSpacesRows(rows);
+    log(
+      `[MainPanel] Using SpaceCollection: ${activeCollection?.name ?? 'none'}, rows: ${rows.length} (filtered from ${allRows.length})`
+    );
+
+    const { element, buttonEvents } = this.createRowsElement(rows, window);
+    return {
+      element,
+      buttonEvents,
+      estimatedDimensions: this.positionManager.calculatePanelDimensions(
+        rows,
+        true // showFooter
+      ),
+    };
+  }
+
+  /**
+   * Build the locked panel body explaining why the extension is disabled
+   */
+  private createLockedBody(reason: DisabledReason): PanelBody {
+    // No layout buttons in the locked state, so keyboard navigation has
+    // nothing to move between.
+    this.layoutButtons.clear();
+
+    const { element, buttonEvents } = createLockedView(reason, () => this.openPreferencesAndHide());
+    return {
+      element,
+      buttonEvents,
+      estimatedDimensions: { width: LOCKED_PANEL_WIDTH, height: LOCKED_PANEL_HEIGHT },
+    };
   }
 
   /**
@@ -386,10 +428,7 @@ export class MainPanel {
       container,
       layoutButtons: this.layoutButtons,
       onLayoutSelected: (event) => this.onLayoutSelected(event),
-      onOpenPreferences: () => {
-        this.openPreferences();
-        this.hide();
-      },
+      onOpenPreferences: () => this.openPreferencesAndHide(),
       openPreferencesShortcuts: this.getOpenPreferencesShortcuts(),
     });
   }

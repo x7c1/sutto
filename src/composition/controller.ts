@@ -12,7 +12,6 @@
  * - Each responsibility should be handled by a single dedicated class
  */
 
-import type { ExtensionMetadata } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { EdgeDetector } from '../domain/geometry/index.js';
 import type { LayoutSelectedEvent } from '../domain/layout/index.js';
 import { extractLayoutIds } from '../domain/layout/index.js';
@@ -31,8 +30,9 @@ import {
   SystemDeviceInfoProvider,
 } from '../infra/glib/index.js';
 import { GnomeShellMonitorProvider } from '../infra/monitor/gnome-shell-monitor-provider.js';
+import { GnomeNotificationService } from '../infra/shell/index.js';
 import type { LayoutHistoryRepository } from '../operations/history/index.js';
-import { LicenseOperations } from '../operations/licensing/index.js';
+import { LicenseOperations, TrialWarningOperations } from '../operations/licensing/index.js';
 import { MonitorEnvironmentOperations } from '../operations/monitor/index.js';
 import { MainPanel } from '../ui/main-panel/index.js';
 import {
@@ -67,7 +67,10 @@ export class Controller {
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
 
-  constructor(preferencesRepository: GSettingsPreferencesRepository, metadata: ExtensionMetadata) {
+  constructor(
+    preferencesRepository: GSettingsPreferencesRepository,
+    onOpenPreferences: () => void
+  ) {
     const monitorProvider = new GnomeShellMonitorProvider();
     const monitorEnvironmentRepository = new FileMonitorEnvironmentRepository(
       getExtensionDataPath(MONITORS_FILE_NAME)
@@ -125,10 +128,13 @@ export class Controller {
       new GioNetworkStateProvider(),
       new SystemDeviceInfoProvider()
     );
-    this.licenseStateHandler = new LicenseStateHandler(licenseOperations);
+    const trialWarningOperations = new TrialWarningOperations(
+      licenseRepository,
+      new GnomeNotificationService()
+    );
+    this.licenseStateHandler = new LicenseStateHandler(licenseOperations, trialWarningOperations);
 
     this.mainPanel = new MainPanel({
-      metadata,
       monitorEnvironment: monitorEnvironmentOperations,
       layoutHistoryRepository: this.layoutHistoryRepository,
       onLayoutSelected: (event) => this.applyLayoutToCurrentWindow(event),
@@ -138,6 +144,7 @@ export class Controller {
         resolvePresetGeneratorOperations().ensurePresetForCurrentMonitors(),
       getActiveSpaceCollection: (activeId) =>
         resolveSpaceCollectionOperations().getActiveSpaceCollection(activeId),
+      onOpenPreferences,
       onPanelShown: () =>
         this.keyboardShortcutManager.registerHidePanelShortcut(() => this.onHidePanelShortcut()),
       onPanelHidden: () => this.keyboardShortcutManager.unregisterHidePanelShortcut(),
@@ -145,18 +152,19 @@ export class Controller {
   }
 
   enable(): void {
-    this.licenseStateHandler.initialize(() => {
-      log('[Controller] License invalid, hiding panel');
-      this.mainPanel.hide();
+    this.licenseStateHandler.initialize((reason) => {
+      // A hidden panel stays hidden; the reason is shown on the next trigger.
+      if (this.mainPanel.isVisible()) {
+        log(`[Controller] License became invalid (${reason}), locking visible panel`);
+        this.mainPanel.showLocked(reason, this.getCursorPosition());
+      }
     });
 
     this.monitorChangeHandler.initialize();
 
     this.monitorChangeHandler.connectToMonitorChanges(() => {
       if (this.mainPanel.isVisible()) {
-        const cursor = this.getCursorPosition();
-        const window = this.dragCoordinator.getCurrentWindow();
-        this.mainPanel.show(cursor, window);
+        this.reshowPanel();
       }
     });
 
@@ -195,12 +203,15 @@ export class Controller {
   }
 
   private showMainPanel(): void {
-    if (!this.licenseStateHandler.isValid()) {
-      log('[Controller] Cannot show panel: license invalid');
+    if (this.mainPanel.isVisible()) {
       return;
     }
 
-    if (this.mainPanel.isVisible()) {
+    // Never swallow the gesture: an invalid license is explained in the panel
+    // itself instead of silently doing nothing.
+    const reason = this.licenseStateHandler.getDisabledReason();
+    if (reason) {
+      this.mainPanel.showLocked(reason, this.getCursorPosition());
       return;
     }
 
@@ -210,6 +221,19 @@ export class Controller {
     const cursor = this.getCursorPosition();
     const window = this.dragCoordinator.getCurrentWindow();
     this.mainPanel.show(cursor, window);
+  }
+
+  /**
+   * Re-render the currently visible panel in place (e.g. after a monitor change)
+   */
+  private reshowPanel(): void {
+    const cursor = this.getCursorPosition();
+    const reason = this.licenseStateHandler.getDisabledReason();
+    if (reason) {
+      this.mainPanel.showLocked(reason, cursor);
+      return;
+    }
+    this.mainPanel.show(cursor, this.dragCoordinator.getCurrentWindow());
   }
 
   private applyLayoutToCurrentWindow(event: LayoutSelectedEvent): void {
@@ -224,11 +248,6 @@ export class Controller {
   private onShowPanelShortcut(): void {
     log('[Controller] ===== KEYBOARD SHORTCUT TRIGGERED =====');
 
-    if (!this.licenseStateHandler.isValid()) {
-      log('[Controller] License invalid, ignoring shortcut');
-      return;
-    }
-
     if (this.mainPanel.isVisible()) {
       log('[Controller] Panel is already visible, hiding it');
       this.mainPanel.hide();
@@ -236,6 +255,19 @@ export class Controller {
     }
 
     const focusWindow = global.display.get_focus_window();
+
+    // Explain an invalid license rather than ignoring the shortcut. This runs
+    // before the focused-window check because the locked panel needs no window.
+    const reason = this.licenseStateHandler.getDisabledReason();
+    if (reason) {
+      log(`[Controller] License invalid (${reason}), showing locked panel`);
+      if (focusWindow) {
+        this.mainPanel.showLockedAtWindowCenter(reason, focusWindow);
+      } else {
+        this.mainPanel.showLocked(reason, this.getCursorPosition());
+      }
+      return;
+    }
 
     if (!focusWindow) {
       log('[Controller] No focused window, ignoring shortcut');
