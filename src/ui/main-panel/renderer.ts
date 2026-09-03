@@ -190,7 +190,7 @@ export function createLockedView(
   const ACTION_PADDING_HORIZONTAL = 14;
   const ACTION_BORDER_RADIUS = 6;
 
-  const { message, canOpenPreferences } = describeDisabledReason(reason);
+  const { headline, instruction, canOpenPreferences } = describeDisabledReason(reason);
 
   const container = new St.BoxLayout({
     style_class: 'sutto-locked-panel',
@@ -209,8 +209,9 @@ export function createLockedView(
   });
   container.add_child(icon);
 
+  // One sentence per line so the break never lands mid-sentence
   const label = new St.Label({
-    text: message,
+    text: `${headline}\n${instruction}`,
     style: `
       font-size: 13px;
       color: ${LOCKED_MESSAGE_TEXT_COLOR};
@@ -220,7 +221,7 @@ export function createLockedView(
     x_expand: true,
     x_align: Clutter.ActorAlign.CENTER,
   });
-  // Wrap the message instead of letting it stretch the panel off screen
+  // Fallback wrap for locales where a sentence outgrows the panel
   label.clutter_text.line_wrap = true;
   container.add_child(label);
 

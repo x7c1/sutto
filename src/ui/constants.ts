@@ -11,7 +11,7 @@ export const BUTTON_BORDER_WIDTH = 1; // Border width for layout buttons
 export const FOOTER_MARGIN_TOP = 3; // Margin above footer
 
 // Locked panel (shown instead of the layout picker while the license is invalid)
-export const LOCKED_PANEL_WIDTH = 320; // Estimated width, refined from the actual rendered size
+export const LOCKED_PANEL_WIDTH = 360; // Wide enough for each message sentence on one line; refined from the actual rendered size
 export const LOCKED_PANEL_HEIGHT = 150; // Estimated height, refined from the actual rendered size
 export const LOCKED_MESSAGE_TEXT_COLOR = 'rgba(255, 255, 255, 0.9)';
 export const LOCKED_ACTION_BG_COLOR = 'rgba(100, 150, 250, 0.7)';

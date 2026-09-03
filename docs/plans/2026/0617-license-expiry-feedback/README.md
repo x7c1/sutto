@@ -72,16 +72,19 @@ is invalid, render the Main Panel in a locked state instead of suppressing it:
 ```
 Drag to edge / press shortcut → panel appears, but the body is locked
 
-┌──────────────────────────────┐
-│  Sutto                       │
-│                              │
-│    🔒  Trial ended           │
-│    Activate a license to     │
-│    keep snapping windows.    │
-│                              │
-│      [ Open Preferences ]    │
-└──────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Sutto                                       │
+│                                              │
+│                     🔒                       │
+│         Your Sutto trial has ended.          │
+│  Activate a license to keep snapping windows.│
+│                                              │
+│              [ Open Preferences ]            │
+└──────────────────────────────────────────────┘
 ```
+
+Each message is two sentences — what happened, then what to do — rendered one
+per line so the line break never falls mid-sentence.
 
 Rationale for choosing this over a transient toast: a notification fades and is
 easily missed — which is exactly the "I couldn't tell what happened" failure this
