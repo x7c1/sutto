@@ -9,7 +9,7 @@ check_command: null
 assignee: null
 branch: task/0903-1858-reloader-prune-before-enable
 created_at: 2026-09-03T18:58:56Z
-updated_at: 2026-09-03T19:36:00Z
+updated_at: 2026-09-03T20:05:00Z
 ---
 
 # fix(reloader): prune stale reload UUIDs before enabling the new instance
@@ -74,11 +74,11 @@ other line still describes the old order. No other behaviour of the reloader
 
 ### Manual / on-hardware (verified by a human before merge)
 
-- [ ] Starting from a freshly logged-in GNOME session with the extension
+- [x] Starting from a freshly logged-in GNOME session with the extension
       enabled, run `npm run dev` three times in a row. Each reload logs exactly
       one `[Sutto] Extension enabled` and one `D-Bus interface registered`, and
       `journalctl /usr/bin/gnome-shell | grep 'already exported'` stays empty.
-- [ ] After those reloads, `gsettings get org.gnome.shell disabled-extensions`
+- [x] After those reloads, `gsettings get org.gnome.shell disabled-extensions`
       contains no `sutto@x7c1.github.io-reload-<digits>` entry other than none
       (stale entries are still pruned), and `enabled-extensions` contains only
       the currently running reload UUID for sutto.
