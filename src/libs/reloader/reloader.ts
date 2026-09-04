@@ -123,14 +123,26 @@ export class Reloader {
 
       await extensionManager.loadExtension(newExtension);
 
+      // Must run BEFORE the new UUID is enabled: pruning writes to the
+      // `org.gnome.shell` extension arrays, and GNOME Shell's
+      // `_onEnabledExtensionsChanged()` handler is async.
+      // A write that lands while the enable of the new UUID is still in flight
+      // starts a second enable of the same UUID (it is not yet recorded as
+      // enabled), which constructs and enables the extension twice and leaves
+      // an orphaned instance holding the D-Bus name. Running it here is safe:
+      // the new UUID is in neither array yet (`createExtensionObject` and
+      // `loadExtension` never write GSettings), and every UUID this write
+      // removes was either disabled above or is a leftover from an earlier
+      // session that was never loaded here, so the handler this write triggers
+      // has nothing to enable or disable. The new UUID is also passed through
+      // as the UUID to preserve, so the prune cannot drop the instance we are
+      // about to enable.
+      this.pruneStaleReloadUuidsFromGSettings(newUuid);
+
       const enableSuccess = extensionManager.enableExtension(newUuid);
       if (!enableSuccess) {
         throw new Error(`Failed to enable extension ${newUuid}`);
       }
-
-      // Prune stale reload UUIDs from GSettings. Must run AFTER the new UUID
-      // has been enabled so we never accidentally prune ourselves.
-      this.pruneStaleReloadUuidsFromGSettings(newUuid);
 
       // Clean up old files and extension
       this.cleanupTempDirs(tmpDir);
