@@ -1,14 +1,16 @@
 /**
- * Helpers for pruning stale `<base-uuid>-reload-<timestamp>` entries that
- * accumulate in GNOME Shell's `enabled-extensions` / `disabled-extensions`
+ * Helpers for pruning stale `<base-uuid>-reload-<timestamp>` entries left
+ * behind in GNOME Shell's `enabled-extensions` / `disabled-extensions`
  * GSettings arrays across repeated `npm run dev` cycles.
  *
  * Every reload registers a fresh UUID (e.g.
- * `sutto@x7c1.github.io-reload-1719300000000000`) and disables the previous
+ * `sutto@x7c1.github.io-reload-1719300000000000`) and unloads the previous
  * one, but the previous UUID is never removed from the GSettings array. Over
- * time both keys fill up with dozens of stale reload UUIDs, which makes it
- * hard to reason about which extension instance is actually running when
- * debugging odd Shell behavior.
+ * time `enabled-extensions` fills up with dozens of stale reload UUIDs, which
+ * makes it hard to reason about which extension instance is actually running
+ * when debugging odd Shell behavior. `disabled-extensions` collects no new
+ * entries — the reload sequence never calls `disableExtension()` — but is
+ * pruned as well, to clear out what older versions left there.
  *
  * The pure {@link pruneStaleReloadUuids} function takes a UUID list and
  * returns a filtered copy with the stale entries removed; the orchestration
@@ -17,9 +19,10 @@
  * something actually changed so DConf stays quiet on no-ops.
  *
  * The canonical UUID (e.g. `sutto@x7c1.github.io`) and the currently-running
- * reload UUID are always preserved — the canonical one is the seed the user
- * re-enables after logout, and the current reload UUID is what's actually
- * powering the live session.
+ * reload UUID are always preserved — the canonical one is the entry that keeps
+ * GNOME Shell starting the extension on the next login (the reload copies live
+ * in /tmp and are never scanned at startup), and the current reload UUID is
+ * what's actually powering the live session.
  */
 
 export interface ShellExtensionSettingsPort {
