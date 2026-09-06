@@ -110,6 +110,10 @@ declare module 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js' {
   export * from '@girs/gnome-shell/dist/extensions/prefs';
 }
 
+declare module 'resource:///org/gnome/shell/misc/extensionUtils.js' {
+  export * from '@girs/gnome-shell/dist/misc/extensionUtils';
+}
+
 declare module 'resource:///org/gnome/shell/ui/main.js' {
   export * from '@girs/gnome-shell/dist/ui/main';
 }
