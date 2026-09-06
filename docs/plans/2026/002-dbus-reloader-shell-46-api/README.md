@@ -2,6 +2,22 @@
 
 Status: Completed
 
+> **Corrections after completion.** Two statements below turned out to be
+> inaccurate and were fixed in later work; the original text is kept as the
+> record of what this plan did.
+>
+> - `createExtensionObject()` is declared as returning `void` in
+>   `@girs/gnome-shell`, but the GNOME Shell runtime (verified on 50.1) does
+>   return the created object. Fetching it with `lookup()` is still correct;
+>   the reason is the type declaration, not the runtime.
+> - The literal `1` passed as the extension type is `ExtensionType.SYSTEM`,
+>   not `PER_USER` (`ExtensionType = { SYSTEM: 1, PER_USER: 2 }`). The
+>   reloader now imports `ExtensionType` and passes `ExtensionType.PER_USER`
+>   (#77). The code samples below were updated to match.
+> - `disableExtension()` was later replaced by `unloadExtension()` so the
+>   canonical UUID stays enabled across logins (#76); the `unloadOldExtension()`
+>   step this plan introduced no longer exists.
+
 ## Overview
 
 Update the D-Bus reloader development tool to use proper GNOME Shell 46 ExtensionManager API instead of type-unsafe `as any` workarounds.
@@ -9,7 +25,7 @@ Update the D-Bus reloader development tool to use proper GNOME Shell 46 Extensio
 **Key Points:**
 - Replace `(Main as any).extensionManager` with typed `Main.extensionManager`
 - Convert to async/await for `loadExtension()` and `unloadExtension()` (now Promise-based)
-- Handle `createExtensionObject()` API change (now returns `void`, use `lookup()` to retrieve)
+- Handle `createExtensionObject()` API change (declared as returning `void`, use `lookup()` to retrieve)
 - Add error handling for `enableExtension()`/`disableExtension()` boolean returns
 - Document why `reloadExtension()` method cannot be used (requires same UUID)
 - Handle `lookup()` type signature bug (returns `undefined` despite non-nullable type)
@@ -104,18 +120,19 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const newExtension = extensionManager.createExtensionObject(
   newUuid,
   tmpDirFile,
-  1 // ExtensionType.PER_USER
+  ExtensionType.PER_USER
 );
 extensionManager.loadExtension(newExtension);
 ```
 
 **After (Shell 46 pattern):**
 ```typescript
-// createExtensionObject returns void, mutates internal state
+// createExtensionObject is declared as returning void (the runtime does
+// return the object); fetch it with lookup() after the call
 extensionManager.createExtensionObject(
   newUuid,
   tmpDirFile,
-  1 // ExtensionType.PER_USER
+  ExtensionType.PER_USER
 );
 
 // Retrieve the created extension using lookup
