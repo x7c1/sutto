@@ -11,6 +11,7 @@
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import { ExtensionType } from 'resource:///org/gnome/shell/misc/extensionUtils.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { ExtensionObject } from '@girs/gnome-shell/dist/types/extension-object.js';
 import type { ExtensionManager } from '@girs/gnome-shell/dist/ui/extensionSystem.js';
@@ -32,7 +33,8 @@ declare class TextEncoder {
 /**
  * GNOME Shell's `ExtensionState.ACTIVE`.
  *
- * Spelled as a numeric literal because the enum's member names drifted:
+ * Spelled as a numeric literal because this particular enum's member names
+ * drifted (`ExtensionType`, exported by the same module, did not):
  * `@girs/gnome-shell` 50.0.0 still declares `ENABLED`/`DISABLED`, while the
  * object that `resource:///org/gnome/shell/misc/extensionUtils.js` exports in
  * Shell 50 has `ACTIVE`/`INACTIVE`. Importing the enum and writing
@@ -137,16 +139,14 @@ export class Reloader {
       const tmpDirFile = this.copyFilesToTemp(tmpDir);
       this.updateMetadata(tmpDirFile, newUuid);
 
-      // Create extension object (returns void in Shell 46)
-      extensionManager.createExtensionObject(
-        newUuid,
-        tmpDirFile,
-        1 // ExtensionType.PER_USER
-      );
+      // The reload copy lives under /tmp and is owned by the user, so it is
+      // registered as a PER_USER extension.
+      extensionManager.createExtensionObject(newUuid, tmpDirFile, ExtensionType.PER_USER);
 
-      // Retrieve the created extension using lookup
-      // Type assertion needed: lookup() type signature doesn't include undefined,
-      // but runtime actually returns undefined when UUID doesn't exist
+      // Shell 50 does return the object it creates, but `@girs/gnome-shell`
+      // 50.0.0 declares the return type as `void`, so look it up instead.
+      // The assertion is needed because `lookup()`'s signature omits
+      // `undefined`, which it does return at runtime for an unknown UUID.
       const newExtension = extensionManager.lookup(newUuid) as ExtensionObject | undefined;
       if (!newExtension) {
         throw new Error(`Failed to create extension object for ${newUuid}`);
