@@ -9,7 +9,7 @@ check_command: null
 assignee: null
 branch: task/0906-0543-reloader-extension-type-per-user
 created_at: 2026-09-06T05:43:23Z
-updated_at: 2026-09-06T06:22:00Z
+updated_at: 2026-09-06T06:30:00Z
 ---
 
 # fix(reloader): register reload copies as PER_USER extensions
@@ -71,12 +71,14 @@ clause making clear it is specific to `ExtensionState`; otherwise leave it.
 
 ### Manual / on-hardware (verified by a human before merge)
 
-- [ ] `npm run dev` twice in a row: each reload logs exactly one
+- [x] `npm run dev` twice in a row: each reload logs exactly one
       `[Sutto] Extension enabled` and no `already exported`; the extension keeps
       working after both reloads.
-- [ ] `gnome-extensions info <current reload UUID>` (take the UUID from
-      `gnome-extensions list --enabled | grep sutto`) reports `Type: User`
-      instead of `System`.
+- [x] The running reload instance is typed as a user extension: with the UUID
+      from `gnome-extensions list --enabled | grep sutto`, the
+      `org.gnome.Shell.Extensions.GetExtensionInfo` D-Bus call (via `gdbus`)
+      returns `'type': <2.0>` (PER_USER) instead of `<1.0>` (SYSTEM).
+      (`gnome-extensions info` does not print the type in GNOME 50.)
 
 ## Out of scope
 
