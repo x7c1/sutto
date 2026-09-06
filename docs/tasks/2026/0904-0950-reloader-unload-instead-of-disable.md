@@ -9,7 +9,7 @@ check_command: null
 assignee: null
 branch: task/0904-0950-reloader-unload-instead-of-disable
 created_at: 2026-09-04T09:50:59Z
-updated_at: 2026-09-04T11:15:00Z
+updated_at: 2026-09-06T05:45:00Z
 ---
 
 # fix(reloader): keep the canonical extension enabled across logins by unloading instead of disabling
@@ -106,15 +106,15 @@ for existing dev machines, and it is out of scope here.
 
 ### Manual / on-hardware (verified by a human before merge)
 
-- [ ] From a session where the canonical extension is running, `npm run dev`
+- [x] From a session where the canonical extension is running, `npm run dev`
       three times in a row: each reload logs exactly one
       `[Sutto] Extension enabled` and one `D-Bus interface registered`, and
       `journalctl -b /usr/bin/gnome-shell | grep 'already exported'` is empty.
-- [ ] After those reloads, `gsettings get org.gnome.shell enabled-extensions`
+- [x] After those reloads, `gsettings get org.gnome.shell enabled-extensions`
       still contains `sutto@x7c1.github.io` plus only the currently running
       reload UUID, and `gsettings get org.gnome.shell disabled-extensions`
       contains no `sutto@x7c1.github.io*` entry.
-- [ ] Log out and log back in: Sutto starts without any manual step
+- [x] Log out and log back in: Sutto starts without any manual step
       (`gnome-extensions info sutto@x7c1.github.io` shows `Enabled: Yes` /
       `State: ACTIVE`, and `npm run dev` works immediately).
 
