@@ -47,7 +47,6 @@ export function getButtonStyle(
   return `
         background-color: ${bgColor};
         border: ${BUTTON_BORDER_WIDTH}px solid ${borderColor};
-        border-radius: 2px;
         width: ${buttonWidth}px;
         height: ${buttonHeight}px;
         margin: 0;
