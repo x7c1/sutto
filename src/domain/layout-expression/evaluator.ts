@@ -33,17 +33,6 @@ export function evaluateExact(
   containerSize: number,
   screenSize?: number
 ): number {
-  return evaluateRecursive(expr, containerSize, screenSize);
-}
-
-/**
- * Recursive evaluation helper
- */
-function evaluateRecursive(
-  expr: LayoutExpression,
-  containerSize: number,
-  screenSize?: number
-): number {
   switch (expr.type) {
     case 'zero':
     case 'fraction':
@@ -52,14 +41,14 @@ function evaluateRecursive(
       return resolveUnit(expr, containerSize, screenSize);
 
     case 'add': {
-      const left = evaluateRecursive(expr.left, containerSize, screenSize);
-      const right = evaluateRecursive(expr.right, containerSize, screenSize);
+      const left = evaluateExact(expr.left, containerSize, screenSize);
+      const right = evaluateExact(expr.right, containerSize, screenSize);
       return left + right;
     }
 
     case 'subtract': {
-      const left = evaluateRecursive(expr.left, containerSize, screenSize);
-      const right = evaluateRecursive(expr.right, containerSize, screenSize);
+      const left = evaluateExact(expr.left, containerSize, screenSize);
+      const right = evaluateExact(expr.right, containerSize, screenSize);
       return left - right;
     }
 

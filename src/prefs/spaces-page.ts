@@ -8,7 +8,8 @@ import {
 } from '../composition/factory/index.js';
 import type { CollectionId, Space, SpaceCollection, SpacesRow } from '../domain/layout/index.js';
 import type { Monitor, MonitorEnvironmentStorage } from '../domain/monitor/index.js';
-import { calculateSpaceDimensions, createGtkMiniatureSpace } from './gtk-miniature-space.js';
+import { calculateSpaceDimensions } from '../ui/components/space-dimensions.js';
+import { createGtkMiniatureSpace } from './gtk-miniature-space.js';
 import {
   createDefaultMonitors,
   environmentToMonitorMap,

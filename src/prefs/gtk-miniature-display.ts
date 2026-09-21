@@ -71,7 +71,6 @@ export function createGtkMiniatureDisplay(options: GtkMiniatureDisplayOptions): 
 
     // Draw layout rectangles
     for (const layout of layoutGroup.layouts) {
-      // Integer rect whose edges are shared with adjacent layouts (no gap or overlap)
       const {
         x,
         y,

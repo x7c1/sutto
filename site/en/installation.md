@@ -36,7 +36,7 @@ You should see the extension listed with status "ENABLED".
 
 ## Recommended: Disable Built-in Edge Tiling
 
-This step is optional, but recommended. Sutto opens its layout panel when you drag a window to a screen edge, and the desktop's own edge tiling reacts to the same gesture, so the two compete for the drag.
+Sutto opens its layout panel when you drag a window to a screen edge, and the desktop's own edge tiling reacts to the same gesture, so the two compete for the drag.
 
 On Ubuntu, edge tiling is provided by the bundled Tiling Assistant extension:
 

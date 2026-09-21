@@ -2,7 +2,8 @@
  * Space Dimensions Calculator
  *
  * Shared utilities for calculating Space sizes based on monitor configuration.
- * Used by both miniature-space.ts (for rendering) and position-manager.ts (for layout).
+ * Used by the panel (miniature-space.ts, position-manager.ts) and the preferences UI
+ * (gtk-miniature-space.ts, spaces-page.ts), so it must not import GNOME Shell modules.
  */
 
 import type { Space } from '../../domain/layout/index.js';

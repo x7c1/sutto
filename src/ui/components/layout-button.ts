@@ -69,8 +69,7 @@ export function createLayoutButton(
   // Get screen work area for scaling fixed pixel values
   const workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
 
-  // Resolve the tile rectangle relative to the miniature display.
-  // Edges are shared with adjacent tiles, so neighbours meet without a gap or overlap.
+  // Resolve the tile rectangle relative to the miniature display
   const rect = resolveRect(layout, { width: displayWidth, height: displayHeight }, workArea);
 
   // CSS width/height exclude the border, so subtract it to keep the outer size equal to rect
