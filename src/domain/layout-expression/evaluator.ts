@@ -19,8 +19,21 @@ export function evaluate(
   containerSize: number,
   screenSize?: number
 ): number {
-  const result = evaluateRecursive(expr, containerSize, screenSize);
-  return Math.round(result);
+  return Math.round(evaluateExact(expr, containerSize, screenSize));
+}
+
+/**
+ * Evaluate expression to an exact (unrounded) pixel value
+ *
+ * Use this when several values are combined before rounding, e.g. deriving a
+ * rectangle's far edge from position + size (see resolveRect).
+ */
+export function evaluateExact(
+  expr: LayoutExpression,
+  containerSize: number,
+  screenSize?: number
+): number {
+  return evaluateRecursive(expr, containerSize, screenSize);
 }
 
 /**

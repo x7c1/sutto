@@ -14,4 +14,6 @@
 
 export { evaluate } from './evaluator.js';
 export { parse } from './parser.js';
+export type { PixelRect, RectExpressions, RectSize } from './rect.js';
+export { resolveRect } from './rect.js';
 export type { LayoutExpression, LayoutUnit } from './types.js';

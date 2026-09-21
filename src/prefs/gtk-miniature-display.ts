@@ -8,6 +8,7 @@
 import Gtk from 'gi://Gtk';
 
 import type { LayoutGroup } from '../domain/layout/index.js';
+import { resolveRect } from '../domain/layout-expression/index.js';
 import type { Monitor } from '../domain/monitor/index.js';
 
 // Cairo Context interface for drawing operations
@@ -45,36 +46,6 @@ export interface GtkMiniatureDisplayOptions {
 }
 
 /**
- * Evaluate a simple layout expression (percentage, fraction, or pixels)
- * For display purposes only - simplified version
- */
-function evaluateExpression(expr: string, containerSize: number): number {
-  const trimmed = expr.trim();
-
-  // Percentage: "50%"
-  if (trimmed.endsWith('%')) {
-    const percent = parseFloat(trimmed.slice(0, -1));
-    return (percent / 100) * containerSize;
-  }
-
-  // Fraction: "1/3", "2/3"
-  if (trimmed.includes('/')) {
-    const [num, denom] = trimmed.split('/').map((s) => parseFloat(s.trim()));
-    if (!Number.isNaN(num) && !Number.isNaN(denom) && denom !== 0) {
-      return (num / denom) * containerSize;
-    }
-  }
-
-  // Pixels: "100px" or just "100"
-  const numValue = parseFloat(trimmed.replace('px', ''));
-  if (!Number.isNaN(numValue)) {
-    return numValue;
-  }
-
-  return 0;
-}
-
-/**
  * Create a GTK miniature display widget
  */
 export function createGtkMiniatureDisplay(options: GtkMiniatureDisplayOptions): Gtk.Widget {
@@ -100,10 +71,13 @@ export function createGtkMiniatureDisplay(options: GtkMiniatureDisplayOptions): 
 
     // Draw layout rectangles
     for (const layout of layoutGroup.layouts) {
-      const x = evaluateExpression(layout.position.x, width);
-      const y = evaluateExpression(layout.position.y, height);
-      const w = evaluateExpression(layout.size.width, width);
-      const h = evaluateExpression(layout.size.height, height);
+      // Integer rect whose edges are shared with adjacent layouts (no gap or overlap)
+      const {
+        x,
+        y,
+        width: w,
+        height: h,
+      } = resolveRect(layout, { width, height }, monitor.workArea);
 
       // Fill
       ctx.setSourceRGBA(LAYOUT_BG_COLOR.r, LAYOUT_BG_COLOR.g, LAYOUT_BG_COLOR.b, LAYOUT_BG_COLOR.a);

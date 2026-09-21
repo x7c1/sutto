@@ -8,7 +8,7 @@
 import Meta from 'gi://Meta';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { LayoutId, LayoutSelectedEvent } from '../../domain/layout/index.js';
-import { evaluate, parse } from '../../domain/layout-expression/index.js';
+import { resolveRect } from '../../domain/layout-expression/index.js';
 import type { GnomeShellMonitorProvider } from '../../infra/monitor/gnome-shell-monitor-provider.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
 
@@ -56,15 +56,10 @@ export class LayoutApplicator {
       log('[LayoutApplicator] Window has no WM_CLASS, skipping history update');
     }
 
-    const resolve = (value: string, containerSize: number): number => {
-      const expr = parse(value);
-      return evaluate(expr, containerSize);
-    };
-
-    const x = workArea.x + resolve(layout.position.x, workArea.width);
-    const y = workArea.y + resolve(layout.position.y, workArea.height);
-    const width = resolve(layout.size.width, workArea.width);
-    const height = resolve(layout.size.height, workArea.height);
+    const rect = resolveRect(layout, workArea);
+    const x = workArea.x + rect.x;
+    const y = workArea.y + rect.y;
+    const { width, height } = rect;
 
     log(
       `[LayoutApplicator] Moving window to x=${x}, y=${y}, w=${width}, h=${height} (work area: ${workArea.x},${workArea.y} ${workArea.width}x${workArea.height})`
