@@ -10,15 +10,15 @@ import Clutter from 'gi://Clutter';
 import type Meta from 'gi://Meta';
 import St from 'gi://St';
 import type { Layout, LayoutSelectedEvent, Space } from '../../domain/layout/index.js';
-import {
-  DEFAULT_MONITOR_HEIGHT,
-  DEFAULT_MONITOR_WIDTH,
-  type Monitor,
-} from '../../domain/monitor/index.js';
+import type { Monitor } from '../../domain/monitor/index.js';
 import type { LayoutHistoryRepository } from '../../operations/history/index.js';
-import { MINIATURE_SPACE_BG_COLOR, MONITOR_MARGIN, SPACE_SPACING } from '../constants.js';
+import { MINIATURE_SPACE_BG_COLOR, SPACE_SPACING } from '../constants.js';
 import { createMiniatureDisplayView } from './miniature-display.js';
-import { calculateSpaceDimensions } from './space-dimensions.js';
+import {
+  calculateBoundingBoxForSpace,
+  calculateDisplayRect,
+  calculateSpaceDimensions,
+} from './space-dimensions.js';
 
 export interface MiniatureSpaceView {
   spaceContainer: St.Widget;
@@ -29,48 +29,6 @@ export interface MiniatureSpaceView {
     leaveEventId: number;
     clickEventId: number;
   }>;
-}
-
-/**
- * Calculate bounding box for monitors referenced in a Space
- */
-function calculateBoundingBoxForSpace(
-  space: Space,
-  monitors: Map<string, Monitor>
-): { minX: number; minY: number; width: number; height: number } {
-  const monitorKeys = Object.keys(space.displays);
-  const relevantMonitors: Monitor[] = [];
-
-  for (const key of monitorKeys) {
-    const monitor = monitors.get(key);
-    if (monitor) {
-      relevantMonitors.push(monitor);
-    }
-  }
-
-  if (relevantMonitors.length === 0) {
-    return { minX: 0, minY: 0, width: DEFAULT_MONITOR_WIDTH, height: DEFAULT_MONITOR_HEIGHT };
-  }
-
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  for (const monitor of relevantMonitors) {
-    const { geometry } = monitor;
-    minX = Math.min(minX, geometry.x);
-    minY = Math.min(minY, geometry.y);
-    maxX = Math.max(maxX, geometry.x + geometry.width);
-    maxY = Math.max(maxY, geometry.y + geometry.height);
-  }
-
-  return {
-    minX,
-    minY,
-    width: maxX - minX,
-    height: maxY - minY,
-  };
 }
 
 /**
@@ -119,16 +77,8 @@ export function createMiniatureSpaceView(
       continue;
     }
 
-    // Calculate scaled dimensions for this monitor
     // Use geometry (physical size) instead of workArea for consistent sizing across monitors
-    // Reduce size by MONITOR_MARGIN (half on each side) to create gap between adjacent displays
-    const scaledWidth = monitor.geometry.width * scale - MONITOR_MARGIN;
-    const scaledHeight = monitor.geometry.height * scale - MONITOR_MARGIN;
-
-    // Calculate position relative to bounding box origin
-    // Add MONITOR_MARGIN offset to create outer margin (FixedLayout doesn't respect padding)
-    const scaledX = (monitor.geometry.x - bbox.minX) * scale + MONITOR_MARGIN;
-    const scaledY = (monitor.geometry.y - bbox.minY) * scale + MONITOR_MARGIN;
+    const displayRect = calculateDisplayRect(monitor, bbox, scale);
 
     // Check if this monitor is inactive (doesn't exist in current physical setup)
     const isInactive = inactiveMonitorKeys.has(monitorKey);
@@ -136,8 +86,8 @@ export function createMiniatureSpaceView(
     // Create miniature display for this monitor
     const miniatureView = createMiniatureDisplayView(
       layoutGroup,
-      scaledWidth,
-      scaledHeight,
+      displayRect.width,
+      displayRect.height,
       window,
       onLayoutSelected,
       monitor,
@@ -150,7 +100,7 @@ export function createMiniatureSpaceView(
     );
 
     // Position the miniature display
-    miniatureView.miniatureDisplay.set_position(scaledX, scaledY);
+    miniatureView.miniatureDisplay.set_position(displayRect.x, displayRect.y);
     spaceContainer.add_child(miniatureView.miniatureDisplay);
 
     // Collect layout buttons and events

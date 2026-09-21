@@ -46,6 +46,10 @@ gnome-extensions list
 gnome-extensions info sutto@x7c1.github.io
 ```
 
+### 5. Disable Built-in Edge Tiling (Recommended)
+
+The desktop's own edge tiling competes with sutto for the drag-to-edge gesture. See [Recommended: Disable Built-in Edge Tiling](../../site/en/installation.md#recommended-disable-built-in-edge-tiling) for the commands.
+
 ## After Installation
 
 Once installed, you can use `npm run dev` to reload the extension without restarting GNOME Shell.

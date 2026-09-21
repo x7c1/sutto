@@ -2,7 +2,7 @@ import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import type { Layout, LayoutSelectedEvent } from '../../domain/layout/index.js';
-import { evaluate, parse } from '../../domain/layout-expression/index.js';
+import { resolveRect } from '../../domain/layout-expression/index.js';
 import {
   BUTTON_BG_COLOR,
   BUTTON_BG_COLOR_HOVER,
@@ -20,26 +20,6 @@ export interface LayoutButtonView {
   enterEventId: number;
   leaveEventId: number;
   clickEventId: number;
-}
-
-/**
- * Resolve layout value (string expression) to pixels
- * @param value - Layout expression ('1/3', '50%', '100px', '50% - 10px', etc.)
- * @param containerSize - Container size in pixels (miniature display width or height)
- * @param screenSize - Optional screen size for scaling fixed pixel values
- * @returns Resolved pixel value
- */
-function resolveLayoutValue(value: string, containerSize: number, screenSize?: number): number {
-  const expr = parse(value);
-  return evaluate(expr, containerSize, screenSize);
-}
-
-/**
- * Calculate button width based on layout width
- */
-function calculateButtonWidth(layout: Layout, displayWidth: number, screenWidth?: number): number {
-  const layoutWidth = resolveLayoutValue(layout.size.width, displayWidth, screenWidth);
-  return layoutWidth - BUTTON_BORDER_WIDTH * 2;
 }
 
 /**
@@ -67,7 +47,6 @@ export function getButtonStyle(
   return `
         background-color: ${bgColor};
         border: ${BUTTON_BORDER_WIDTH}px solid ${borderColor};
-        border-radius: 2px;
         width: ${buttonWidth}px;
         height: ${buttonHeight}px;
         margin: 0;
@@ -90,15 +69,12 @@ export function createLayoutButton(
   // Get screen work area for scaling fixed pixel values
   const workArea = Main.layoutManager.getWorkAreaForMonitor(monitorIndex);
 
-  // Calculate button position relative to miniature display
-  const buttonX = resolveLayoutValue(layout.position.x, displayWidth, workArea.width);
-  const buttonY = resolveLayoutValue(layout.position.y, displayHeight, workArea.height);
+  // Resolve the tile rectangle relative to the miniature display
+  const rect = resolveRect(layout, { width: displayWidth, height: displayHeight }, workArea);
 
-  // Calculate button dimensions
-  const buttonWidth = calculateButtonWidth(layout, displayWidth, workArea.width);
-  const buttonHeight =
-    resolveLayoutValue(layout.size.height, displayHeight, workArea.height) -
-    BUTTON_BORDER_WIDTH * 2;
+  // CSS width/height exclude the border, so subtract it to keep the outer size equal to rect
+  const buttonWidth = rect.width - BUTTON_BORDER_WIDTH * 2;
+  const buttonHeight = rect.height - BUTTON_BORDER_WIDTH * 2;
 
   // Create button with initial style (not hovered, but might be selected)
   const button = new St.Button({
@@ -111,7 +87,7 @@ export function createLayoutButton(
   });
 
   // Set position
-  button.set_position(buttonX, buttonY);
+  button.set_position(rect.x, rect.y);
 
   // Store button metadata for dynamic style updates
   const buttonWithMeta = button as LayoutButtonWithMetadata;

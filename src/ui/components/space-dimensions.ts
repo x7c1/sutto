@@ -2,7 +2,8 @@
  * Space Dimensions Calculator
  *
  * Shared utilities for calculating Space sizes based on monitor configuration.
- * Used by both miniature-space.ts (for rendering) and position-manager.ts (for layout).
+ * Used by the panel (miniature-space.ts, position-manager.ts) and the preferences UI
+ * (gtk-miniature-space.ts, spaces-page.ts), so it must not import GNOME Shell modules.
  */
 
 import type { Space } from '../../domain/layout/index.js';
@@ -26,7 +27,7 @@ export interface SpaceDimensions {
 /**
  * Calculate bounding box for monitors referenced in a Space
  */
-function calculateBoundingBoxForSpace(
+export function calculateBoundingBoxForSpace(
   space: Space,
   monitors: Map<string, Monitor>
 ): { minX: number; minY: number; width: number; height: number } {
@@ -63,6 +64,29 @@ function calculateBoundingBoxForSpace(
     width: maxX - minX,
     height: maxY - minY,
   };
+}
+
+/**
+ * Calculate where a monitor's miniature display sits inside the Space container
+ *
+ * The size is reduced by MONITOR_MARGIN to create a gap between adjacent displays, and the
+ * position is offset by MONITOR_MARGIN to create the outer margin (FixedLayout ignores padding).
+ * Edges are rounded to whole pixels so the display's border and the layout buttons inside it
+ * land on the pixel grid instead of being antialiased across two pixels.
+ */
+export function calculateDisplayRect(
+  monitor: Monitor,
+  bbox: { minX: number; minY: number },
+  scale: number
+): { x: number; y: number; width: number; height: number } {
+  const left = (monitor.geometry.x - bbox.minX) * scale + MONITOR_MARGIN;
+  const top = (monitor.geometry.y - bbox.minY) * scale + MONITOR_MARGIN;
+  const right = left + monitor.geometry.width * scale - MONITOR_MARGIN;
+  const bottom = top + monitor.geometry.height * scale - MONITOR_MARGIN;
+
+  const x = Math.round(left);
+  const y = Math.round(top);
+  return { x, y, width: Math.round(right) - x, height: Math.round(bottom) - y };
 }
 
 /**
@@ -118,19 +142,12 @@ export function calculateSpaceDimensions(
       continue;
     }
 
-    // Calculate scaled dimensions for this monitor
-    const scaledWidth = monitor.geometry.width * scale - MONITOR_MARGIN;
-    const scaledHeight = monitor.geometry.height * scale - MONITOR_MARGIN;
-
-    // Calculate position relative to bounding box origin
-    const scaledX = (monitor.geometry.x - bbox.minX) * scale + MONITOR_MARGIN;
-    const scaledY = (monitor.geometry.y - bbox.minY) * scale + MONITOR_MARGIN;
-
     // Update actual bounding box to include this display
-    actualMinX = Math.min(actualMinX, scaledX);
-    actualMinY = Math.min(actualMinY, scaledY);
-    actualMaxX = Math.max(actualMaxX, scaledX + scaledWidth);
-    actualMaxY = Math.max(actualMaxY, scaledY + scaledHeight);
+    const rect = calculateDisplayRect(monitor, bbox, scale);
+    actualMinX = Math.min(actualMinX, rect.x);
+    actualMinY = Math.min(actualMinY, rect.y);
+    actualMaxX = Math.max(actualMaxX, rect.x + rect.width);
+    actualMaxY = Math.max(actualMaxY, rect.y + rect.height);
   }
 
   // Calculate final container size based on actual bounding box of all displays

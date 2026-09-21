@@ -33,3 +33,21 @@ gnome-extensions info sutto@x7c1.github.io
 ```
 
 You should see the extension listed with status "ENABLED".
+
+## Recommended: Disable Built-in Edge Tiling
+
+Sutto opens its layout panel when you drag a window to a screen edge, and the desktop's own edge tiling reacts to the same gesture, so the two compete for the drag.
+
+On Ubuntu, edge tiling is provided by the bundled Tiling Assistant extension:
+
+```bash
+gnome-extensions disable tiling-assistant@ubuntu.com
+```
+
+Then turn off GNOME's own edge tiling. On Ubuntu, run this after the command above, because disabling Tiling Assistant hands edge tiling back to GNOME:
+
+```bash
+gsettings set org.gnome.mutter edge-tiling false
+```
+
+To undo, run `gnome-extensions enable tiling-assistant@ubuntu.com` on Ubuntu, or `gsettings set org.gnome.mutter edge-tiling true` elsewhere.
