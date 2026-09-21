@@ -8,6 +8,7 @@ import {
   SpaceId,
   type SpacesRow,
 } from '../../../domain/layout/index.js';
+import { parse } from '../../../domain/layout-expression/index.js';
 import type {
   LayoutConfiguration,
   LayoutGroupSetting,
@@ -63,6 +64,9 @@ function importLayoutConfiguration(
   }
 }
 
+/** Layout fields holding a layout expression (e.g. '1/3', '50%', '100% - 20px') */
+const EXPRESSION_FIELDS = ['x', 'y', 'width', 'height'] as const;
+
 function isValidLayoutConfiguration(data: unknown): data is LayoutConfiguration {
   if (typeof data !== 'object' || data === null) {
     return false;
@@ -82,7 +86,75 @@ function isValidLayoutConfiguration(data: unknown): data is LayoutConfiguration 
     return false;
   }
 
-  return true;
+  // Layout expressions are only parsed when a layout is drawn or applied, so a malformed one
+  // would otherwise surface much later as a repeated exception. Reject the whole file here.
+  return config.layoutGroups.every((group, index) => isValidLayoutGroupSetting(group, index));
+}
+
+// A rejected group is identified by its index while its name is unusable, and by its name
+// afterwards, so that the log always points at one group of the imported file.
+function isValidLayoutGroupSetting(group: unknown, groupIndex: number): boolean {
+  if (typeof group !== 'object' || group === null) {
+    log(`[ImportCollection] Layout Group at index ${groupIndex} is not an object`);
+    return false;
+  }
+
+  const setting = group as Record<string, unknown>;
+
+  if (typeof setting.name !== 'string' || setting.name.trim() === '') {
+    log(`[ImportCollection] Layout Group at index ${groupIndex} has no "name"`);
+    return false;
+  }
+
+  if (!Array.isArray(setting.layouts)) {
+    log(`[ImportCollection] Layout Group "${setting.name}" has no "layouts" array`);
+    return false;
+  }
+
+  const groupName = setting.name;
+
+  return setting.layouts.every((layout, index) => isValidLayoutSetting(layout, groupName, index));
+}
+
+function isValidLayoutSetting(layout: unknown, groupName: string, layoutIndex: number): boolean {
+  if (typeof layout !== 'object' || layout === null) {
+    log(
+      `[ImportCollection] Layout Group "${groupName}" has a layout at index ${layoutIndex} that is not an object`
+    );
+    return false;
+  }
+
+  const setting = layout as Record<string, unknown>;
+
+  if (typeof setting.label !== 'string' || setting.label.trim() === '') {
+    log(
+      `[ImportCollection] Layout Group "${groupName}" has a layout at index ${layoutIndex} without a label`
+    );
+    return false;
+  }
+
+  // Labels repeat across groups (the built-in presets have several "Left Third"), so the group
+  // name goes into the message as well to point at a single layout of the imported file.
+  const layoutRef = `Layout Group "${groupName}" layout "${setting.label}"`;
+
+  return EXPRESSION_FIELDS.every((field) =>
+    isValidLayoutExpression(setting[field], layoutRef, field)
+  );
+}
+
+function isValidLayoutExpression(value: unknown, layoutRef: string, field: string): boolean {
+  if (typeof value !== 'string') {
+    log(`[ImportCollection] ${layoutRef} has a non-string "${field}": ${JSON.stringify(value)}`);
+    return false;
+  }
+
+  try {
+    parse(value);
+    return true;
+  } catch (e) {
+    log(`[ImportCollection] ${layoutRef} has an invalid "${field}" expression "${value}": ${e}`);
+    return false;
+  }
 }
 
 function configurationToSpacesRows(config: LayoutConfiguration): SpacesRow[] {
