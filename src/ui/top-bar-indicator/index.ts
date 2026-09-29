@@ -39,6 +39,9 @@ export class TopBarIndicator {
 
   constructor(private readonly options: TopBarIndicatorOptions) {
     this.button = new PanelMenu.Button(0.0, options.name, false);
+    // The theme's panel-button padding (12px a side) makes a single-icon
+    // button look far wider than its glyph; keep it compact.
+    this.button.set_style('-natural-hpadding: 6px;');
     this.button.add_child(new St.Icon({ icon_name: ICON_NAME, style_class: 'system-status-icon' }));
 
     const menu = this.button.menu as PopupMenu.PopupMenu;
