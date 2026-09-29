@@ -8,7 +8,7 @@ export type { LicenseProps } from './license.js';
 export { InvalidLicenseError, License } from './license.js';
 export { InvalidLicenseKeyError, LicenseKey } from './license-key.js';
 export type { LicenseState } from './license-state.js';
-export { createLicenseState } from './license-state.js';
+export { createLicenseState, OFFLINE_GRACE_PERIOD_DAYS } from './license-state.js';
 export type { LicenseStatus } from './license-status.js';
 export {
   InvalidLicenseStatusError,
@@ -16,6 +16,8 @@ export {
   LICENSE_STATUSES,
   parseLicenseStatus,
 } from './license-status.js';
+export type { LicenseStatusDisplay } from './license-status-display.js';
+export { getLicenseStatusDisplay } from './license-status-display.js';
 export type { NetworkState } from './network-state.js';
 export { isValidNetworkState, NETWORK_STATES } from './network-state.js';
 export { InvalidTrialDaysError, TrialDays } from './trial-days.js';

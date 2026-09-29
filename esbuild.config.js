@@ -45,6 +45,7 @@ async function build() {
             define: {
                 '__DEV__': JSON.stringify(isDev),
                 '__LICENSE_API_BASE_URL__': JSON.stringify(licenseApiBaseUrl),
+                '__LICENSE_PURCHASE_URL__': JSON.stringify(licensePurchaseUrl),
             },
         });
 

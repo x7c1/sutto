@@ -1,11 +1,12 @@
 import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
-import type Gio from 'gi://Gio';
+import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 import { createLicenseGroup } from './license-ui.js';
 
 const SETTINGS_KEY_SHOW_PANEL = 'show-panel-shortcut';
 const SETTINGS_KEY_OPEN_PREFERENCES = 'open-preferences-shortcut';
+const SETTINGS_KEY_SHOW_TOP_BAR_INDICATOR = 'show-top-bar-indicator';
 
 /**
  * Create the General preferences page with keyboard shortcut settings
@@ -45,11 +46,31 @@ export function createGeneralPage(
 
   page.add(group);
 
+  page.add(createTopBarGroup(settings));
+
   // Add License group
   const licenseGroup = createLicenseGroup(window, settings);
   page.add(licenseGroup);
 
   return page;
+}
+
+/**
+ * Create the Top Bar group with the indicator visibility switch
+ */
+function createTopBarGroup(settings: Gio.Settings): Adw.PreferencesGroup {
+  const group = new Adw.PreferencesGroup({
+    title: 'Top Bar',
+  });
+
+  const row = new Adw.SwitchRow({
+    title: 'Show Top Bar Indicator',
+    subtitle: 'Show the Sutto icon and menu in the top bar',
+  });
+  settings.bind(SETTINGS_KEY_SHOW_TOP_BAR_INDICATOR, row, 'active', Gio.SettingsBindFlags.DEFAULT);
+  group.add(row);
+
+  return group;
 }
 
 /**

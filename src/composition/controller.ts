@@ -16,7 +16,7 @@ import { EdgeDetector } from '../domain/geometry/index.js';
 import type { LayoutSelectedEvent } from '../domain/layout/index.js';
 import { extractLayoutIds } from '../domain/layout/index.js';
 import { HttpLicenseApiClient } from '../infra/api/index.js';
-import { HISTORY_FILE_NAME, MONITORS_FILE_NAME } from '../infra/constants.js';
+import { EXTENSION_UUID, HISTORY_FILE_NAME, MONITORS_FILE_NAME } from '../infra/constants.js';
 import {
   FileLayoutHistoryRepository,
   FileMonitorEnvironmentRepository,
@@ -31,6 +31,7 @@ import {
 } from '../infra/glib/index.js';
 import { GnomeShellMonitorProvider } from '../infra/monitor/gnome-shell-monitor-provider.js';
 import { GnomeNotificationService } from '../infra/shell/index.js';
+import { safeDisable } from '../libs/safe-disable.js';
 import type { LayoutHistoryRepository } from '../operations/history/index.js';
 import { LicenseOperations, TrialWarningOperations } from '../operations/licensing/index.js';
 import { MonitorEnvironmentOperations } from '../operations/monitor/index.js';
@@ -45,10 +46,11 @@ import {
   resolvePresetGeneratorOperations,
   resolveSpaceCollectionOperations,
 } from './factory/index.js';
+import { TopBarIndicatorManager } from './indicator/index.js';
 import { LicenseStateHandler } from './licensing/index.js';
 import { MonitorChangeHandler } from './monitor/index.js';
 import { KeyboardShortcutManager } from './shortcuts/index.js';
-import { LayoutApplicator } from './window/index.js';
+import { getFocusedLayoutTarget, LayoutApplicator } from './window/index.js';
 
 declare function log(message: string): void;
 
@@ -63,6 +65,7 @@ export class Controller {
   private dragCoordinator: DragCoordinator;
   private dragSignalHandler: DragSignalHandler;
   private keyboardShortcutManager: KeyboardShortcutManager;
+  private topBarIndicatorManager: TopBarIndicatorManager;
   private layoutApplicator: LayoutApplicator;
   private layoutHistoryRepository: LayoutHistoryRepository;
   private historyLoaded: boolean = false;
@@ -149,6 +152,18 @@ export class Controller {
         this.keyboardShortcutManager.registerHidePanelShortcut(() => this.onHidePanelShortcut()),
       onPanelHidden: () => this.keyboardShortcutManager.unregisterHidePanelShortcut(),
     });
+
+    this.topBarIndicatorManager = new TopBarIndicatorManager(preferencesRepository, {
+      role: EXTENSION_UUID,
+      getMenuInput: () => ({
+        licenseState: this.licenseStateHandler.getLicenseState(),
+        licenseValid: this.licenseStateHandler.getDisabledReason() === null,
+        hasFocusWindow: getFocusedLayoutTarget() !== null,
+        panelVisible: this.mainPanel.isVisible(),
+      }),
+      onShowPanel: () => this.togglePanelForFocusedWindow(),
+      onOpenPreferences,
+    });
   }
 
   enable(): void {
@@ -173,10 +188,19 @@ export class Controller {
       onDragEnd: (window, op) => this.dragCoordinator.onGrabOpEnd(window, op),
     });
 
-    this.keyboardShortcutManager.registerShowPanelShortcut(() => this.onShowPanelShortcut());
+    this.keyboardShortcutManager.registerShowPanelShortcut(() => {
+      log('[Controller] ===== KEYBOARD SHORTCUT TRIGGERED =====');
+      this.togglePanelForFocusedWindow();
+    });
+
+    this.licenseStateHandler.onStateChange(() => this.topBarIndicatorManager.refresh());
+    this.topBarIndicatorManager.enable();
   }
 
   disable(): void {
+    // Wrapped so a throw while removing the indicator cannot strand the
+    // teardown below — see safe-disable.ts.
+    safeDisable('topBarIndicator', () => this.topBarIndicatorManager.disable());
     this.licenseStateHandler.clearCallbacks();
     this.dragCoordinator.stop();
     this.dragSignalHandler.disconnect();
@@ -245,16 +269,18 @@ export class Controller {
     this.layoutApplicator.applyLayout(targetWindow, event);
   }
 
-  private onShowPanelShortcut(): void {
-    log('[Controller] ===== KEYBOARD SHORTCUT TRIGGERED =====');
-
+  /**
+   * Show the panel over the focused window, or hide it when already visible.
+   * Shared by the show-panel shortcut and the top bar indicator.
+   */
+  private togglePanelForFocusedWindow(): void {
     if (this.mainPanel.isVisible()) {
       log('[Controller] Panel is already visible, hiding it');
       this.mainPanel.hide();
       return;
     }
 
-    const focusWindow = global.display.get_focus_window();
+    const focusWindow = getFocusedLayoutTarget();
 
     // Explain an invalid license rather than ignoring the shortcut. This runs
     // before the focused-window check because the locked panel needs no window.
@@ -270,7 +296,7 @@ export class Controller {
     }
 
     if (!focusWindow) {
-      log('[Controller] No focused window, ignoring shortcut');
+      log('[Controller] No focused window, not showing panel');
       return;
     }
 
