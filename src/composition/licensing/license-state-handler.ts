@@ -6,7 +6,7 @@
  * disabled without recomputing the reason itself.
  */
 
-import type { DisabledReason } from '../../domain/licensing/index.js';
+import type { DisabledReason, LicenseState } from '../../domain/licensing/index.js';
 import type {
   LicenseOperations,
   TrialWarningOperations,
@@ -47,6 +47,21 @@ export class LicenseStateHandler {
    */
   getDisabledReason(): DisabledReason | null {
     return this.disabledReason;
+  }
+
+  /**
+   * The current license state, read fresh from the repository.
+   */
+  getLicenseState(): LicenseState {
+    return this.licenseOperations.getState();
+  }
+
+  /**
+   * Register an additional listener for license state changes.
+   * Listeners are removed by clearCallbacks().
+   */
+  onStateChange(listener: (state: LicenseState) => void): void {
+    this.licenseOperations.onStateChange(listener);
   }
 
   clearCallbacks(): void {

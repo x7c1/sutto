@@ -9,6 +9,8 @@ import { CollectionId } from '../../domain/layout/index.js';
 
 const log = (message: string): void => console.log(message);
 
+const SHOW_TOP_BAR_INDICATOR_KEY = 'show-top-bar-indicator';
+
 export class GSettingsPreferencesRepository {
   private settings: Gio.Settings;
 
@@ -64,6 +66,24 @@ export class GSettingsPreferencesRepository {
    */
   getGSettings(): Gio.Settings {
     return this.settings;
+  }
+
+  /**
+   * Whether the top bar indicator should be shown
+   */
+  isTopBarIndicatorShown(): boolean {
+    return this.settings.get_boolean(SHOW_TOP_BAR_INDICATOR_KEY);
+  }
+
+  /**
+   * Watch changes to the top bar indicator setting
+   * @returns A function that stops watching
+   */
+  watchTopBarIndicatorShown(callback: (shown: boolean) => void): () => void {
+    const signalId = this.settings.connect(`changed::${SHOW_TOP_BAR_INDICATOR_KEY}`, () =>
+      callback(this.isTopBarIndicatorShown())
+    );
+    return () => this.settings.disconnect(signalId);
   }
 
   getActiveCollectionId(): CollectionId | null {

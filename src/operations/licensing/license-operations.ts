@@ -10,13 +10,12 @@ import {
   type ActivationResult,
   createLicenseState,
   License,
+  OFFLINE_GRACE_PERIOD_DAYS,
 } from '../../domain/licensing/index.js';
 import type { LicenseApiClient, ValidationError } from './license-api-client.js';
 import type { LicenseRepository } from './license-repository.js';
 
 declare function log(message: string): void;
-
-const OFFLINE_GRACE_PERIOD_DAYS = 7;
 
 export interface DateProvider {
   now(): Date;

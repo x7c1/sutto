@@ -21,6 +21,11 @@
       <summary>Active space collection ID</summary>
       <description>The ID of the currently active SpaceCollection. Empty string means use the first available preset.</description>
     </key>
+    <key name="show-top-bar-indicator" type="b">
+      <default>true</default>
+      <summary>Show top bar indicator</summary>
+      <description>Whether to show the Sutto icon and menu in the top bar. Default is true.</description>
+    </key>
     <key name="license-key" type="s">
       <default>''</default>
       <summary>License key</summary>

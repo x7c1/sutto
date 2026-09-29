@@ -1,7 +1,11 @@
 import Adw from 'gi://Adw';
 import type Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
-import { LicenseKey, type LicenseState } from '../domain/licensing/index.js';
+import {
+  getLicenseStatusDisplay,
+  LicenseKey,
+  type LicenseState,
+} from '../domain/licensing/index.js';
 import { HttpLicenseApiClient } from '../infra/api/index.js';
 import {
   GioNetworkStateProvider,
@@ -62,7 +66,7 @@ function createStatusRow(initialState: LicenseState): StatusRowResult {
   let currentPurchaseButton: Gtk.Button | null = null;
 
   const update = (state: LicenseState): void => {
-    const { title, subtitle, showPurchaseLink } = getStatusDisplay(state);
+    const { title, subtitle, showPurchaseLink } = getLicenseStatusDisplay(state);
 
     row.set_title(title);
     row.set_subtitle(subtitle);
@@ -89,84 +93,6 @@ function createStatusRow(initialState: LicenseState): StatusRowResult {
 
   update(initialState);
   return { row, update };
-}
-
-interface StatusDisplay {
-  title: string;
-  subtitle: string;
-  showPurchaseLink: boolean;
-}
-
-function getStatusDisplay(state: LicenseState): StatusDisplay {
-  const { status, networkState, trialDaysRemaining, validUntil, daysSinceLastValidation } = state;
-
-  if (status === 'trial') {
-    if (networkState === 'backend_unreachable') {
-      return {
-        title: 'Trial',
-        subtitle: 'Server unavailable',
-        showPurchaseLink: true,
-      };
-    }
-    return {
-      title: 'Trial',
-      subtitle: `${trialDaysRemaining} days remaining`,
-      showPurchaseLink: true,
-    };
-  }
-
-  if (status === 'valid') {
-    if (networkState === 'offline') {
-      const daysUntilRequired = Math.ceil(7 - daysSinceLastValidation);
-      return {
-        title: 'Active',
-        subtitle: `Offline - connect within ${daysUntilRequired} days`,
-        showPurchaseLink: false,
-      };
-    }
-    if (networkState === 'backend_unreachable') {
-      return {
-        title: 'Active',
-        subtitle: 'Server unavailable',
-        showPurchaseLink: false,
-      };
-    }
-    const validUntilStr = validUntil ? formatDate(validUntil) : 'Unknown';
-    return {
-      title: 'Active',
-      subtitle: `Valid until ${validUntilStr}`,
-      showPurchaseLink: false,
-    };
-  }
-
-  if (status === 'expired') {
-    if (trialDaysRemaining === 0) {
-      return {
-        title: 'Trial Expired',
-        subtitle: 'Please purchase a license',
-        showPurchaseLink: true,
-      };
-    }
-    return {
-      title: 'Expired',
-      subtitle: 'Please renew your subscription',
-      showPurchaseLink: true,
-    };
-  }
-
-  // status === 'invalid'
-  return {
-    title: 'Invalid',
-    subtitle: state.errorMessage ?? 'License key is invalid',
-    showPurchaseLink: true,
-  };
-}
-
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 interface LicenseKeyRowResult {
