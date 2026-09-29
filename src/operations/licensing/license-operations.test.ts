@@ -95,6 +95,73 @@ function createMockRepository(
       license = null;
       status = 'trial';
     },
+    watchChanges: () => () => {},
+  };
+}
+
+interface ExternalStore {
+  status: LicenseStatus;
+  license: License | null;
+  trialPeriod: TrialPeriod;
+}
+
+/**
+ * A repository whose stored data can be changed from outside (as another
+ * process would), with a way to fire the change callbacks and a count of the
+ * writes made through the repository itself.
+ */
+function createExternallyChangedRepository(initial: ExternalStore): {
+  repository: LicenseRepository;
+  store: ExternalStore;
+  fireChange: () => void;
+  watcherCount: () => number;
+  writeCount: () => number;
+} {
+  const store = { ...initial };
+  const watchers = new Set<() => void>();
+  let writes = 0;
+  const write = <T extends unknown[]>(apply: (...args: T) => void) => {
+    return (...args: T) => {
+      writes++;
+      apply(...args);
+    };
+  };
+
+  const repository: LicenseRepository = {
+    getStatus: () => store.status,
+    setStatus: write((s: LicenseStatus) => {
+      store.status = s;
+    }),
+    loadLicense: () => store.license,
+    saveLicense: write((l: License) => {
+      store.license = l;
+    }),
+    loadTrialPeriod: () => store.trialPeriod,
+    saveTrialPeriod: write((t: TrialPeriod) => {
+      store.trialPeriod = t;
+    }),
+    getTrialWarningThreshold: () => 0,
+    setTrialWarningThreshold: write(() => {}),
+    clearLicense: write(() => {
+      store.license = null;
+      store.status = 'trial';
+    }),
+    watchChanges: (callback: () => void) => {
+      watchers.add(callback);
+      return () => watchers.delete(callback);
+    },
+  };
+
+  return {
+    repository,
+    store,
+    fireChange: () => {
+      for (const watcher of watchers) {
+        watcher();
+      }
+    },
+    watcherCount: () => watchers.size,
+    writeCount: () => writes,
   };
 }
 
@@ -648,6 +715,84 @@ describe('LicenseOperations', () => {
       ops.recordTrialUsage();
 
       expect(states.length).toBe(1);
+    });
+  });
+
+  describe('watchStoredChanges', () => {
+    it('reflects a license activated by another process once the change is reported', () => {
+      const fake = createExternallyChangedRepository({
+        status: 'trial',
+        license: null,
+        trialPeriod: createMockTrialPeriod(30),
+      });
+      const ops = createOperations({ repository: fake.repository });
+      const states: LicenseState[] = [];
+      ops.onStateChange((s) => states.push(s));
+      ops.watchStoredChanges();
+      expect(ops.getDisabledReason()).toBe('trial-expired');
+
+      fake.store.license = createMockLicense();
+      fake.store.status = 'valid';
+      fake.fireChange();
+
+      expect(ops.getDisabledReason()).toBeNull();
+      expect(states.length).toBe(1);
+      expect(states[0].status).toBe('valid');
+    });
+
+    it('reflects a license that became invalid in another process', () => {
+      const fake = createExternallyChangedRepository({
+        status: 'valid',
+        license: createMockLicense(),
+        trialPeriod: createMockTrialPeriod(30),
+      });
+      const ops = createOperations({ repository: fake.repository });
+      const states: LicenseState[] = [];
+      ops.onStateChange((s) => states.push(s));
+      ops.watchStoredChanges();
+      expect(ops.getDisabledReason()).toBeNull();
+
+      fake.store.status = 'expired';
+      fake.fireChange();
+
+      expect(ops.getDisabledReason()).toBe('license-expired');
+      expect(states.length).toBe(1);
+      expect(states[0].status).toBe('expired');
+    });
+
+    it('does not write to the repository when handling a change', () => {
+      const fake = createExternallyChangedRepository({
+        status: 'trial',
+        license: null,
+        trialPeriod: createMockTrialPeriod(5, TEST_TODAY),
+      });
+      const ops = createOperations({ repository: fake.repository });
+      ops.onStateChange(() => {});
+      ops.watchStoredChanges();
+
+      fake.fireChange();
+      fake.store.status = 'expired';
+      fake.fireChange();
+
+      expect(fake.writeCount()).toBe(0);
+    });
+
+    it('stops notifying once the returned function is called', () => {
+      const fake = createExternallyChangedRepository({
+        status: 'trial',
+        license: null,
+        trialPeriod: createMockTrialPeriod(5),
+      });
+      const ops = createOperations({ repository: fake.repository });
+      const states: LicenseState[] = [];
+      ops.onStateChange((s) => states.push(s));
+      const stop = ops.watchStoredChanges();
+
+      stop();
+      fake.fireChange();
+
+      expect(fake.watcherCount()).toBe(0);
+      expect(states.length).toBe(0);
     });
   });
 

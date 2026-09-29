@@ -16,6 +16,7 @@ declare function log(message: string): void;
 
 export class LicenseStateHandler {
   private disabledReason: DisabledReason | null = null;
+  private stopWatchingStoredChanges: (() => void) | null = null;
 
   constructor(
     private readonly licenseOperations: LicenseOperations,
@@ -30,6 +31,12 @@ export class LicenseStateHandler {
         onBecameInvalid(this.disabledReason);
       }
     });
+
+    // The preferences window runs in its own process and writes license
+    // changes straight to storage; follow them so activating a license there
+    // unlocks the panel without reloading the extension.
+    this.stopWatchingStoredChanges?.();
+    this.stopWatchingStoredChanges = this.licenseOperations.watchStoredChanges();
 
     this.licenseOperations.initialize().then(() => {
       this.disabledReason = this.licenseOperations.getDisabledReason();
@@ -58,13 +65,18 @@ export class LicenseStateHandler {
 
   /**
    * Register an additional listener for license state changes.
-   * Listeners are removed by clearCallbacks().
+   * Listeners are removed by dispose().
    */
   onStateChange(listener: (state: LicenseState) => void): void {
     this.licenseOperations.onStateChange(listener);
   }
 
-  clearCallbacks(): void {
+  /**
+   * Stop following stored license changes and remove all state listeners.
+   */
+  dispose(): void {
+    this.stopWatchingStoredChanges?.();
+    this.stopWatchingStoredChanges = null;
     this.licenseOperations.clearCallbacks();
   }
 }
