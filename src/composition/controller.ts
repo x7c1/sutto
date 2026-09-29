@@ -50,7 +50,7 @@ import { TopBarIndicatorManager } from './indicator/index.js';
 import { LicenseStateHandler } from './licensing/index.js';
 import { MonitorChangeHandler } from './monitor/index.js';
 import { KeyboardShortcutManager } from './shortcuts/index.js';
-import { LayoutApplicator } from './window/index.js';
+import { getFocusedLayoutTarget, LayoutApplicator } from './window/index.js';
 
 declare function log(message: string): void;
 
@@ -158,7 +158,7 @@ export class Controller {
       getMenuInput: () => ({
         licenseState: this.licenseStateHandler.getLicenseState(),
         licenseValid: this.licenseStateHandler.getDisabledReason() === null,
-        hasFocusWindow: global.display.get_focus_window() !== null,
+        hasFocusWindow: getFocusedLayoutTarget() !== null,
         panelVisible: this.mainPanel.isVisible(),
       }),
       onShowPanel: () => this.togglePanelForFocusedWindow(),
@@ -280,7 +280,7 @@ export class Controller {
       return;
     }
 
-    const focusWindow = global.display.get_focus_window();
+    const focusWindow = getFocusedLayoutTarget();
 
     // Explain an invalid license rather than ignoring the shortcut. This runs
     // before the focused-window check because the locked panel needs no window.
