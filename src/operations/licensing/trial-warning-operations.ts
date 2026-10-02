@@ -9,8 +9,8 @@ const WARNING_TITLE = 'Trial ending soon';
 /**
  * Warns the user before the trial ends.
  *
- * Evaluated at startup only: the trial day count advances at startup, so a
- * threshold can never be crossed mid-session.
+ * Evaluated whenever a new trial day is recorded (when the user triggers the
+ * main panel), since that is the only time the remaining days decrease.
  */
 export class TrialWarningOperations {
   constructor(
@@ -20,7 +20,7 @@ export class TrialWarningOperations {
 
   /**
    * Notify the user if the trial just crossed a warning threshold, and persist
-   * the threshold so it does not fire again on the next login.
+   * the threshold so it does not fire again for the same threshold.
    */
   checkAndNotify(): void {
     const trial = this.repository.loadTrialPeriod();

@@ -252,7 +252,7 @@ describe('LicenseOperations', () => {
       expect(savedLicense?.validUntil).toEqual(newValidUntil);
     });
 
-    it('records trial usage when status is trial', async () => {
+    it('does not record a trial day', async () => {
       const repository = createMockRepository({
         status: 'trial',
         trialPeriod: createMockTrialPeriod(5, '2026-06-14'),
@@ -261,20 +261,8 @@ describe('LicenseOperations', () => {
 
       await ops.initialize();
 
-      expect(repository.loadTrialPeriod().daysUsed.toNumber()).toBe(6);
-    });
-
-    it('skips trial usage recording when backend is unreachable', async () => {
-      const repository = createMockRepository({
-        status: 'trial',
-        trialPeriod: createMockTrialPeriod(5, '2026-06-14'),
-      });
-      const networkStateProvider = createMockNetworkStateProvider('backend_unreachable');
-      const ops = createOperations({ repository, networkStateProvider });
-
-      await ops.initialize();
-
       expect(repository.loadTrialPeriod().daysUsed.toNumber()).toBe(5);
+      expect(repository.loadTrialPeriod().lastUsedDate).toBe('2026-06-14');
     });
 
     it('notifies state change callbacks after initialization', async () => {
@@ -682,6 +670,23 @@ describe('LicenseOperations', () => {
       const repository = createMockRepository({
         status: 'trial',
         trialPeriod: createMockTrialPeriod(5, TEST_TODAY),
+      });
+      const ops = createOperations({ repository });
+
+      const result = ops.recordTrialUsage();
+
+      expect(result).toBe(false);
+      expect(repository.loadTrialPeriod().daysUsed.toNumber()).toBe(5);
+    });
+
+    it.each([
+      'valid',
+      'expired',
+      'invalid',
+    ] as const)('records nothing and returns false when status is %s', (status) => {
+      const repository = createMockRepository({
+        status,
+        trialPeriod: createMockTrialPeriod(5, '2026-06-14'),
       });
       const ops = createOperations({ repository });
 

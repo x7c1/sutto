@@ -231,6 +231,10 @@ export class Controller {
       return;
     }
 
+    // Count the trial day first so the day that reaches the limit locks the
+    // panel at this same trigger.
+    this.licenseStateHandler.recordPanelUse();
+
     // Never swallow the gesture: an invalid license is explained in the panel
     // itself instead of silently doing nothing.
     const reason = this.licenseStateHandler.getDisabledReason();
@@ -279,6 +283,10 @@ export class Controller {
       this.mainPanel.hide();
       return;
     }
+
+    // Count the trial day first so the day that reaches the limit locks the
+    // panel at this same trigger.
+    this.licenseStateHandler.recordPanelUse();
 
     const focusWindow = getFocusedLayoutTarget();
 

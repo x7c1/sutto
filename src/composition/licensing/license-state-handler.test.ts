@@ -59,7 +59,49 @@ function createSharedStorage() {
   };
 }
 
-function createHandler(repository: LicenseRepository): LicenseStateHandler {
+/**
+ * An in-memory repository that records every trial period it is asked to save.
+ */
+function createTrialStorage(
+  status: LicenseStatus,
+  trialPeriod: TrialPeriod,
+  trialWarningThreshold = 0
+) {
+  const store = { status, trialPeriod, trialWarningThreshold };
+  const savedTrialPeriods: TrialPeriod[] = [];
+
+  const repository: LicenseRepository = {
+    getStatus: () => store.status,
+    setStatus: (next) => {
+      store.status = next;
+    },
+    // No stored license, so initialize() never calls the license API.
+    loadLicense: () => null,
+    saveLicense: unexpected('saveLicense'),
+    loadTrialPeriod: () => store.trialPeriod,
+    saveTrialPeriod: (next) => {
+      store.trialPeriod = next;
+      savedTrialPeriods.push(next);
+    },
+    getTrialWarningThreshold: () => store.trialWarningThreshold,
+    setTrialWarningThreshold: (threshold) => {
+      store.trialWarningThreshold = threshold;
+    },
+    clearLicense: unexpected('clearLicense'),
+    watchChanges: () => () => {},
+  };
+
+  return { repository, store, savedTrialPeriods };
+}
+
+function trialPeriod(daysUsed: number, lastUsedDate: string): TrialPeriod {
+  return new TrialPeriod({ daysUsed: new TrialDays(daysUsed), lastUsedDate });
+}
+
+function createHandler(
+  repository: LicenseRepository,
+  warnings: string[] = []
+): LicenseStateHandler {
   const apiClient: LicenseApiClient = {
     activate: unexpected('activate'),
     validate: unexpected('validate'),
@@ -73,7 +115,7 @@ function createHandler(repository: LicenseRepository): LicenseStateHandler {
   );
   const trialWarningOperations = new TrialWarningOperations(repository, {
     notifyError: () => {},
-    notifyWarning: () => {},
+    notifyWarning: (_title, message) => warnings.push(message),
   });
   return new LicenseStateHandler(licenseOperations, trialWarningOperations);
 }
@@ -166,5 +208,92 @@ describe('LicenseStateHandler', () => {
     await flushPromises();
 
     expect(storage.watcherCount()).toBe(1);
+  });
+
+  describe('recordPanelUse', () => {
+    it('records today once per day during the trial', async () => {
+      const storage = createTrialStorage('trial', trialPeriod(5, '2026-06-14'));
+      const handler = createHandler(storage.repository);
+      handler.initialize(() => {});
+      await flushPromises();
+
+      handler.recordPanelUse();
+
+      expect(storage.savedTrialPeriods).toHaveLength(1);
+      expect(storage.savedTrialPeriods[0].lastUsedDate).toBe('2026-06-15');
+      expect(storage.savedTrialPeriods[0].daysUsed.toNumber()).toBe(6);
+
+      handler.recordPanelUse();
+
+      expect(storage.savedTrialPeriods).toHaveLength(1);
+    });
+
+    it.each([
+      'valid',
+      'expired',
+      'invalid',
+    ] as const)('writes no trial data when the status is %s', async (status) => {
+      const storage = createTrialStorage(status, trialPeriod(5, '2026-06-14'));
+      storage.repository.saveTrialPeriod = unexpected('saveTrialPeriod');
+      const handler = createHandler(storage.repository);
+      handler.initialize(() => {});
+      await flushPromises();
+
+      handler.recordPanelUse();
+
+      expect(storage.store.trialPeriod.daysUsed.toNumber()).toBe(5);
+    });
+
+    it('locks the panel as soon as the day that reaches the limit is recorded', async () => {
+      const storage = createTrialStorage('trial', trialPeriod(29, '2026-06-14'));
+      const handler = createHandler(storage.repository);
+      handler.initialize(() => {});
+      await flushPromises();
+      expect(handler.getDisabledReason()).toBeNull();
+
+      handler.recordPanelUse();
+
+      expect(handler.getDisabledReason()).toBe('license-expired');
+    });
+
+    it('warns when a recorded day crosses a warning threshold', async () => {
+      const storage = createTrialStorage('trial', trialPeriod(26, '2026-06-14'));
+      const warnings: string[] = [];
+      const handler = createHandler(storage.repository, warnings);
+      handler.initialize(() => {});
+      await flushPromises();
+      expect(warnings).toEqual([]);
+
+      handler.recordPanelUse();
+
+      expect(warnings).toHaveLength(1);
+      expect(storage.store.trialWarningThreshold).toBe(3);
+    });
+
+    it('does not warn when no day was recorded', async () => {
+      // 3 days remain, but the threshold has not been warned about yet:
+      // only recording a new day may send the warning.
+      const storage = createTrialStorage('trial', trialPeriod(27, '2026-06-15'));
+      const warnings: string[] = [];
+      const handler = createHandler(storage.repository, warnings);
+      handler.initialize(() => {});
+      await flushPromises();
+
+      handler.recordPanelUse();
+
+      expect(storage.savedTrialPeriods).toEqual([]);
+      expect(warnings).toEqual([]);
+    });
+  });
+
+  it('does not record a trial day on initialize', async () => {
+    const storage = createTrialStorage('trial', trialPeriod(5, '2026-06-14'));
+    const handler = createHandler(storage.repository);
+
+    handler.initialize(() => {});
+    await flushPromises();
+
+    expect(storage.savedTrialPeriods).toEqual([]);
+    expect(storage.store.trialPeriod.daysUsed.toNumber()).toBe(5);
   });
 });
