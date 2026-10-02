@@ -46,6 +46,11 @@
       <summary>License last validated</summary>
       <description>Timestamp of last successful license validation (Unix timestamp in seconds).</description>
     </key>
+    <key name="last-online-at" type="x">
+      <default>0</default>
+      <summary>Last online</summary>
+      <description>Timestamp of the last time the device was seen online, whether or not the license server answered (Unix timestamp in seconds). The offline grace period is counted from it. 0 means not recorded yet.</description>
+    </key>
     <key name="trial-days-used" type="i">
       <default>0</default>
       <summary>Trial days used</summary>

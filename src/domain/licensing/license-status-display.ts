@@ -20,7 +20,7 @@ export interface LicenseStatusDisplay {
  * Map a LicenseState to its user-facing title, subtitle and purchase-link flag.
  */
 export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDisplay {
-  const { status, networkState, trialDaysRemaining, validUntil, daysSinceLastValidation } = state;
+  const { status, networkState, trialDaysRemaining, validUntil, daysSinceLastOnline } = state;
 
   if (status === 'trial') {
     return {
@@ -32,10 +32,15 @@ export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDispl
 
   if (status === 'valid') {
     if (networkState === 'offline') {
-      const daysUntilRequired = Math.ceil(OFFLINE_GRACE_PERIOD_DAYS - daysSinceLastValidation);
+      const daysUntilRequired = Math.ceil(OFFLINE_GRACE_PERIOD_DAYS - daysSinceLastOnline);
+      // Once the grace period has run out there is no day count left to show.
+      const subtitle =
+        daysUntilRequired > 0
+          ? `Offline - connect within ${daysUntilRequired} days`
+          : 'Offline - reconnect to the internet to continue';
       return {
         title: 'Active',
-        subtitle: `Offline - connect within ${daysUntilRequired} days`,
+        subtitle,
         showPurchaseLink: false,
       };
     }

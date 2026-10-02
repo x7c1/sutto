@@ -2,7 +2,7 @@
 globalThis.log = () => {};
 
 import { describe, expect, it } from 'vitest';
-import type { DisabledReason, LicenseStatus } from '../../domain/licensing/index.js';
+import type { DisabledReason, LicenseStatus, NetworkState } from '../../domain/licensing/index.js';
 import {
   ActivationId,
   DeviceId,
@@ -24,9 +24,10 @@ const unexpected = (name: string) => (): never => {
  * is changed directly (as the other process would), then fireChange() reports it.
  */
 function createSharedStorage() {
-  const store: { status: LicenseStatus; license: License | null } = {
+  const store: { status: LicenseStatus; license: License | null; lastOnlineAt: Date | null } = {
     status: 'expired',
     license: null,
+    lastOnlineAt: null,
   };
   const trialPeriod = new TrialPeriod({ daysUsed: new TrialDays(30), lastUsedDate: '2026-06-15' });
   const watchers = new Set<() => void>();
@@ -40,6 +41,10 @@ function createSharedStorage() {
     saveTrialPeriod: unexpected('saveTrialPeriod'),
     getTrialWarningThreshold: () => 0,
     setTrialWarningThreshold: unexpected('setTrialWarningThreshold'),
+    getLastOnlineAt: () => store.lastOnlineAt,
+    setLastOnlineAt: (date) => {
+      store.lastOnlineAt = date;
+    },
     clearLicense: unexpected('clearLicense'),
     watchChanges: (callback) => {
       watchers.add(callback);
@@ -67,7 +72,12 @@ function createTrialStorage(
   trialPeriod: TrialPeriod,
   trialWarningThreshold = 0
 ) {
-  const store = { status, trialPeriod, trialWarningThreshold };
+  const store: {
+    status: LicenseStatus;
+    trialPeriod: TrialPeriod;
+    trialWarningThreshold: number;
+    lastOnlineAt: Date | null;
+  } = { status, trialPeriod, trialWarningThreshold, lastOnlineAt: null };
   const savedTrialPeriods: TrialPeriod[] = [];
 
   const repository: LicenseRepository = {
@@ -87,6 +97,10 @@ function createTrialStorage(
     setTrialWarningThreshold: (threshold) => {
       store.trialWarningThreshold = threshold;
     },
+    getLastOnlineAt: () => store.lastOnlineAt,
+    setLastOnlineAt: (date) => {
+      store.lastOnlineAt = date;
+    },
     clearLicense: unexpected('clearLicense'),
     watchChanges: () => () => {},
   };
@@ -98,9 +112,42 @@ function trialPeriod(daysUsed: number, lastUsedDate: string): TrialPeriod {
   return new TrialPeriod({ daysUsed: new TrialDays(daysUsed), lastUsedDate });
 }
 
+/**
+ * A network that is online or offline, counting its watchers. change() sets
+ * the state and reports it to the watchers as Gio.NetworkMonitor would.
+ */
+function createNetwork(initial: NetworkState = 'online') {
+  const callbacks = new Set<(state: NetworkState) => void>();
+  const network = {
+    state: initial,
+    get watchers() {
+      return callbacks.size;
+    },
+    change(next: NetworkState) {
+      network.state = next;
+      for (const callback of [...callbacks]) {
+        callback(next);
+      }
+    },
+  };
+  const provider = {
+    getNetworkState: () => network.state,
+    watchNetworkState: (callback: (state: NetworkState) => void) => {
+      callbacks.add(callback);
+      return () => {
+        callbacks.delete(callback);
+      };
+    },
+  };
+  return { network, provider };
+}
+
+const NOW = new Date('2026-06-15T12:00:00Z');
+
 function createHandler(
   repository: LicenseRepository,
-  warnings: string[] = []
+  warnings: string[] = [],
+  networkStateProvider = createNetwork().provider
 ): LicenseStateHandler {
   const apiClient: LicenseApiClient = {
     activate: unexpected('activate'),
@@ -109,8 +156,8 @@ function createHandler(
   const licenseOperations = new LicenseOperations(
     repository,
     apiClient,
-    { now: () => new Date('2026-06-15T12:00:00Z'), today: () => '2026-06-15' },
-    { getNetworkState: () => 'online' },
+    { now: () => NOW, today: () => '2026-06-15' },
+    networkStateProvider,
     { getDeviceId: () => new DeviceId('test-device'), getDeviceLabel: () => 'Test Device' }
   );
   const trialWarningOperations = new TrialWarningOperations(repository, {
@@ -210,7 +257,63 @@ describe('LicenseStateHandler', () => {
     expect(storage.watcherCount()).toBe(1);
   });
 
+  it('follows the network state until disposed', async () => {
+    const storage = createSharedStorage();
+    const { network, provider } = createNetwork();
+    const handler = createHandler(storage.repository, [], provider);
+    handler.initialize(() => {});
+    handler.initialize(() => {});
+    await flushPromises();
+    expect(network.watchers).toBe(1);
+
+    handler.dispose();
+
+    expect(network.watchers).toBe(0);
+  });
+
+  it('unlocks once the network comes back after the offline grace period was exceeded', async () => {
+    const storage = createSharedStorage();
+    storage.store.license = createValidLicense();
+    storage.store.status = 'valid';
+    storage.store.lastOnlineAt = new Date('2026-06-01T00:00:00Z');
+    const { network, provider } = createNetwork('offline');
+    const handler = createHandler(storage.repository, [], provider);
+    handler.initialize(() => {});
+    await flushPromises();
+    expect(handler.getDisabledReason()).toBe('offline-grace-exceeded');
+
+    network.change('online');
+
+    expect(handler.getDisabledReason()).toBeNull();
+    expect(storage.store.lastOnlineAt).toEqual(NOW);
+  });
+
   describe('recordPanelUse', () => {
+    it('records now as last online when online', async () => {
+      const storage = createSharedStorage();
+      const handler = createHandler(storage.repository);
+      handler.initialize(() => {});
+      await flushPromises();
+      storage.store.lastOnlineAt = new Date('2026-06-10T00:00:00Z');
+
+      handler.recordPanelUse();
+
+      expect(storage.store.lastOnlineAt).toEqual(NOW);
+    });
+
+    it('leaves last online unchanged when offline', async () => {
+      const storage = createSharedStorage();
+      const handler = createHandler(storage.repository, [], createNetwork('offline').provider);
+      handler.initialize(() => {});
+      await flushPromises();
+      const lastOnlineAt = new Date('2026-06-10T00:00:00Z');
+      storage.store.lastOnlineAt = lastOnlineAt;
+
+      handler.recordPanelUse();
+
+      expect(storage.store.lastOnlineAt).toEqual(lastOnlineAt);
+    });
+
     it('records today once per day during the trial', async () => {
       const storage = createTrialStorage('trial', trialPeriod(5, '2026-06-14'));
       const handler = createHandler(storage.repository);

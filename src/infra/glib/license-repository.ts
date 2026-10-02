@@ -17,7 +17,9 @@ declare function log(message: string): void;
 /**
  * GSettings keys that feed the license state.
  * The trial warning threshold is deliberately excluded: it does not affect
- * whether the extension is enabled.
+ * whether the extension is enabled. `last-online-at` is excluded too: the Shell
+ * writes it often, and following it would only produce redundant
+ * notifications.
  */
 const LICENSE_STATE_KEYS = [
   'license-status',
@@ -92,6 +94,18 @@ export class GSettingsLicenseRepository implements LicenseRepository {
 
   setTrialWarningThreshold(threshold: number): void {
     this.settings.set_int('trial-warning-last-threshold', threshold);
+  }
+
+  getLastOnlineAt(): Date | null {
+    const seconds = this.settings.get_int64('last-online-at');
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      return null;
+    }
+    return new Date(seconds * 1000);
+  }
+
+  setLastOnlineAt(date: Date): void {
+    this.settings.set_int64('last-online-at', Math.floor(date.getTime() / 1000));
   }
 
   getStatus(): LicenseStatus {

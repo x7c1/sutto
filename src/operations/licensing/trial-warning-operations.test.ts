@@ -41,6 +41,8 @@ function createMockRepository(options: {
     setTrialWarningThreshold: (threshold: number) => {
       trialWarningThreshold = threshold;
     },
+    getLastOnlineAt: notImplemented('getLastOnlineAt'),
+    setLastOnlineAt: notImplemented('setLastOnlineAt'),
     clearLicense: notImplemented('clearLicense'),
     watchChanges: notImplemented('watchChanges'),
   };
