@@ -12,6 +12,7 @@ import {
   ActivationId,
   ActivationResult,
   DeviceId,
+  getLicenseStatusDisplay,
   License,
   LicenseKey,
   TrialDays,
@@ -67,12 +68,14 @@ function createMockRepository(
     license: License | null;
     trialPeriod: TrialPeriod;
     trialWarningThreshold: number;
+    lastOnlineAt: Date | null;
   }>
 ): LicenseRepository {
   let status = overrides?.status ?? 'trial';
   let license = overrides?.license ?? null;
   let trialPeriod = overrides?.trialPeriod ?? TrialPeriod.initial();
   let trialWarningThreshold = overrides?.trialWarningThreshold ?? 0;
+  let lastOnlineAt = overrides?.lastOnlineAt ?? null;
 
   return {
     getStatus: () => status,
@@ -91,6 +94,10 @@ function createMockRepository(
     setTrialWarningThreshold: (threshold: number) => {
       trialWarningThreshold = threshold;
     },
+    getLastOnlineAt: () => lastOnlineAt,
+    setLastOnlineAt: (date: Date) => {
+      lastOnlineAt = date;
+    },
     clearLicense: () => {
       license = null;
       status = 'trial';
@@ -103,6 +110,7 @@ interface ExternalStore {
   status: LicenseStatus;
   license: License | null;
   trialPeriod: TrialPeriod;
+  lastOnlineAt?: Date | null;
 }
 
 /**
@@ -142,6 +150,11 @@ function createExternallyChangedRepository(initial: ExternalStore): {
     }),
     getTrialWarningThreshold: () => 0,
     setTrialWarningThreshold: write(() => {}),
+    // Not license or trial data: not counted as a write.
+    getLastOnlineAt: () => store.lastOnlineAt ?? null,
+    setLastOnlineAt: (date: Date) => {
+      store.lastOnlineAt = date;
+    },
     clearLicense: write(() => {
       store.license = null;
       store.status = 'trial';
@@ -197,7 +210,41 @@ function createMockDateProvider(now = TEST_NOW, today = TEST_TODAY): DateProvide
 function createMockNetworkStateProvider(state: NetworkState = 'online'): NetworkStateProvider {
   return {
     getNetworkState: () => state,
+    watchNetworkState: () => () => {},
   };
+}
+
+/**
+ * A network state provider whose state can be changed, reporting each change
+ * to the watchers as Gio.NetworkMonitor would.
+ */
+function createChangingNetworkStateProvider(initial: NetworkState): {
+  provider: NetworkStateProvider;
+  change: (state: NetworkState) => void;
+  watcherCount: () => number;
+} {
+  let state = initial;
+  const watchers = new Set<(state: NetworkState) => void>();
+  return {
+    provider: {
+      getNetworkState: () => state,
+      watchNetworkState: (callback) => {
+        watchers.add(callback);
+        return () => watchers.delete(callback);
+      },
+    },
+    change: (next) => {
+      state = next;
+      for (const watcher of watchers) {
+        watcher(next);
+      }
+    },
+    watcherCount: () => watchers.size,
+  };
+}
+
+function daysBefore(date: Date, days: number): Date {
+  return new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
 function createMockDeviceInfoProvider(): DeviceInfoProvider {
@@ -250,6 +297,54 @@ describe('LicenseOperations', () => {
       expect(savedLicense?.validUntil).toEqual(newValidUntil);
     });
 
+    it('records last online and validates when online', async () => {
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense(),
+        lastOnlineAt: daysBefore(TEST_NOW, 3),
+      });
+      let validateCalls = 0;
+      const apiClient = createMockApiClient();
+      const validate = apiClient.validate;
+      apiClient.validate = (...args) => {
+        validateCalls++;
+        return validate(...args);
+      };
+      const ops = createOperations({
+        repository,
+        apiClient,
+        networkStateProvider: createMockNetworkStateProvider('online'),
+      });
+
+      await ops.initialize();
+
+      expect(repository.getLastOnlineAt()).toEqual(TEST_NOW);
+      expect(validateCalls).toBe(1);
+    });
+
+    it('neither records last online nor validates when offline', async () => {
+      const lastOnlineAt = daysBefore(TEST_NOW, 3);
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense(),
+        lastOnlineAt,
+      });
+      const apiClient = createMockApiClient();
+      apiClient.validate = () => {
+        throw new Error('validate is not expected to be called while offline');
+      };
+      const ops = createOperations({
+        repository,
+        apiClient,
+        networkStateProvider: createMockNetworkStateProvider('offline'),
+      });
+
+      await ops.initialize();
+
+      expect(repository.getLastOnlineAt()).toEqual(lastOnlineAt);
+      expect(ops.getDisabledReason()).toBeNull();
+    });
+
     it('does not record a trial day', async () => {
       const repository = createMockRepository({
         status: 'trial',
@@ -273,6 +368,110 @@ describe('LicenseOperations', () => {
 
       expect(states.length).toBeGreaterThanOrEqual(1);
       expect(states[states.length - 1].status).toBe('trial');
+    });
+  });
+
+  describe('recordOnlineIfConnected', () => {
+    it('records now as last online when online', () => {
+      const repository = createMockRepository({ lastOnlineAt: daysBefore(TEST_NOW, 3) });
+      const ops = createOperations({
+        repository,
+        networkStateProvider: createMockNetworkStateProvider('online'),
+      });
+
+      expect(ops.recordOnlineIfConnected()).toBe(true);
+      expect(repository.getLastOnlineAt()).toEqual(TEST_NOW);
+    });
+
+    it('leaves last online unchanged when offline', () => {
+      const lastOnlineAt = daysBefore(TEST_NOW, 3);
+      const repository = createMockRepository({ lastOnlineAt });
+      const ops = createOperations({
+        repository,
+        networkStateProvider: createMockNetworkStateProvider('offline'),
+      });
+
+      expect(ops.recordOnlineIfConnected()).toBe(false);
+      expect(repository.getLastOnlineAt()).toEqual(lastOnlineAt);
+    });
+
+    it('does not notify state change callbacks', () => {
+      const ops = createOperations({
+        repository: createMockRepository({ lastOnlineAt: daysBefore(TEST_NOW, 3) }),
+        networkStateProvider: createMockNetworkStateProvider('online'),
+      });
+      const states: LicenseState[] = [];
+      ops.onStateChange((s) => states.push(s));
+
+      ops.recordOnlineIfConnected();
+
+      expect(states).toEqual([]);
+    });
+  });
+
+  describe('watchNetworkState', () => {
+    it('records last online when the network comes back, without notifying', () => {
+      const lastOnlineAt = daysBefore(TEST_NOW, 3);
+      const repository = createMockRepository({ lastOnlineAt });
+      const network = createChangingNetworkStateProvider('offline');
+      const ops = createOperations({ repository, networkStateProvider: network.provider });
+      const states: LicenseState[] = [];
+      ops.onStateChange((s) => states.push(s));
+      ops.watchNetworkState();
+
+      network.change('offline');
+      expect(repository.getLastOnlineAt()).toEqual(lastOnlineAt);
+
+      network.change('online');
+      expect(repository.getLastOnlineAt()).toEqual(TEST_NOW);
+      expect(states).toEqual([]);
+    });
+
+    it('records last online when the network goes away after being online', () => {
+      const repository = createMockRepository({ lastOnlineAt: daysBefore(TEST_NOW, 3) });
+      const network = createChangingNetworkStateProvider('online');
+      const ops = createOperations({ repository, networkStateProvider: network.provider });
+      ops.watchNetworkState();
+
+      network.change('offline');
+      expect(repository.getLastOnlineAt()).toEqual(TEST_NOW);
+    });
+
+    it('leaves last online unchanged while the network stays offline', () => {
+      const lastOnlineAt = daysBefore(TEST_NOW, 3);
+      const repository = createMockRepository({ lastOnlineAt });
+      const network = createChangingNetworkStateProvider('offline');
+      const ops = createOperations({ repository, networkStateProvider: network.provider });
+      ops.watchNetworkState();
+
+      network.change('offline');
+      network.change('offline');
+      expect(repository.getLastOnlineAt()).toEqual(lastOnlineAt);
+    });
+
+    it('calls back after recording whenever the network is online', () => {
+      const repository = createMockRepository({ lastOnlineAt: daysBefore(TEST_NOW, 3) });
+      const network = createChangingNetworkStateProvider('offline');
+      const ops = createOperations({ repository, networkStateProvider: network.provider });
+      const recordedOnCall: (Date | null)[] = [];
+      ops.watchNetworkState(() => recordedOnCall.push(repository.getLastOnlineAt()));
+
+      network.change('offline');
+      expect(recordedOnCall).toEqual([]);
+
+      network.change('online');
+      expect(recordedOnCall).toEqual([TEST_NOW]);
+    });
+
+    it('stops watching when the returned function is called', () => {
+      const network = createChangingNetworkStateProvider('offline');
+      const ops = createOperations({ networkStateProvider: network.provider });
+
+      const stop = ops.watchNetworkState();
+      expect(network.watcherCount()).toBe(1);
+
+      stop();
+      expect(network.watcherCount()).toBe(0);
     });
   });
 
@@ -301,7 +500,44 @@ describe('LicenseOperations', () => {
       const state = ops.getState();
 
       expect(state.validUntil).toBeNull();
-      expect(state.daysSinceLastValidation).toBe(0);
+    });
+
+    it('reports the days since the device was last online', () => {
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ lastValidated: daysBefore(TEST_NOW, 30) }),
+        lastOnlineAt: daysBefore(TEST_NOW, 2.5),
+      });
+      const ops = createOperations({ repository });
+
+      expect(ops.getState().daysSinceLastOnline).toBe(2.5);
+    });
+
+    it('counts the offline subtitle from last online, not from the last validation', () => {
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ lastValidated: daysBefore(TEST_NOW, 30) }),
+        lastOnlineAt: daysBefore(TEST_NOW, 2.5),
+      });
+      const ops = createOperations({
+        repository,
+        networkStateProvider: createMockNetworkStateProvider('offline'),
+      });
+
+      expect(getLicenseStatusDisplay(ops.getState()).subtitle).toBe(
+        'Offline - connect within 5 days'
+      );
+    });
+
+    it('counts a missing last-online time as now and stores it', () => {
+      const repository = createMockRepository({ status: 'trial', lastOnlineAt: null });
+      const ops = createOperations({
+        repository,
+        networkStateProvider: createMockNetworkStateProvider('offline'),
+      });
+
+      expect(ops.getState().daysSinceLastOnline).toBe(0);
+      expect(repository.getLastOnlineAt()).toEqual(TEST_NOW);
     });
   });
 
@@ -324,38 +560,66 @@ describe('LicenseOperations', () => {
       expect(createOperations({ repository }).getDisabledReason()).toBe('trial-expired');
     });
 
-    it('returns null when valid and online', () => {
+    function validLicenseOperations(options: {
+      network: NetworkState;
+      lastOnlineAt: Date | null;
+      lastValidated?: Date;
+    }): { ops: LicenseOperations; repository: LicenseRepository } {
       const repository = createMockRepository({
         status: 'valid',
-        license: createMockLicense(),
+        license: createMockLicense({ lastValidated: options.lastValidated ?? TEST_NOW }),
+        lastOnlineAt: options.lastOnlineAt,
       });
-      const networkStateProvider = createMockNetworkStateProvider('online');
+      const networkStateProvider = createMockNetworkStateProvider(options.network);
+      return { ops: createOperations({ repository, networkStateProvider }), repository };
+    }
 
-      expect(createOperations({ repository, networkStateProvider }).getDisabledReason()).toBeNull();
+    it('returns null when valid and online, however long ago it was last online', () => {
+      const { ops } = validLicenseOperations({
+        network: 'online',
+        lastOnlineAt: daysBefore(TEST_NOW, 30),
+      });
+
+      expect(ops.getDisabledReason()).toBeNull();
     });
 
-    it('returns null when valid and offline within the grace period', () => {
-      const recentlyValidated = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-      const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense({ lastValidated: recentlyValidated }),
+    it('returns null when valid and offline 6 days after last online', () => {
+      const { ops } = validLicenseOperations({
+        network: 'offline',
+        lastOnlineAt: daysBefore(TEST_NOW, 6),
       });
-      const networkStateProvider = createMockNetworkStateProvider('offline');
 
-      expect(createOperations({ repository, networkStateProvider }).getDisabledReason()).toBeNull();
+      expect(ops.getDisabledReason()).toBeNull();
     });
 
-    it('returns offline-grace-exceeded when valid and offline beyond the grace period', () => {
-      const longAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
-      const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense({ lastValidated: longAgo }),
+    it('returns offline-grace-exceeded when valid and offline 7 days after last online', () => {
+      const { ops } = validLicenseOperations({
+        network: 'offline',
+        lastOnlineAt: daysBefore(TEST_NOW, 7),
       });
-      const networkStateProvider = createMockNetworkStateProvider('offline');
 
-      expect(createOperations({ repository, networkStateProvider }).getDisabledReason()).toBe(
-        'offline-grace-exceeded'
-      );
+      expect(ops.getDisabledReason()).toBe('offline-grace-exceeded');
+    });
+
+    it('counts the grace period from last online, not from the last validation', () => {
+      const { ops } = validLicenseOperations({
+        network: 'offline',
+        lastOnlineAt: daysBefore(TEST_NOW, 1),
+        lastValidated: daysBefore(TEST_NOW, 30),
+      });
+
+      expect(ops.getDisabledReason()).toBeNull();
+    });
+
+    it('treats a missing last-online time as now while offline and stores now', () => {
+      const { ops, repository } = validLicenseOperations({
+        network: 'offline',
+        lastOnlineAt: null,
+        lastValidated: daysBefore(TEST_NOW, 30),
+      });
+
+      expect(ops.getDisabledReason()).toBeNull();
+      expect(repository.getLastOnlineAt()).toEqual(TEST_NOW);
     });
 
     it('returns license-expired when status is expired', () => {

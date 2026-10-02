@@ -9,6 +9,7 @@ import type {
 } from '../../domain/licensing/index.js';
 import {
   createLicenseState,
+  daysSinceLastOnline,
   License,
   OFFLINE_GRACE_PERIOD_DAYS,
 } from '../../domain/licensing/index.js';
@@ -36,6 +37,12 @@ export interface DateProvider {
 
 export interface NetworkStateProvider {
   getNetworkState(): NetworkState;
+
+  /**
+   * Call `callback` whenever the network state may have changed.
+   * @returns A function that stops watching
+   */
+  watchNetworkState(callback: (state: NetworkState) => void): () => void;
 }
 
 export interface DeviceInfoProvider {
@@ -86,12 +93,54 @@ export class LicenseOperations {
 
     const status = this.repository.getStatus();
     const license = this.repository.loadLicense();
+    const online = this.recordOnlineIfConnected();
 
-    if (status === 'valid' && license) {
+    // Validating offline cannot succeed; a valid license keeps working on the
+    // offline grace period instead.
+    if (status === 'valid' && license && online) {
       await this.validateLicense();
     }
 
     this.notifyStateChange();
+  }
+
+  /**
+   * Record now as the last time the device was online, if it is online.
+   * The offline grace period is counted from this time, whether or not the
+   * license server answers. Not a license change: state change callbacks are
+   * not notified.
+   * @returns true when the device is online
+   */
+  recordOnlineIfConnected(): boolean {
+    if (this.networkStateProvider.getNetworkState() !== 'online') {
+      return false;
+    }
+    this.repository.setLastOnlineAt(this.dateProvider.now());
+    return true;
+  }
+
+  /**
+   * Record the last time the device was online whenever the network state
+   * changes while or after being online: when the network comes back, and when
+   * it goes away (the device was online until then). Like
+   * recordOnlineIfConnected(), this does not notify state change callbacks.
+   * @param onOnline Called after recording, whenever the network is online.
+   *   Reconnecting can end an exceeded offline grace period, so a caller that
+   *   caches the disabled reason uses it to recompute that reason.
+   * @returns A function that stops watching
+   */
+  watchNetworkState(onOnline?: () => void): () => void {
+    let wasOnline = this.networkStateProvider.getNetworkState() === 'online';
+    return this.networkStateProvider.watchNetworkState((state) => {
+      const online = state === 'online';
+      if (online || wasOnline) {
+        this.repository.setLastOnlineAt(this.dateProvider.now());
+      }
+      wasOnline = online;
+      if (online) {
+        onOnline?.();
+      }
+    });
   }
 
   /**
@@ -106,8 +155,9 @@ export class LicenseOperations {
    * in the preferences window) by notifying state change callbacks whenever
    * the stored license or trial data changes.
    *
-   * Handling a change only reads state and never writes to the repository, so
-   * this process's own writes cannot start a notification loop.
+   * Handling a change never writes license or trial data (at most it fills in
+   * a missing last-online time, which is not watched), so this process's own
+   * writes cannot start a notification loop.
    * @returns A function that stops watching
    */
   watchStoredChanges(): () => void {
@@ -133,14 +183,12 @@ export class LicenseOperations {
     const trial = this.repository.loadTrialPeriod();
     const networkState = this.networkStateProvider.getNetworkState();
 
-    const daysSinceLastValidation = license ? license.daysSinceLastValidation() : 0;
-
     return createLicenseState({
       status,
       networkState,
       trialDaysRemaining: trial.getRemainingDays(),
       validUntil: license?.validUntil ?? null,
-      daysSinceLastValidation,
+      daysSinceLastOnline: this.getDaysSinceLastOnline(),
     });
   }
 
@@ -162,7 +210,7 @@ export class LicenseOperations {
       case 'valid': {
         const graceExceeded =
           state.networkState === 'offline' &&
-          state.daysSinceLastValidation >= OFFLINE_GRACE_PERIOD_DAYS;
+          state.daysSinceLastOnline >= OFFLINE_GRACE_PERIOD_DAYS;
         return graceExceeded ? 'offline-grace-exceeded' : null;
       }
       case 'expired':
@@ -298,6 +346,21 @@ export class LicenseOperations {
 
     this.notifyStateChange();
     return true;
+  }
+
+  /**
+   * Days since the device was last online. A missing last-online time (e.g. an
+   * installation from before it was recorded) counts as now and is stored, so
+   * it never locks the extension.
+   */
+  private getDaysSinceLastOnline(): number {
+    const now = this.dateProvider.now();
+    const lastOnlineAt = this.repository.getLastOnlineAt();
+    if (!lastOnlineAt) {
+      this.repository.setLastOnlineAt(now);
+      return 0;
+    }
+    return daysSinceLastOnline(lastOnlineAt, now);
   }
 
   private handleValidationRejection(reason: LicenseRejectionReason): void {

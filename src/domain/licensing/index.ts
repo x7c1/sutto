@@ -14,7 +14,11 @@ export {
   LicenseServerOutcome,
 } from './license-server-outcome.js';
 export type { LicenseState } from './license-state.js';
-export { createLicenseState, OFFLINE_GRACE_PERIOD_DAYS } from './license-state.js';
+export {
+  createLicenseState,
+  daysSinceLastOnline,
+  OFFLINE_GRACE_PERIOD_DAYS,
+} from './license-state.js';
 export type { LicenseStatus } from './license-status.js';
 export {
   InvalidLicenseStatusError,

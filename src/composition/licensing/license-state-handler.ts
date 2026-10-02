@@ -17,6 +17,7 @@ declare function log(message: string): void;
 export class LicenseStateHandler {
   private disabledReason: DisabledReason | null = null;
   private stopWatchingStoredChanges: (() => void) | null = null;
+  private stopWatchingNetworkState: (() => void) | null = null;
 
   constructor(
     private readonly licenseOperations: LicenseOperations,
@@ -38,6 +39,13 @@ export class LicenseStateHandler {
     this.stopWatchingStoredChanges?.();
     this.stopWatchingStoredChanges = this.licenseOperations.watchStoredChanges();
 
+    // Reconnecting ends an exceeded offline grace period, so recompute the
+    // cached disabled reason whenever the device comes online.
+    this.stopWatchingNetworkState?.();
+    this.stopWatchingNetworkState = this.licenseOperations.watchNetworkState(() => {
+      this.disabledReason = this.licenseOperations.getDisabledReason();
+    });
+
     this.licenseOperations.initialize().then(() => {
       this.disabledReason = this.licenseOperations.getDisabledReason();
       if (this.disabledReason) {
@@ -47,16 +55,18 @@ export class LicenseStateHandler {
   }
 
   /**
-   * Record that the user triggered the main panel. During the trial this counts
-   * today as a usage day (at most once per calendar day) and, when a new day
-   * was recorded, warns the user if a pre-expiry threshold was just crossed.
-   * Does nothing for any other status.
+   * Record that the user triggered the main panel. When the device is online
+   * this records now as the last time it was online. During the trial it also
+   * counts today as a usage day (at most once per calendar day) and, when a
+   * new day was recorded, warns the user if a pre-expiry threshold was just
+   * crossed.
    *
    * Call it before reading getDisabledReason(): recording the day that reaches
    * the limit ends the trial, and the resulting state change updates the
    * disabled reason synchronously.
    */
   recordPanelUse(): void {
+    this.licenseOperations.recordOnlineIfConnected();
     if (this.licenseOperations.recordTrialUsage()) {
       this.trialWarningOperations.checkAndNotify();
     }
@@ -85,11 +95,14 @@ export class LicenseStateHandler {
   }
 
   /**
-   * Stop following stored license changes and remove all state listeners.
+   * Stop following stored license changes and the network state, and remove
+   * all state listeners.
    */
   dispose(): void {
     this.stopWatchingStoredChanges?.();
     this.stopWatchingStoredChanges = null;
+    this.stopWatchingNetworkState?.();
+    this.stopWatchingNetworkState = null;
     this.licenseOperations.clearCallbacks();
   }
 }

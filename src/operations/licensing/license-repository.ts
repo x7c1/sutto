@@ -38,6 +38,18 @@ export interface LicenseRepository {
   setTrialWarningThreshold(threshold: number): void;
 
   /**
+   * Get the last time the device was seen online.
+   * Returns null when none is recorded (or the stored value is not usable).
+   */
+  getLastOnlineAt(): Date | null;
+
+  /**
+   * Store the last time the device was seen online.
+   * This is not a license change: it is not reported to watchChanges().
+   */
+  setLastOnlineAt(date: Date): void;
+
+  /**
    * Get the current license status
    */
   getStatus(): LicenseStatus;

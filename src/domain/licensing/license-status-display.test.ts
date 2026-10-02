@@ -8,7 +8,7 @@ function state(overrides: Partial<LicenseState>): LicenseState {
     networkState: 'online',
     trialDaysRemaining: 12,
     validUntil: null,
-    daysSinceLastValidation: 0,
+    daysSinceLastOnline: 0,
     ...overrides,
   });
 }
@@ -51,11 +51,23 @@ describe('getLicenseStatusDisplay', () => {
   it('shows the remaining offline grace days of a valid license', () => {
     expect(
       getLicenseStatusDisplay(
-        state({ status: 'valid', networkState: 'offline', daysSinceLastValidation: 3.5 })
+        state({ status: 'valid', networkState: 'offline', daysSinceLastOnline: 3.5 })
       )
     ).toEqual({
       title: 'Active',
       subtitle: 'Offline - connect within 4 days',
+      showPurchaseLink: false,
+    });
+  });
+
+  it('asks to reconnect instead of counting days once the offline grace period has run out', () => {
+    expect(
+      getLicenseStatusDisplay(
+        state({ status: 'valid', networkState: 'offline', daysSinceLastOnline: 10 })
+      )
+    ).toEqual({
+      title: 'Active',
+      subtitle: 'Offline - reconnect to the internet to continue',
       showPurchaseLink: false,
     });
   });

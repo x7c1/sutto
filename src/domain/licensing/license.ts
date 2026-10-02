@@ -40,12 +40,6 @@ export class License {
     return this.status === 'expired' || this.validUntil.getTime() < Date.now();
   }
 
-  daysSinceLastValidation(): number {
-    const now = Date.now();
-    const diff = now - this.lastValidated.getTime();
-    return diff / (24 * 60 * 60 * 1000);
-  }
-
   withStatus(status: LicenseStatus): License {
     return new License({
       licenseKey: this.licenseKey,

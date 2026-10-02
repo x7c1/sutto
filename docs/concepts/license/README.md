@@ -14,7 +14,7 @@ A License is created when a user activates a [License Key](./license-key/) and c
 
 - A user purchases a subscription, receives a License Key, and activates it to create a License
 - A License with a valid-until date of 2026-03-01 grants access until that date
-- A License that hasn't been validated in 8 days requires re-validation
+- A License on a device that has been offline for 8 days requires an internet connection again
 
 ## Collocations
 
@@ -26,7 +26,7 @@ A License is created when a user activates a [License Key](./license-key/) and c
 ## Domain Rules
 
 - **3-device limit**: Each License supports up to 3 device activations. When activated on a 4th device, the oldest activation is automatically deactivated.
-- **7-day offline grace period**: A License works offline for up to 7 days after the last successful validation. After that, an internet connection is needed to re-validate.
+- **7-day offline grace period**: A License works offline for up to 7 days after the device was last online, whether or not the license server answered. After that, an internet connection is needed. While online, a License keeps working even when the license server does not answer.
 
 ## Related Concepts
 
