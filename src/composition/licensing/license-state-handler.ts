@@ -43,10 +43,23 @@ export class LicenseStateHandler {
       if (this.disabledReason) {
         log(`[LicenseStateHandler] License invalid on startup: ${this.disabledReason}`);
       }
-      // The trial day count only advances at startup, so the pre-expiry
-      // thresholds can only be crossed here.
-      this.trialWarningOperations.checkAndNotify();
     });
+  }
+
+  /**
+   * Record that the user triggered the main panel. During the trial this counts
+   * today as a usage day (at most once per calendar day) and, when a new day
+   * was recorded, warns the user if a pre-expiry threshold was just crossed.
+   * Does nothing for any other status.
+   *
+   * Call it before reading getDisabledReason(): recording the day that reaches
+   * the limit ends the trial, and the resulting state change updates the
+   * disabled reason synchronously.
+   */
+  recordPanelUse(): void {
+    if (this.licenseOperations.recordTrialUsage()) {
+      this.trialWarningOperations.checkAndNotify();
+    }
   }
 
   /**

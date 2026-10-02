@@ -77,8 +77,6 @@ export class LicenseOperations {
 
     if (status === 'valid' && license) {
       await this.validateLicense();
-    } else if (status === 'trial') {
-      await this.handleTrialStartup();
     }
 
     this.notifyStateChange();
@@ -243,14 +241,20 @@ export class LicenseOperations {
   }
 
   /**
-   * Record a trial usage day (called at startup when in trial mode)
+   * Record today as a trial usage day, at most once per calendar day.
+   * Does nothing unless the stored status is trial, so a licensed user never
+   * gets trial days written.
+   * @returns true when a new day was recorded
    */
   recordTrialUsage(): boolean {
+    if (this.repository.getStatus() !== 'trial') {
+      return false;
+    }
+
     const trial = this.repository.loadTrialPeriod();
     const today = this.dateProvider.today();
 
     if (!trial.canRecordUsage(today)) {
-      log(`[LicenseOperations] Trial usage already recorded for today`);
       return false;
     }
 
@@ -268,17 +272,6 @@ export class LicenseOperations {
 
     this.notifyStateChange();
     return true;
-  }
-
-  private async handleTrialStartup(): Promise<void> {
-    const networkState = this.networkStateProvider.getNetworkState();
-
-    if (networkState === 'backend_unreachable') {
-      log('[LicenseOperations] Backend unreachable during trial, not counting usage day');
-      return;
-    }
-
-    this.recordTrialUsage();
   }
 
   private handleActivationError(
