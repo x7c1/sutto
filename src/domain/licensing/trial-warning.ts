@@ -37,7 +37,7 @@ export interface TrialWarningDecision {
  * Evaluate whether a pre-expiry trial warning is due.
  *
  * Outside of an active trial the stored threshold is reset, so a later trial
- * (or a re-activated license that lapses back to trial) warns again.
+ * warns again.
  */
 export function evaluateTrialWarning(input: TrialWarningInput): TrialWarningDecision {
   if (input.status !== 'trial') {

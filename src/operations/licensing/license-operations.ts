@@ -212,8 +212,9 @@ export class LicenseOperations {
    * Resolve why the extension is currently disabled.
    * Returns null when the extension should be enabled.
    *
-   * This is the single source of truth for license gating: it drives both
-   * `shouldExtensionBeEnabled()` and the message shown in the locked panel.
+   * This is the single source of truth for license gating: it decides
+   * whether the extension is enabled and the message shown in the locked
+   * panel.
    */
   getDisabledReason(): DisabledReason | null {
     const state = this.getState();
@@ -235,13 +236,6 @@ export class LicenseOperations {
       case 'invalid':
         return 'license-invalid';
     }
-  }
-
-  /**
-   * Check if the extension should be enabled based on license status
-   */
-  shouldExtensionBeEnabled(): boolean {
-    return this.getDisabledReason() === null;
   }
 
   /**
@@ -320,23 +314,6 @@ export class LicenseOperations {
 
     log('[LicenseOperations] No response from the license server, keeping stored status');
     return this.repository.getStatus() === 'valid';
-  }
-
-  /**
-   * Clear the current license and return to the trial. When the trial days
-   * are already used up, return to trial-expired instead, so clearing a
-   * license never restarts an ended trial.
-   */
-  clearLicense(): void {
-    this.repository.clearLicense();
-    const trialEnded = this.repository.loadTrialPeriod().isExpired();
-    if (trialEnded) {
-      this.repository.setStatus('trial-expired');
-    }
-    this.notifyStateChange();
-    log(
-      `[LicenseOperations] License cleared, returning to ${trialEnded ? 'trial-expired' : 'trial'}`
-    );
   }
 
   /**

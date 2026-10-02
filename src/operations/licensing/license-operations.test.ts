@@ -105,10 +105,6 @@ function createMockRepository(
     setTrialProbeResult: (result: TrialProbeResult) => {
       trialProbeResult = result;
     },
-    clearLicense: () => {
-      license = null;
-      status = 'trial';
-    },
     watchChanges: () => () => {},
   };
 }
@@ -166,10 +162,6 @@ function createExternallyChangedRepository(initial: ExternalStore): {
     getTrialProbeResult: () => store.trialProbeResult ?? 'none',
     setTrialProbeResult: write((result: TrialProbeResult) => {
       store.trialProbeResult = result;
-    }),
-    clearLicense: write(() => {
-      store.license = null;
-      store.status = 'trial';
     }),
     watchChanges: (callback: () => void) => {
       watchers.add(callback);
@@ -975,27 +967,6 @@ describe('LicenseOperations', () => {
     });
   });
 
-  // Thin wrapper over getDisabledReason(), which owns the per-status cases above.
-  describe('shouldExtensionBeEnabled', () => {
-    it('returns true when there is no disabled reason', () => {
-      const repository = createMockRepository({
-        status: 'trial',
-        trialPeriod: createMockTrialPeriod(10),
-      });
-
-      expect(createOperations({ repository }).shouldExtensionBeEnabled()).toBe(true);
-    });
-
-    it('returns false when there is a disabled reason', () => {
-      const repository = createMockRepository({
-        status: 'trial',
-        trialPeriod: createMockTrialPeriod(30),
-      });
-
-      expect(createOperations({ repository }).shouldExtensionBeEnabled()).toBe(false);
-    });
-  });
-
   describe('activate', () => {
     it('saves license, sets status to valid, and returns deactivatedDevice on success', async () => {
       const repository = createMockRepository({ status: 'trial' });
@@ -1148,7 +1119,7 @@ describe('LicenseOperations', () => {
       expect(fake.writeCount()).toBe(0);
       expect(fake.store.status).toBe('valid');
       expect(fake.store.license).toBe(license);
-      expect(ops.shouldExtensionBeEnabled()).toBe(true);
+      expect(ops.getDisabledReason()).toBeNull();
     });
 
     it('keeps the stored status and returns false when the server does not respond and status is not valid', async () => {
@@ -1163,52 +1134,6 @@ describe('LicenseOperations', () => {
 
       expect(result).toBe(false);
       expect(repository.getStatus()).toBe('expired');
-    });
-  });
-
-  describe('clearLicense', () => {
-    it('returns to trial while trial days remain', () => {
-      const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
-        trialPeriod: createMockTrialPeriod(29),
-      });
-      const ops = createOperations({ repository });
-
-      ops.clearLicense();
-
-      expect(repository.loadLicense()).toBeNull();
-      expect(repository.getStatus()).toBe('trial');
-    });
-
-    it('returns to trial-expired when the trial days are used up', () => {
-      const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
-        trialPeriod: createMockTrialPeriod(30),
-      });
-      const ops = createOperations({ repository });
-
-      ops.clearLicense();
-
-      expect(repository.loadLicense()).toBeNull();
-      expect(repository.getStatus()).toBe('trial-expired');
-      expect(ops.getDisabledReason()).toBe('trial-expired');
-    });
-
-    it('notifies state change callbacks', () => {
-      const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
-      });
-      const ops = createOperations({ repository });
-      const states: LicenseState[] = [];
-      ops.onStateChange((s) => states.push(s));
-
-      ops.clearLicense();
-
-      expect(states.length).toBe(1);
-      expect(states[0].status).toBe('trial');
     });
   });
 
@@ -1367,14 +1292,14 @@ describe('LicenseOperations', () => {
   describe('state change callbacks', () => {
     it('onStateChange registers callback that receives state updates', () => {
       const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
+        status: 'trial',
+        trialPeriod: createMockTrialPeriod(5, '2026-06-14'),
       });
       const ops = createOperations({ repository });
       const states: LicenseState[] = [];
       ops.onStateChange((s) => states.push(s));
 
-      ops.clearLicense();
+      ops.recordTrialUsage();
 
       expect(states.length).toBe(1);
       expect(states[0].status).toBe('trial');
@@ -1382,23 +1307,23 @@ describe('LicenseOperations', () => {
 
     it('clearCallbacks removes all registered callbacks', () => {
       const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
+        status: 'trial',
+        trialPeriod: createMockTrialPeriod(5, '2026-06-14'),
       });
       const ops = createOperations({ repository });
       const states: LicenseState[] = [];
       ops.onStateChange((s) => states.push(s));
 
       ops.clearCallbacks();
-      ops.clearLicense();
+      ops.recordTrialUsage();
 
       expect(states.length).toBe(0);
     });
 
     it('callback errors are caught and do not propagate', async () => {
       const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
+        status: 'trial',
+        trialPeriod: createMockTrialPeriod(5, '2026-06-14'),
       });
       const ops = createOperations({ repository });
       ops.onStateChange(() => {
@@ -1407,7 +1332,7 @@ describe('LicenseOperations', () => {
       const secondStates: LicenseState[] = [];
       ops.onStateChange((s) => secondStates.push(s));
 
-      ops.clearLicense();
+      ops.recordTrialUsage();
 
       expect(secondStates.length).toBe(1);
     });

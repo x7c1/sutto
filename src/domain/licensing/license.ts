@@ -2,13 +2,6 @@ import type { ActivationId } from './activation-id.js';
 import type { LicenseKey } from './license-key.js';
 import type { LicenseStatus } from './license-status.js';
 
-export class InvalidLicenseError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'InvalidLicenseError';
-  }
-}
-
 export interface LicenseProps {
   licenseKey: LicenseKey;
   activationId: ActivationId;
@@ -34,20 +27,6 @@ export class License {
     this.validUntil = props.validUntil;
     this.lastValidated = props.lastValidated;
     this.status = props.status;
-  }
-
-  isValid(): boolean {
-    return this.status === 'valid';
-  }
-
-  withStatus(status: LicenseStatus): License {
-    return new License({
-      licenseKey: this.licenseKey,
-      activationId: this.activationId,
-      validUntil: this.validUntil,
-      lastValidated: this.lastValidated,
-      status,
-    });
   }
 
   withValidation(validUntil: Date, lastValidated: Date): License {

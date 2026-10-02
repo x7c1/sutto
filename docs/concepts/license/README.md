@@ -20,7 +20,6 @@ A License is created when a user activates a [License Key](./license-key/) and c
 
 - activate (a License) — create a License by entering a License Key
 - validate (a License) — verify the License with the server
-- clear (a License) — remove a License from the device
 - renew (a License) — extend the subscription period
 
 ## Domain Rules

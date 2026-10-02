@@ -133,14 +133,6 @@ export class GSettingsLicenseRepository implements LicenseRepository {
     this.settings.set_string('license-status', status);
   }
 
-  clearLicense(): void {
-    this.settings.set_string('license-key', '');
-    this.settings.set_string('license-activation-id', '');
-    this.settings.set_int64('license-valid-until', 0);
-    this.settings.set_int64('license-last-validated', 0);
-    this.settings.set_string('license-status', 'trial');
-  }
-
   /**
    * Watch the license state keys for changes.
    *
