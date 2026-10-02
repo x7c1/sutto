@@ -42,6 +42,7 @@ function createMockRepository(options: {
       trialWarningThreshold = threshold;
     },
     clearLicense: notImplemented('clearLicense'),
+    watchChanges: notImplemented('watchChanges'),
   };
 }
 

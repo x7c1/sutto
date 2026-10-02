@@ -92,6 +92,22 @@ export class LicenseOperations {
   }
 
   /**
+   * Follow license changes stored by another process (e.g. a license activated
+   * in the preferences window) by notifying state change callbacks whenever
+   * the stored license or trial data changes.
+   *
+   * Handling a change only reads state and never writes to the repository, so
+   * this process's own writes cannot start a notification loop.
+   * @returns A function that stops watching
+   */
+  watchStoredChanges(): () => void {
+    return this.repository.watchChanges(() => {
+      log('[LicenseOperations] Stored license data changed');
+      this.notifyStateChange();
+    });
+  }
+
+  /**
    * Clear all state change callbacks
    */
   clearCallbacks(): void {

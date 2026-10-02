@@ -51,4 +51,12 @@ export interface LicenseRepository {
    * Clear all license data (return to trial mode)
    */
   clearLicense(): void;
+
+  /**
+   * Watch for changes to the stored license or trial data, including writes
+   * made by another process (e.g. the preferences window).
+   * Implementations may coalesce a burst of writes into a single callback.
+   * @returns A function that stops watching
+   */
+  watchChanges(callback: () => void): () => void;
 }

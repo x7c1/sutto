@@ -201,7 +201,7 @@ export class Controller {
     // Wrapped so a throw while removing the indicator cannot strand the
     // teardown below — see safe-disable.ts.
     safeDisable('topBarIndicator', () => this.topBarIndicatorManager.disable());
-    this.licenseStateHandler.clearCallbacks();
+    this.licenseStateHandler.dispose();
     this.dragCoordinator.stop();
     this.dragSignalHandler.disconnect();
     this.keyboardShortcutManager.unregisterAll();
