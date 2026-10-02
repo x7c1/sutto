@@ -2,7 +2,7 @@
 
 ## Definition
 
-**License Status** is the current state of the licensing system. It determines whether the user has access to all features.
+**License Status** is the current state of the licensing system. Together with the offline grace period (see [License](../)) and, for an ended trial, whether the license server still answers (see [Trial Period](../../trial-period/)), it determines whether the user has access to all features.
 
 There are five statuses:
 
