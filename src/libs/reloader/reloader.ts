@@ -17,6 +17,7 @@ import type { ExtensionObject } from '@girs/gnome-shell/dist/types/extension-obj
 import type { ExtensionManager } from '@girs/gnome-shell/dist/ui/extensionSystem.js';
 import { GioShellExtensionSettings } from './gio-shell-extension-settings.js';
 import {
+  isReloadUuidOf,
   pruneStaleReloadUuidsFromSettings,
   type ShellExtensionSettingsPort,
 } from './prune-stale-uuids.js';
@@ -194,7 +195,9 @@ export class Reloader {
   private cleanupOldInstances(extensionManager: ExtensionManager): void {
     const uuids = extensionManager.getUuids();
     for (const uuid of uuids) {
-      if (uuid.includes('-reload-') && uuid !== this.currentUuid) {
+      // Only this extension's own copies: other extensions may run their
+      // own reload copies, and unloading those would take them down.
+      if (isReloadUuidOf(this.originalUuid, uuid) && uuid !== this.currentUuid) {
         try {
           const extension = extensionManager.lookup(uuid) as ExtensionObject | undefined;
           if (extension) {

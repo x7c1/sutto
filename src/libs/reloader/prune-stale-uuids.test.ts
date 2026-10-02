@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isReloadUuidOf,
   pruneStaleReloadUuids,
   pruneStaleReloadUuidsFromSettings,
   type ShellExtensionSettingsPort,
@@ -194,5 +195,15 @@ describe('pruneStaleReloadUuidsFromSettings', () => {
       currentReload,
     ]);
     expect(port.getDisabledExtensions()).toEqual(['yet-another@example.com']);
+  });
+});
+
+describe('isReloadUuidOf', () => {
+  it("matches only this extension's own reload copies", () => {
+    expect(isReloadUuidOf(BASE_UUID, `${BASE_UUID}-reload-1719300000000000`)).toBe(true);
+    expect(isReloadUuidOf(BASE_UUID, BASE_UUID)).toBe(false);
+    expect(isReloadUuidOf(BASE_UUID, 'zatto@x7c1.github.io-reload-1719300000000000')).toBe(false);
+    expect(isReloadUuidOf(BASE_UUID, `${BASE_UUID}-reload-extra`)).toBe(false);
+    expect(isReloadUuidOf(BASE_UUID, `prefix-${BASE_UUID}-reload-1`)).toBe(false);
   });
 });
