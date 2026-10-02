@@ -3,19 +3,31 @@ import type {
   DeviceId,
   DisabledReason,
   LicenseKey,
+  LicenseRejectionReason,
   LicenseState,
   NetworkState,
 } from '../../domain/licensing/index.js';
 import {
-  type ActivationResult,
   createLicenseState,
   License,
   OFFLINE_GRACE_PERIOD_DAYS,
 } from '../../domain/licensing/index.js';
-import type { LicenseApiClient, ValidationError } from './license-api-client.js';
+import type { LicenseApiClient } from './license-api-client.js';
 import type { LicenseRepository } from './license-repository.js';
 
 declare function log(message: string): void;
+
+/** Message shown when an activation is rejected by the license server. */
+const ACTIVATION_REJECTION_MESSAGES: Record<LicenseRejectionReason, string> = {
+  INVALID_LICENSE_KEY: 'License key not found',
+  INVALID_ACTIVATION: 'Activation is no longer valid',
+  LICENSE_EXPIRED: 'Subscription has expired',
+  LICENSE_CANCELLED: 'Subscription was cancelled',
+  DEVICE_DEACTIVATED: 'This device was deactivated',
+};
+
+/** Message shown when the license server did not answer an activation. */
+const ACTIVATION_NO_RESPONSE_MESSAGE = "Couldn't reach the license server. Try again later.";
 
 export interface DateProvider {
   now(): Date;
@@ -178,7 +190,7 @@ export class LicenseOperations {
 
     const result = await this.apiClient.activate(licenseKey, deviceId, deviceLabel);
 
-    if (result.success) {
+    if (result.kind === 'success') {
       this.repository.saveLicense(
         this.createLicenseFromActivation(
           licenseKey,
@@ -197,7 +209,15 @@ export class LicenseOperations {
       };
     }
 
-    return this.handleActivationError(result);
+    if (result.kind === 'rejected') {
+      // A rejected activation changes nothing: whatever was stored (e.g. a
+      // trial) stays as it was.
+      log(`[LicenseOperations] Activation rejected: ${result.reason}`);
+      return { success: false, error: ACTIVATION_REJECTION_MESSAGES[result.reason] };
+    }
+
+    log('[LicenseOperations] No response from the license server during activation');
+    return { success: false, error: ACTIVATION_NO_RESPONSE_MESSAGE, isRetryable: true };
   }
 
   /**
@@ -215,7 +235,7 @@ export class LicenseOperations {
 
     const result = await this.apiClient.validate(license.licenseKey, license.activationId);
 
-    if (result.success) {
+    if (result.kind === 'success') {
       const updatedLicense = license.withValidation(
         result.data.validUntil,
         this.dateProvider.now()
@@ -228,7 +248,13 @@ export class LicenseOperations {
       return true;
     }
 
-    return this.handleValidationError(result.error);
+    if (result.kind === 'rejected') {
+      this.handleValidationRejection(result.reason);
+      return false;
+    }
+
+    log('[LicenseOperations] No response from the license server, keeping stored status');
+    return this.repository.getStatus() === 'valid';
   }
 
   /**
@@ -274,54 +300,22 @@ export class LicenseOperations {
     return true;
   }
 
-  private handleActivationError(
-    result: Extract<ActivationResult, { success: false }>
-  ): LicenseOperationsResult {
-    const error = result.error;
+  private handleValidationRejection(reason: LicenseRejectionReason): void {
+    log(`[LicenseOperations] Validation rejected: ${reason}`);
 
-    const errorMessages: Record<string, string> = {
-      INVALID_LICENSE_KEY: 'License key not found',
-      LICENSE_EXPIRED: 'Subscription has expired',
-      LICENSE_CANCELLED: 'Subscription was cancelled',
-      NETWORK_ERROR: 'No internet connection',
-      BACKEND_UNREACHABLE: 'License server unavailable',
-    };
-
-    if (error === 'NETWORK_ERROR' || error === 'BACKEND_UNREACHABLE') {
-      return {
-        success: false,
-        error: errorMessages[error],
-        isRetryable: true,
-      };
-    }
-
-    this.repository.setStatus('invalid');
-    this.notifyStateChange();
-
-    return {
-      success: false,
-      error: error ? (errorMessages[error] ?? error) : 'An unexpected error occurred',
-    };
-  }
-
-  private handleValidationError(error: ValidationError): boolean {
-    log(`[LicenseOperations] Validation failed: ${error}`);
-
-    if (
-      error === 'LICENSE_EXPIRED' ||
-      error === 'LICENSE_CANCELLED' ||
-      error === 'DEVICE_DEACTIVATED'
-    ) {
-      this.repository.setStatus('expired');
-    } else if (error === 'NETWORK_ERROR' || error === 'BACKEND_UNREACHABLE') {
-      log('[LicenseOperations] Backend unreachable during validation, using cached status');
-      return this.repository.getStatus() === 'valid';
-    } else {
-      this.repository.setStatus('invalid');
+    switch (reason) {
+      case 'LICENSE_EXPIRED':
+      case 'LICENSE_CANCELLED':
+      case 'DEVICE_DEACTIVATED':
+        this.repository.setStatus('expired');
+        break;
+      case 'INVALID_LICENSE_KEY':
+      case 'INVALID_ACTIVATION':
+        this.repository.setStatus('invalid');
+        break;
     }
 
     this.notifyStateChange();
-    return false;
   }
 
   private createLicenseFromActivation(

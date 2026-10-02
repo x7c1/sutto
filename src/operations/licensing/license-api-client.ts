@@ -4,6 +4,7 @@ import type {
   DeviceId,
   LicenseKey,
 } from '../../domain/licensing/index.js';
+import { type LicenseRejectionReason, LicenseServerOutcome } from '../../domain/licensing/index.js';
 
 /**
  * Interface for license API operations
@@ -25,25 +26,17 @@ export interface LicenseApiClient {
   validate(licenseKey: LicenseKey, activationId: ActivationId): Promise<ValidationResult>;
 }
 
-export type ValidationError =
-  | 'INVALID_LICENSE_KEY'
-  | 'INVALID_ACTIVATION'
-  | 'LICENSE_EXPIRED'
-  | 'LICENSE_CANCELLED'
-  | 'DEVICE_DEACTIVATED'
-  | 'NETWORK_ERROR'
-  | 'BACKEND_UNREACHABLE';
-
 export interface ValidationSuccess {
   validUntil: Date;
   subscriptionStatus: string;
 }
 
-export type ValidationResult =
-  | { success: true; data: ValidationSuccess }
-  | { success: false; error: ValidationError };
+/** The outcome of a validation request to the license server. */
+export type ValidationResult = LicenseServerOutcome<ValidationSuccess>;
 
 export const ValidationResult = {
-  succeeded: (data: ValidationSuccess): ValidationResult => ({ success: true, data }),
-  failed: (error: ValidationError): ValidationResult => ({ success: false, error }),
+  succeeded: (data: ValidationSuccess): ValidationResult => LicenseServerOutcome.succeeded(data),
+  rejected: (reason: LicenseRejectionReason): ValidationResult =>
+    LicenseServerOutcome.rejected(reason),
+  noResponse: (): ValidationResult => LicenseServerOutcome.noResponse(),
 };

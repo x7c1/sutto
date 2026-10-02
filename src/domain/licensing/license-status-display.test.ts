@@ -30,16 +30,6 @@ describe('getLicenseStatusDisplay', () => {
     });
   });
 
-  it('reports an unavailable server during the trial', () => {
-    expect(
-      getLicenseStatusDisplay(state({ status: 'trial', networkState: 'backend_unreachable' }))
-    ).toEqual({
-      title: 'Trial',
-      subtitle: 'Server unavailable',
-      showPurchaseLink: true,
-    });
-  });
-
   it('shows the expiry date of a valid license while online', () => {
     expect(
       getLicenseStatusDisplay(state({ status: 'valid', validUntil: new Date(2026, 9, 5) }))
@@ -66,16 +56,6 @@ describe('getLicenseStatusDisplay', () => {
     ).toEqual({
       title: 'Active',
       subtitle: 'Offline - connect within 4 days',
-      showPurchaseLink: false,
-    });
-  });
-
-  it('reports an unavailable server for a valid license', () => {
-    expect(
-      getLicenseStatusDisplay(state({ status: 'valid', networkState: 'backend_unreachable' }))
-    ).toEqual({
-      title: 'Active',
-      subtitle: 'Server unavailable',
       showPurchaseLink: false,
     });
   });

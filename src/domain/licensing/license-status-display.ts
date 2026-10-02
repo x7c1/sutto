@@ -23,13 +23,6 @@ export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDispl
   const { status, networkState, trialDaysRemaining, validUntil, daysSinceLastValidation } = state;
 
   if (status === 'trial') {
-    if (networkState === 'backend_unreachable') {
-      return {
-        title: 'Trial',
-        subtitle: 'Server unavailable',
-        showPurchaseLink: true,
-      };
-    }
     return {
       title: 'Trial',
       subtitle: `${trialDaysRemaining} days remaining`,
@@ -43,13 +36,6 @@ export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDispl
       return {
         title: 'Active',
         subtitle: `Offline - connect within ${daysUntilRequired} days`,
-        showPurchaseLink: false,
-      };
-    }
-    if (networkState === 'backend_unreachable') {
-      return {
-        title: 'Active',
-        subtitle: 'Server unavailable',
         showPurchaseLink: false,
       };
     }

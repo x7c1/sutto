@@ -23,13 +23,9 @@ Your subscription period has ended. Renew your subscription to continue using Su
 
 Your subscription has been cancelled and is no longer active. To continue using Sutto, [purchase a new license](/pricing).
 
-### "No internet connection"
+### "Couldn't reach the license server. Try again later."
 
-License validation requires an internet connection. Check your network connection and try again.
-
-### "License server unavailable"
-
-The license server could not be reached. Try again later. If the problem persists, the server may no longer be operational. Sutto continues to work normally regardless of server availability.
+Sutto got no answer from the license server. Check your network connection and try again later. Nothing changes on your device: a trial stays a trial. If the problem persists, the server may no longer be operational. Sutto continues to work normally regardless of server availability.
 
 ### Device Limit
 
