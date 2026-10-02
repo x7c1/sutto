@@ -77,11 +77,6 @@ export interface LicenseRepository {
   setStatus(status: LicenseStatus): void;
 
   /**
-   * Clear all license data and set the status to 'trial'
-   */
-  clearLicense(): void;
-
-  /**
    * Watch for changes to the stored license or trial data, including writes
    * made by another process (e.g. the preferences window).
    * Implementations may coalesce a burst of writes into a single callback.

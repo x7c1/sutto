@@ -39,8 +39,4 @@ export class DeviceId {
   equals(other: DeviceId): boolean {
     return this.value === other.value;
   }
-
-  isUnknown(): boolean {
-    return this.value === UNKNOWN_DEVICE;
-  }
 }

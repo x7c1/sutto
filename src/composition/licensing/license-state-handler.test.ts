@@ -35,7 +35,7 @@ const unexpected = (name: string) => (): never => {
 function createSharedStorage() {
   const store: { status: LicenseStatus; license: License | null; lastOnlineAt: Date | null } = {
     status: 'expired',
-    license: createValidLicense().withStatus('expired'),
+    license: createLicense('expired'),
     lastOnlineAt: null,
   };
   const trialPeriod = new TrialPeriod({ daysUsed: new TrialDays(30), lastUsedDate: '2026-06-15' });
@@ -56,7 +56,6 @@ function createSharedStorage() {
     },
     getTrialProbeResult: () => 'none',
     setTrialProbeResult: unexpected('setTrialProbeResult'),
-    clearLicense: unexpected('clearLicense'),
     watchChanges: (callback) => {
       watchers.add(callback);
       return () => watchers.delete(callback);
@@ -117,7 +116,6 @@ function createTrialStorage(
     setTrialProbeResult: (result) => {
       store.trialProbeResult = result;
     },
-    clearLicense: unexpected('clearLicense'),
     watchChanges: () => () => {},
   };
 
@@ -185,13 +183,13 @@ function createHandler(
   return new LicenseStateHandler(licenseOperations, trialWarningOperations);
 }
 
-function createValidLicense(): License {
+function createLicense(status: LicenseStatus = 'valid'): License {
   return new License({
     licenseKey: new LicenseKey('TEST-LICENSE-KEY-123'),
     activationId: new ActivationId('550e8400-e29b-41d4-a716-446655440000'),
     validUntil: new Date('2026-12-31T00:00:00Z'),
     lastValidated: new Date(),
-    status: 'valid',
+    status,
   });
 }
 
@@ -207,7 +205,7 @@ describe('LicenseStateHandler', () => {
     await flushPromises();
     expect(handler.getDisabledReason()).toBe('license-expired');
 
-    storage.store.license = createValidLicense();
+    storage.store.license = createLicense();
     storage.store.status = 'valid';
     storage.fireChange();
 
@@ -222,7 +220,7 @@ describe('LicenseStateHandler', () => {
     await flushPromises();
     invalidReasons.length = 0;
 
-    storage.store.license = createValidLicense();
+    storage.store.license = createLicense();
     storage.store.status = 'valid';
     storage.fireChange();
     expect(handler.getDisabledReason()).toBeNull();
@@ -243,7 +241,7 @@ describe('LicenseStateHandler', () => {
     let notified = 0;
     handler.onStateChange(() => notified++);
 
-    storage.store.license = createValidLicense();
+    storage.store.license = createLicense();
     storage.store.status = 'valid';
     storage.fireChange();
 
@@ -257,7 +255,7 @@ describe('LicenseStateHandler', () => {
     await flushPromises();
 
     handler.dispose();
-    storage.store.license = createValidLicense();
+    storage.store.license = createLicense();
     storage.store.status = 'valid';
     storage.fireChange();
 
@@ -291,7 +289,7 @@ describe('LicenseStateHandler', () => {
 
   it('unlocks once the network comes back after the offline grace period was exceeded', async () => {
     const storage = createSharedStorage();
-    storage.store.license = createValidLicense();
+    storage.store.license = createLicense();
     storage.store.status = 'valid';
     storage.store.lastOnlineAt = new Date('2026-06-01T00:00:00Z');
     const { network, provider } = createNetwork('offline');

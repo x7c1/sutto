@@ -5,7 +5,7 @@ export { DeviceId, InvalidDeviceIdError } from './device-id.js';
 export type { DisabledReason, DisabledReasonDescription } from './disabled-reason.js';
 export { DISABLED_REASONS, describeDisabledReason } from './disabled-reason.js';
 export type { LicenseProps } from './license.js';
-export { InvalidLicenseError, License } from './license.js';
+export { License } from './license.js';
 export { InvalidLicenseKeyError, LicenseKey } from './license-key.js';
 export type { LicenseRejectionReason } from './license-server-outcome.js';
 export {
@@ -30,7 +30,7 @@ export {
 export type { LicenseStatusDisplay } from './license-status-display.js';
 export { getLicenseStatusDisplay } from './license-status-display.js';
 export type { NetworkState } from './network-state.js';
-export { isValidNetworkState, NETWORK_STATES } from './network-state.js';
+export { NETWORK_STATES } from './network-state.js';
 export { InvalidTrialDaysError, TrialDays } from './trial-days.js';
 export type { TrialPeriodProps } from './trial-period.js';
 export { TrialPeriod } from './trial-period.js';
