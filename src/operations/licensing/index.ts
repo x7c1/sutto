@@ -1,4 +1,4 @@
-export type { LicenseApiClient, ValidationError, ValidationSuccess } from './license-api-client.js';
+export type { LicenseApiClient, ValidationSuccess } from './license-api-client.js';
 export { ValidationResult } from './license-api-client.js';
 export type {
   DateProvider,

@@ -1,5 +1,5 @@
 export { ActivationId, InvalidActivationIdError } from './activation-id.js';
-export type { ActivationError, ActivationSuccessData } from './activation-result.js';
+export type { ActivationSuccessData } from './activation-result.js';
 export { ActivationResult } from './activation-result.js';
 export { DeviceId, InvalidDeviceIdError } from './device-id.js';
 export type { DisabledReason, DisabledReasonDescription } from './disabled-reason.js';
@@ -7,6 +7,12 @@ export { DISABLED_REASONS, describeDisabledReason } from './disabled-reason.js';
 export type { LicenseProps } from './license.js';
 export { InvalidLicenseError, License } from './license.js';
 export { InvalidLicenseKeyError, LicenseKey } from './license-key.js';
+export type { LicenseRejectionReason } from './license-server-outcome.js';
+export {
+  isLicenseRejectionReason,
+  LICENSE_REJECTION_REASONS,
+  LicenseServerOutcome,
+} from './license-server-outcome.js';
 export type { LicenseState } from './license-state.js';
 export { createLicenseState, OFFLINE_GRACE_PERIOD_DAYS } from './license-state.js';
 export type { LicenseStatus } from './license-status.js';

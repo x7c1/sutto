@@ -1,12 +1,5 @@
 import type { ActivationId } from './activation-id.js';
-
-export type ActivationError =
-  | 'INVALID_LICENSE_KEY'
-  | 'LICENSE_EXPIRED'
-  | 'LICENSE_CANCELLED'
-  | 'NETWORK_ERROR'
-  | 'BACKEND_UNREACHABLE'
-  | 'UNKNOWN_ERROR';
+import { type LicenseRejectionReason, LicenseServerOutcome } from './license-server-outcome.js';
 
 export interface ActivationSuccessData {
   activationId: ActivationId;
@@ -16,15 +9,13 @@ export interface ActivationSuccessData {
   deactivatedDevice: string | null;
 }
 
-export type ActivationResult =
-  | { success: true; data: ActivationSuccessData }
-  | { success: false; error: ActivationError; errorMessage?: string };
+/** The outcome of an activation request to the license server. */
+export type ActivationResult = LicenseServerOutcome<ActivationSuccessData>;
 
 export const ActivationResult = {
-  succeeded: (data: ActivationSuccessData): ActivationResult => ({ success: true, data }),
-  failed: (error: ActivationError, errorMessage?: string): ActivationResult => ({
-    success: false,
-    error,
-    errorMessage,
-  }),
+  succeeded: (data: ActivationSuccessData): ActivationResult =>
+    LicenseServerOutcome.succeeded(data),
+  rejected: (reason: LicenseRejectionReason): ActivationResult =>
+    LicenseServerOutcome.rejected(reason),
+  noResponse: (): ActivationResult => LicenseServerOutcome.noResponse(),
 };

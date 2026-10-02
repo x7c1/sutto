@@ -17,7 +17,7 @@ import {
   TrialDays,
   TrialPeriod,
 } from '../../domain/licensing/index.js';
-import type { LicenseApiClient, ValidationResult } from './license-api-client.js';
+import { type LicenseApiClient, ValidationResult } from './license-api-client.js';
 import type {
   DateProvider,
   DeviceInfoProvider,
@@ -182,10 +182,8 @@ function createMockApiClient(
         deactivatedDevice: null,
       }),
     validate: async () =>
-      overrides?.validateResult ?? {
-        success: true as const,
-        data: { validUntil: TEST_VALID_UNTIL, subscriptionStatus: 'active' },
-      },
+      overrides?.validateResult ??
+      ValidationResult.succeeded({ validUntil: TEST_VALID_UNTIL, subscriptionStatus: 'active' }),
   };
 }
 
@@ -238,10 +236,10 @@ describe('LicenseOperations', () => {
       });
       const newValidUntil = new Date('2027-06-30T00:00:00Z');
       const apiClient = createMockApiClient({
-        validateResult: {
-          success: true,
-          data: { validUntil: newValidUntil, subscriptionStatus: 'active' },
-        },
+        validateResult: ValidationResult.succeeded({
+          validUntil: newValidUntil,
+          subscriptionStatus: 'active',
+        }),
       });
       const ops = createOperations({ repository, apiClient });
 
@@ -428,66 +426,49 @@ describe('LicenseOperations', () => {
       expect(states[0].status).toBe('valid');
     });
 
-    it('returns retryable error on network error without changing status', async () => {
-      const repository = createMockRepository({ status: 'trial' });
-      const apiClient = createMockApiClient({
-        activateResult: ActivationResult.failed('NETWORK_ERROR'),
+    it('returns a retryable failure and writes nothing when the server does not respond', async () => {
+      const fake = createExternallyChangedRepository({
+        status: 'trial',
+        license: null,
+        trialPeriod: createMockTrialPeriod(5),
       });
-      const ops = createOperations({ repository, apiClient });
+      const apiClient = createMockApiClient({ activateResult: ActivationResult.noResponse() });
+      const ops = createOperations({ repository: fake.repository, apiClient });
 
       const result = await ops.activate(TEST_LICENSE_KEY);
 
-      expect(result.success).toBe(false);
-      expect(result.isRetryable).toBe(true);
-      expect(repository.getStatus()).toBe('trial');
+      expect(result).toEqual({
+        success: false,
+        error: "Couldn't reach the license server. Try again later.",
+        isRetryable: true,
+      });
+      expect(fake.writeCount()).toBe(0);
+      expect(fake.store.status).toBe('trial');
+      expect(fake.store.license).toBeNull();
     });
 
-    it('returns retryable error when backend is unreachable without changing status', async () => {
-      const repository = createMockRepository({ status: 'trial' });
-      const apiClient = createMockApiClient({
-        activateResult: ActivationResult.failed('BACKEND_UNREACHABLE'),
+    it.each([
+      ['INVALID_LICENSE_KEY', 'License key not found'],
+      ['INVALID_ACTIVATION', 'Activation is no longer valid'],
+      ['LICENSE_EXPIRED', 'Subscription has expired'],
+      ['LICENSE_CANCELLED', 'Subscription was cancelled'],
+      ['DEVICE_DEACTIVATED', 'This device was deactivated'],
+    ] as const)('keeps a trial and saves no license when rejected with %s', async (reason, message) => {
+      const fake = createExternallyChangedRepository({
+        status: 'trial',
+        license: null,
+        trialPeriod: createMockTrialPeriod(5),
       });
-      const ops = createOperations({ repository, apiClient });
+      const apiClient = createMockApiClient({ activateResult: ActivationResult.rejected(reason) });
+      const ops = createOperations({ repository: fake.repository, apiClient });
 
       const result = await ops.activate(TEST_LICENSE_KEY);
 
-      expect(result.success).toBe(false);
-      expect(result.isRetryable).toBe(true);
-      expect(repository.getStatus()).toBe('trial');
-    });
-
-    it('sets status to invalid on invalid key', async () => {
-      const repository = createMockRepository({ status: 'trial' });
-      const apiClient = createMockApiClient({
-        activateResult: ActivationResult.failed('INVALID_LICENSE_KEY'),
-      });
-      const ops = createOperations({ repository, apiClient });
-      const states: LicenseState[] = [];
-      ops.onStateChange((s) => states.push(s));
-
-      const result = await ops.activate(TEST_LICENSE_KEY);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('License key not found');
-      expect(repository.getStatus()).toBe('invalid');
-      expect(states.length).toBe(1);
-    });
-
-    it('sets status to invalid on expired license', async () => {
-      const repository = createMockRepository({ status: 'trial' });
-      const apiClient = createMockApiClient({
-        activateResult: ActivationResult.failed('LICENSE_EXPIRED'),
-      });
-      const ops = createOperations({ repository, apiClient });
-      const states: LicenseState[] = [];
-      ops.onStateChange((s) => states.push(s));
-
-      const result = await ops.activate(TEST_LICENSE_KEY);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Subscription has expired');
-      expect(repository.getStatus()).toBe('invalid');
-      expect(states.length).toBe(1);
+      expect(result).toEqual({ success: false, error: message });
+      expect(result.isRetryable).toBeUndefined();
+      expect(fake.writeCount()).toBe(0);
+      expect(fake.store.status).toBe('trial');
+      expect(fake.store.license).toBeNull();
     });
   });
 
@@ -508,10 +489,10 @@ describe('LicenseOperations', () => {
         license: createMockLicense(),
       });
       const apiClient = createMockApiClient({
-        validateResult: {
-          success: true,
-          data: { validUntil: newValidUntil, subscriptionStatus: 'active' },
-        },
+        validateResult: ValidationResult.succeeded({
+          validUntil: newValidUntil,
+          subscriptionStatus: 'active',
+        }),
       });
       const ops = createOperations({ repository, apiClient });
 
@@ -524,100 +505,60 @@ describe('LicenseOperations', () => {
       expect(saved?.lastValidated).toEqual(TEST_NOW);
     });
 
-    it('sets status to expired when license is expired', async () => {
+    it.each([
+      ['LICENSE_EXPIRED', 'expired'],
+      ['LICENSE_CANCELLED', 'expired'],
+      ['DEVICE_DEACTIVATED', 'expired'],
+      ['INVALID_LICENSE_KEY', 'invalid'],
+      ['INVALID_ACTIVATION', 'invalid'],
+    ] as const)('a rejection with %s sets status to %s', async (reason, expectedStatus) => {
       const repository = createMockRepository({
         status: 'valid',
         license: createMockLicense(),
       });
-      const apiClient = createMockApiClient({
-        validateResult: { success: false, error: 'LICENSE_EXPIRED' },
-      });
+      const apiClient = createMockApiClient({ validateResult: ValidationResult.rejected(reason) });
       const ops = createOperations({ repository, apiClient });
+      const states: LicenseState[] = [];
+      ops.onStateChange((s) => states.push(s));
 
       const result = await ops.validateLicense();
 
       expect(result).toBe(false);
-      expect(repository.getStatus()).toBe('expired');
+      expect(repository.getStatus()).toBe(expectedStatus);
+      expect(states.length).toBe(1);
     });
 
-    it('sets status to expired when license is cancelled', async () => {
-      const repository = createMockRepository({
+    it('leaves the stored status and license untouched and keeps a valid license enabled when the server does not respond', async () => {
+      const license = createMockLicense();
+      const fake = createExternallyChangedRepository({
         status: 'valid',
-        license: createMockLicense(),
+        license,
+        trialPeriod: createMockTrialPeriod(30),
       });
-      const apiClient = createMockApiClient({
-        validateResult: { success: false, error: 'LICENSE_CANCELLED' },
-      });
-      const ops = createOperations({ repository, apiClient });
-
-      const result = await ops.validateLicense();
-
-      expect(result).toBe(false);
-      expect(repository.getStatus()).toBe('expired');
-    });
-
-    it('sets status to expired when device is deactivated', async () => {
-      const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
-      });
-      const apiClient = createMockApiClient({
-        validateResult: { success: false, error: 'DEVICE_DEACTIVATED' },
-      });
-      const ops = createOperations({ repository, apiClient });
-
-      const result = await ops.validateLicense();
-
-      expect(result).toBe(false);
-      expect(repository.getStatus()).toBe('expired');
-    });
-
-    it('keeps cached status and returns true on network error when status is valid', async () => {
-      const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
-      });
-      const apiClient = createMockApiClient({
-        validateResult: { success: false, error: 'NETWORK_ERROR' },
-      });
-      const ops = createOperations({ repository, apiClient });
+      const apiClient = createMockApiClient({ validateResult: ValidationResult.noResponse() });
+      const ops = createOperations({ repository: fake.repository, apiClient });
 
       const result = await ops.validateLicense();
 
       expect(result).toBe(true);
-      expect(repository.getStatus()).toBe('valid');
+      expect(fake.writeCount()).toBe(0);
+      expect(fake.store.status).toBe('valid');
+      expect(fake.store.license).toBe(license);
+      expect(ops.shouldExtensionBeEnabled()).toBe(true);
     });
 
-    it('keeps cached status and returns false on network error when status is not valid', async () => {
+    it('keeps the stored status and returns false when the server does not respond and status is not valid', async () => {
       const repository = createMockRepository({
         status: 'expired',
         license: createMockLicense(),
       });
-      const apiClient = createMockApiClient({
-        validateResult: { success: false, error: 'BACKEND_UNREACHABLE' },
-      });
+      const apiClient = createMockApiClient({ validateResult: ValidationResult.noResponse() });
       const ops = createOperations({ repository, apiClient });
 
       const result = await ops.validateLicense();
 
       expect(result).toBe(false);
       expect(repository.getStatus()).toBe('expired');
-    });
-
-    it('sets status to invalid on invalid license key', async () => {
-      const repository = createMockRepository({
-        status: 'valid',
-        license: createMockLicense(),
-      });
-      const apiClient = createMockApiClient({
-        validateResult: { success: false, error: 'INVALID_LICENSE_KEY' },
-      });
-      const ops = createOperations({ repository, apiClient });
-
-      const result = await ops.validateLicense();
-
-      expect(result).toBe(false);
-      expect(repository.getStatus()).toBe('invalid');
     });
   });
 
