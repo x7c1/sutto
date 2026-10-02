@@ -75,5 +75,5 @@ export function evaluateTrialWarning(input: TrialWarningInput): TrialWarningDeci
  */
 export function formatTrialWarningMessage(daysRemaining: number): string {
   const unit = daysRemaining === 1 ? 'day' : 'days';
-  return `Your Sutto trial ends in ${daysRemaining} ${unit}. Activate a license to keep using it.`;
+  return `Your Sutto trial has ${daysRemaining} ${unit} of use left. Activate a license to keep using it.`;
 }

@@ -94,7 +94,7 @@ describe('buildIndicatorMenuModel', () => {
         input({ licenseState: licenseState({ status: 'trial', trialDaysRemaining: 12 }) })
       );
       expect(model.licenseTitle).toBe('Trial');
-      expect(model.licenseSubtitle).toBe('12 days remaining');
+      expect(model.licenseSubtitle).toBe('12 days of use left');
     });
   });
 });
