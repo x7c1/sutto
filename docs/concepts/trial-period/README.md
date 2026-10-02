@@ -15,7 +15,6 @@ Usage days are counted based on actual usage — only days when the user uses th
 ## Collocations
 
 - record (a usage day in the Trial Period) — count a day of usage
-- reset (a Trial Period) — restore the Trial Period to its initial state
 
 ## Domain Rules
 

@@ -20,7 +20,7 @@ export class SystemDeviceInfoProvider implements DeviceInfoProvider {
     } catch (e) {
       log(`[DeviceInfoProvider] Failed to read machine-id: ${e}`);
     }
-    return new DeviceId('unknown-device');
+    return DeviceId.unknown();
   }
 
   getDeviceLabel(): string {

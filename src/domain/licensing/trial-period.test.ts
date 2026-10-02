@@ -110,17 +110,4 @@ describe('TrialPeriod', () => {
       expect(period.lastUsedDate).toBe('2026-01-14');
     });
   });
-
-  describe('reset', () => {
-    it('returns initial trial period', () => {
-      const period = new TrialPeriod({
-        daysUsed: new TrialDays(25),
-        lastUsedDate: '2026-01-15',
-      });
-      const reset = period.reset();
-
-      expect(reset.daysUsed.toNumber()).toBe(0);
-      expect(reset.lastUsedDate).toBe('');
-    });
-  });
 });

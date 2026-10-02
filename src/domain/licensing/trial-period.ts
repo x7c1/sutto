@@ -42,8 +42,4 @@ export class TrialPeriod {
       lastUsedDate: today,
     });
   }
-
-  reset(): TrialPeriod {
-    return TrialPeriod.initial();
-  }
 }
