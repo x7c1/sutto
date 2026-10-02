@@ -260,6 +260,13 @@ function daysBefore(date: Date, days: number): Date {
   return new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
+/** `date` as YYYY-MM-DD in local time, as the status display formats it. */
+function localDate(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 function createMockDeviceInfoProvider(): DeviceInfoProvider {
   return {
     getDeviceId: () => TEST_DEVICE_ID,
@@ -664,6 +671,83 @@ describe('LicenseOperations', () => {
       expect(state.validUntil).toBeNull();
     });
 
+    it('reports the valid-until date as not passed while it lies ahead', () => {
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ validUntil: TEST_VALID_UNTIL }),
+      });
+
+      expect(createOperations({ repository }).getState().validUntilPassed).toBe(false);
+    });
+
+    it('reports a valid-until date of today as not passed', () => {
+      const startOfToday = new Date(
+        TEST_NOW.getFullYear(),
+        TEST_NOW.getMonth(),
+        TEST_NOW.getDate()
+      );
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ validUntil: startOfToday }),
+      });
+
+      expect(createOperations({ repository }).getState().validUntilPassed).toBe(false);
+    });
+
+    it('reports the valid-until date as passed using the date provider', () => {
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ validUntil: TEST_VALID_UNTIL }),
+      });
+      const ops = createOperations({
+        repository,
+        dateProvider: createMockDateProvider(new Date('2027-01-10T12:00:00Z'), '2027-01-10'),
+      });
+
+      expect(ops.getState().validUntilPassed).toBe(true);
+    });
+
+    it('reports the valid-until date as not passed when no license exists', () => {
+      const repository = createMockRepository({ status: 'trial' });
+
+      expect(createOperations({ repository }).getState().validUntilPassed).toBe(false);
+    });
+
+    it('exposes the last validated date', () => {
+      const lastValidated = daysBefore(TEST_NOW, 3);
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ lastValidated }),
+      });
+
+      expect(createOperations({ repository }).getState().lastValidated).toEqual(lastValidated);
+    });
+
+    it('reports no last validated date for a license never validated', () => {
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ lastValidated: new Date(0) }),
+      });
+
+      expect(createOperations({ repository }).getState().lastValidated).toBeNull();
+    });
+
+    it('shows the last verified date once the valid-until date has passed while online', () => {
+      const lastValidated = daysBefore(TEST_NOW, 3);
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ validUntil: daysBefore(TEST_NOW, 2), lastValidated }),
+      });
+      const ops = createOperations({
+        repository,
+        networkStateProvider: createMockNetworkStateProvider('online'),
+      });
+
+      expect(getLicenseStatusDisplay(ops.getState()).subtitle).toBe(
+        `Last verified ${localDate(lastValidated)}`
+      );
+    });
+
     it('reports the days since the device was last online', () => {
       const repository = createMockRepository({
         status: 'valid',
@@ -861,6 +945,21 @@ describe('LicenseOperations', () => {
 
       expect(ops.getDisabledReason()).toBeNull();
       expect(repository.getLastOnlineAt()).toEqual(TEST_NOW);
+    });
+
+    it('returns null when valid and online after the valid-until date has passed', () => {
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense({ validUntil: daysBefore(TEST_NOW, 30) }),
+        lastOnlineAt: TEST_NOW,
+      });
+      const ops = createOperations({
+        repository,
+        networkStateProvider: createMockNetworkStateProvider('online'),
+      });
+
+      expect(ops.getState().validUntilPassed).toBe(true);
+      expect(ops.getDisabledReason()).toBeNull();
     });
 
     it('returns license-expired when status is expired', () => {

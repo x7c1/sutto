@@ -20,6 +20,10 @@ export interface LicenseProps {
 export class License {
   readonly licenseKey: LicenseKey;
   readonly activationId: ActivationId;
+  /**
+   * When the subscription period ends, as last confirmed by the license
+   * server. Shown to the user, not used to decide access.
+   */
   readonly validUntil: Date;
   readonly lastValidated: Date;
   readonly status: LicenseStatus;
@@ -34,10 +38,6 @@ export class License {
 
   isValid(): boolean {
     return this.status === 'valid';
-  }
-
-  isExpired(): boolean {
-    return this.status === 'expired' || this.validUntil.getTime() < Date.now();
   }
 
   withStatus(status: LicenseStatus): License {

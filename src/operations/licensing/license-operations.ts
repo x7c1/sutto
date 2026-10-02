@@ -11,6 +11,7 @@ import type {
 import {
   createLicenseState,
   daysSinceLastOnline,
+  isValidUntilPassed,
   License,
   OFFLINE_GRACE_PERIOD_DAYS,
   TrialDays,
@@ -192,12 +193,17 @@ export class LicenseOperations {
     const license = this.repository.loadLicense();
     const trial = this.repository.loadTrialPeriod();
     const networkState = this.networkStateProvider.getNetworkState();
+    const validUntil = license?.validUntil ?? null;
 
     return createLicenseState({
       status,
       networkState,
       trialDaysRemaining: trial.getRemainingDays(),
-      validUntil: license?.validUntil ?? null,
+      validUntil,
+      validUntilPassed:
+        validUntil !== null && isValidUntilPassed(validUntil, this.dateProvider.now()),
+      // A License that was never validated is stored with the epoch.
+      lastValidated: license && license.lastValidated.getTime() > 0 ? license.lastValidated : null,
       daysSinceLastOnline: this.getDaysSinceLastOnline(),
     });
   }

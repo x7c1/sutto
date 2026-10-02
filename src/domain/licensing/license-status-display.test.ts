@@ -8,6 +8,8 @@ function state(overrides: Partial<LicenseState>): LicenseState {
     networkState: 'online',
     trialDaysRemaining: 12,
     validUntil: null,
+    validUntilPassed: false,
+    lastValidated: null,
     daysSinceLastOnline: 0,
     ...overrides,
   });
@@ -30,9 +32,16 @@ describe('getLicenseStatusDisplay', () => {
     });
   });
 
-  it('shows the expiry date of a valid license while online', () => {
+  it('shows the valid-until date of a valid license while online', () => {
     expect(
-      getLicenseStatusDisplay(state({ status: 'valid', validUntil: new Date(2026, 9, 5) }))
+      getLicenseStatusDisplay(
+        state({
+          status: 'valid',
+          validUntil: new Date(2026, 9, 5),
+          validUntilPassed: false,
+          lastValidated: new Date(2026, 8, 1),
+        })
+      )
     ).toEqual({
       title: 'Active',
       subtitle: 'Valid until 2026-10-05',
@@ -40,10 +49,63 @@ describe('getLicenseStatusDisplay', () => {
     });
   });
 
-  it('shows an unknown expiry date when a valid license has none', () => {
+  it('shows an unknown valid-until date when a valid license has none', () => {
     expect(getLicenseStatusDisplay(state({ status: 'valid', validUntil: null }))).toEqual({
       title: 'Active',
       subtitle: 'Valid until Unknown',
+      showPurchaseLink: false,
+    });
+  });
+
+  it('shows the last verified date once the valid-until date has passed', () => {
+    expect(
+      getLicenseStatusDisplay(
+        state({
+          status: 'valid',
+          validUntil: new Date(2026, 8, 30),
+          validUntilPassed: true,
+          lastValidated: new Date(2026, 8, 1),
+        })
+      )
+    ).toEqual({
+      title: 'Active',
+      subtitle: 'Last verified 2026-09-01',
+      showPurchaseLink: false,
+    });
+  });
+
+  it('shows not verified yet once the valid-until date has passed without a last validated date', () => {
+    expect(
+      getLicenseStatusDisplay(
+        state({
+          status: 'valid',
+          validUntil: new Date(2026, 8, 30),
+          validUntilPassed: true,
+          lastValidated: null,
+        })
+      )
+    ).toEqual({
+      title: 'Active',
+      subtitle: 'Not verified yet',
+      showPurchaseLink: false,
+    });
+  });
+
+  it('keeps the offline subtitle once the valid-until date has passed', () => {
+    expect(
+      getLicenseStatusDisplay(
+        state({
+          status: 'valid',
+          networkState: 'offline',
+          daysSinceLastOnline: 3.5,
+          validUntil: new Date(2026, 8, 30),
+          validUntilPassed: true,
+          lastValidated: new Date(2026, 8, 1),
+        })
+      )
+    ).toEqual({
+      title: 'Active',
+      subtitle: 'Offline - connect within 4 days',
       showPurchaseLink: false,
     });
   });
