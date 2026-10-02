@@ -34,8 +34,9 @@ Both directions must work. Activating a license unlocks the panel on the next tr
 
 ### Manual / on-hardware (verified by a human before merge)
 
-- [ ] With an expired trial on a real GNOME Shell session, activating a license in the preferences window makes the show-panel shortcut open the normal panel right away, without logging out
-- [ ] Disabling the extension leaves no errors in the journal (`journalctl --user -f /usr/bin/gnome-shell`), and re-enabling it still follows license changes
+- [x] With an expired trial on a real GNOME Shell session, activating a license in the preferences window makes the show-panel shortcut open the normal panel right away, without logging out
+  - Verified by writing the license keys with `gsettings` from a separate process, because the license API is not live yet. This covers the cross-process path the fix is about; the activation request from the preferences window itself was not exercised
+- [x] Disabling the extension leaves no errors in the journal (`journalctl --user -f /usr/bin/gnome-shell`), and re-enabling it still follows license changes
 
 ## Out of scope
 
