@@ -10,7 +10,7 @@ import { type LicenseState, OFFLINE_GRACE_PERIOD_DAYS } from './license-state.js
 export interface LicenseStatusDisplay {
   /** Short status, e.g. "Trial" or "Active". */
   readonly title: string;
-  /** Detail line, e.g. "12 days remaining". */
+  /** Detail line, e.g. "12 days of use left". */
   readonly subtitle: string;
   /** Whether the user should be offered a link to purchase a license. */
   readonly showPurchaseLink: boolean;
@@ -25,7 +25,7 @@ export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDispl
   if (status === 'trial') {
     return {
       title: 'Trial',
-      subtitle: `${trialDaysRemaining} days remaining`,
+      subtitle: `${trialDaysRemaining} ${trialDaysRemaining === 1 ? 'day' : 'days'} of use left`,
       showPurchaseLink: true,
     };
   }

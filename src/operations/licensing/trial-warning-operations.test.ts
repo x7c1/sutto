@@ -74,7 +74,7 @@ describe('TrialWarningOperations', () => {
     expect(recorded).toEqual([
       {
         title: 'Trial ending soon',
-        details: 'Your Sutto trial ends in 3 days. Activate a license to keep using it.',
+        details: 'Your Sutto trial has 3 days of use left. Activate a license to keep using it.',
       },
     ]);
     expect(repository.getTrialWarningThreshold()).toBe(3);
@@ -113,7 +113,7 @@ describe('TrialWarningOperations', () => {
     expect(recorded).toEqual([
       {
         title: 'Trial ending soon',
-        details: 'Your Sutto trial ends in 1 day. Activate a license to keep using it.',
+        details: 'Your Sutto trial has 1 day of use left. Activate a license to keep using it.',
       },
     ]);
     expect(repository.getTrialWarningThreshold()).toBe(1);

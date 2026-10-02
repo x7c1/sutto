@@ -78,13 +78,13 @@ describe('evaluateTrialWarning', () => {
 describe('formatTrialWarningMessage', () => {
   it('uses the plural form for 3 days', () => {
     expect(formatTrialWarningMessage(3)).toBe(
-      'Your Sutto trial ends in 3 days. Activate a license to keep using it.'
+      'Your Sutto trial has 3 days of use left. Activate a license to keep using it.'
     );
   });
 
   it('uses the singular form for 1 day', () => {
     expect(formatTrialWarningMessage(1)).toBe(
-      'Your Sutto trial ends in 1 day. Activate a license to keep using it.'
+      'Your Sutto trial has 1 day of use left. Activate a license to keep using it.'
     );
   });
 });

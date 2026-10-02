@@ -19,7 +19,15 @@ describe('getLicenseStatusDisplay', () => {
   it('shows the remaining trial days while online', () => {
     expect(getLicenseStatusDisplay(state({ status: 'trial', trialDaysRemaining: 12 }))).toEqual({
       title: 'Trial',
-      subtitle: '12 days remaining',
+      subtitle: '12 days of use left',
+      showPurchaseLink: true,
+    });
+  });
+
+  it('uses the singular form for one remaining trial day', () => {
+    expect(getLicenseStatusDisplay(state({ status: 'trial', trialDaysRemaining: 1 }))).toEqual({
+      title: 'Trial',
+      subtitle: '1 day of use left',
       showPurchaseLink: true,
     });
   });
@@ -27,7 +35,7 @@ describe('getLicenseStatusDisplay', () => {
   it('shows the remaining trial days while offline', () => {
     expect(getLicenseStatusDisplay(state({ status: 'trial', networkState: 'offline' }))).toEqual({
       title: 'Trial',
-      subtitle: '12 days remaining',
+      subtitle: '12 days of use left',
       showPurchaseLink: true,
     });
   });
@@ -156,7 +164,7 @@ describe('getLicenseStatusDisplay', () => {
 
   it.each([
     0, 5,
-  ])('asks to renew an expired subscription with %i trial days remaining', (trialDaysRemaining) => {
+  ])('asks to renew an expired subscription with %i trial days of use left', (trialDaysRemaining) => {
     expect(getLicenseStatusDisplay(state({ status: 'expired', trialDaysRemaining }))).toEqual({
       title: 'Expired',
       subtitle: 'Please renew your subscription',
