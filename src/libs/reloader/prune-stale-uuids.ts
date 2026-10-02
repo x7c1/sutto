@@ -37,6 +37,20 @@ function escapeRegex(input: string): string {
 }
 
 /**
+ * Whether `uuid` is a reload copy of the extension `baseUuid`, i.e.
+ * exactly `<baseUuid>-reload-<digits>`. Other extensions may use the same
+ * reload scheme, so matching on `-reload-` alone would also catch their
+ * copies.
+ */
+export function isReloadUuidOf(baseUuid: string, uuid: string): boolean {
+  return reloadPattern(baseUuid).test(uuid);
+}
+
+function reloadPattern(baseUuid: string): RegExp {
+  return new RegExp(`^${escapeRegex(baseUuid)}-reload-\\d+$`);
+}
+
+/**
  * Return a copy of `uuids` with stale reload UUIDs removed.
  *
  * A UUID is considered a stale reload entry when it matches
@@ -50,7 +64,7 @@ export function pruneStaleReloadUuids(
   baseUuid: string,
   currentUuid: string
 ): string[] {
-  const pattern = new RegExp(`^${escapeRegex(baseUuid)}-reload-\\d+$`);
+  const pattern = reloadPattern(baseUuid);
   return uuids.filter((uuid) => uuid === currentUuid || !pattern.test(uuid));
 }
 
