@@ -10,6 +10,13 @@ import {
 } from '../../domain/licensing/index.js';
 import type { LicenseApiClient, ValidationResult } from '../../operations/licensing/index.js';
 import {
+  ACTIVATE_PATH,
+  buildActivationRequest,
+  buildProbeRequest,
+  buildValidationRequest,
+  VALIDATE_PATH,
+} from './license-api-request.js';
+import {
   classifyLicenseApiResponse,
   parseActivationSuccess,
   parseValidationSuccess,
@@ -17,17 +24,6 @@ import {
 } from './license-api-response.js';
 
 const log = (message: string): void => console.log(message);
-
-interface ActivationRequest {
-  license_key: string;
-  device_id: string;
-  device_label: string;
-}
-
-interface ValidationRequest {
-  license_key: string;
-  activation_id: string;
-}
 
 interface HttpResponse {
   /** HTTP status code, or 0 when no HTTP response was received */
@@ -55,20 +51,23 @@ export class HttpLicenseApiClient implements LicenseApiClient {
     deviceId: DeviceId,
     deviceLabel: string
   ): Promise<ActivationResult> {
-    const body: ActivationRequest = {
-      license_key: licenseKey.toString(),
-      device_id: deviceId.toString(),
-      device_label: deviceLabel,
-    };
-    return this.request('/v1/license/activate', body, parseActivationSuccess);
+    return this.request(
+      ACTIVATE_PATH,
+      buildActivationRequest(licenseKey, deviceId, deviceLabel),
+      parseActivationSuccess
+    );
   }
 
   async validate(licenseKey: LicenseKey, activationId: ActivationId): Promise<ValidationResult> {
-    const body: ValidationRequest = {
-      license_key: licenseKey.toString(),
-      activation_id: activationId.toString(),
-    };
-    return this.request('/v1/license/validate', body, parseValidationSuccess);
+    return this.request(
+      VALIDATE_PATH,
+      buildValidationRequest(licenseKey, activationId),
+      parseValidationSuccess
+    );
+  }
+
+  async probe(): Promise<ValidationResult> {
+    return this.request(VALIDATE_PATH, buildProbeRequest(), parseValidationSuccess);
   }
 
   /**

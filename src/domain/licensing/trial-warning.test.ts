@@ -67,7 +67,7 @@ describe('evaluateTrialWarning', () => {
   });
 
   it('resets the stored threshold when the status leaves trial', () => {
-    for (const status of ['valid', 'expired', 'invalid'] as const) {
+    for (const status of ['trial-expired', 'valid', 'expired', 'invalid'] as const) {
       expect(
         evaluateTrialWarning({ status, trialDaysRemaining: 1, lastWarnedThreshold: 3 })
       ).toEqual({ thresholdToWarn: null, lastWarnedThreshold: NO_TRIAL_WARNING });

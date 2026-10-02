@@ -72,16 +72,30 @@ describe('getLicenseStatusDisplay', () => {
     });
   });
 
-  it('asks to purchase a license after the trial expired', () => {
-    expect(getLicenseStatusDisplay(state({ status: 'expired', trialDaysRemaining: 0 }))).toEqual({
+  it.each([
+    'online',
+    'offline',
+  ] as const)('asks to purchase a license after the trial ended, while %s', (networkState) => {
+    expect(
+      getLicenseStatusDisplay(
+        state({
+          status: 'trial-expired',
+          networkState,
+          trialDaysRemaining: 0,
+          daysSinceLastOnline: 10,
+        })
+      )
+    ).toEqual({
       title: 'Trial Expired',
       subtitle: 'Please purchase a license',
       showPurchaseLink: true,
     });
   });
 
-  it('asks to renew an expired subscription', () => {
-    expect(getLicenseStatusDisplay(state({ status: 'expired', trialDaysRemaining: 5 }))).toEqual({
+  it.each([
+    0, 5,
+  ])('asks to renew an expired subscription with %i trial days remaining', (trialDaysRemaining) => {
+    expect(getLicenseStatusDisplay(state({ status: 'expired', trialDaysRemaining }))).toEqual({
       title: 'Expired',
       subtitle: 'Please renew your subscription',
       showPurchaseLink: true,

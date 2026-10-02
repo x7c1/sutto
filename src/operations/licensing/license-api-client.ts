@@ -24,6 +24,14 @@ export interface LicenseApiClient {
    * Validate an existing activation
    */
   validate(licenseKey: LicenseKey, activationId: ActivationId): Promise<ValidationResult>;
+
+  /**
+   * Ask the license server whether it is there, by sending a validation
+   * request with an empty license key and an empty activation id.
+   * The response is classified like any other: a rejection or a success means
+   * the server answered.
+   */
+  probe(): Promise<ValidationResult>;
 }
 
 export interface ValidationSuccess {

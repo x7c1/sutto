@@ -66,10 +66,15 @@
       <summary>Trial warning last threshold</summary>
       <description>Remaining-day threshold (3 or 1) the trial pre-expiry warning was last shown for, so each threshold warns at most once. 0 means no warning has been shown yet.</description>
     </key>
+    <key name="trial-probe-result" type="s">
+      <default>'none'</default>
+      <summary>Trial probe result</summary>
+      <description>Result of the last time the license server was asked, after the trial ended, whether it is there: "none" (not asked yet), "answered", or "no-response". An ended trial is unlocked only while the result is "no-response".</description>
+    </key>
     <key name="license-status" type="s">
       <default>'trial'</default>
       <summary>License status</summary>
-      <description>Current license status: "trial", "valid", "expired", or "invalid".</description>
+      <description>Current license status: "trial", "trial-expired", "valid", "expired", or "invalid".</description>
     </key>
   </schema>
 </schemalist>

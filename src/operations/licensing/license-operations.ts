@@ -5,6 +5,7 @@ import type {
   LicenseKey,
   LicenseRejectionReason,
   LicenseState,
+  LicenseStatus,
   NetworkState,
 } from '../../domain/licensing/index.js';
 import {
@@ -12,6 +13,8 @@ import {
   daysSinceLastOnline,
   License,
   OFFLINE_GRACE_PERIOD_DAYS,
+  TrialDays,
+  trialProbeResultOf,
 } from '../../domain/licensing/index.js';
 import type { LicenseApiClient } from './license-api-client.js';
 import type { LicenseRepository } from './license-repository.js';
@@ -91,6 +94,8 @@ export class LicenseOperations {
   async initialize(): Promise<void> {
     log('[LicenseOperations] Initializing...');
 
+    this.migrateTrialExpiry();
+
     const status = this.repository.getStatus();
     const license = this.repository.loadLicense();
     const online = this.recordOnlineIfConnected();
@@ -99,6 +104,11 @@ export class LicenseOperations {
     // offline grace period instead.
     if (status === 'valid' && license && online) {
       await this.validateLicense();
+    }
+
+    // Asking offline cannot get an answer; the stored result is kept instead.
+    if (this.getEffectiveStatus() === 'trial-expired' && online) {
+      await this.probeLicenseServer();
     }
 
     this.notifyStateChange();
@@ -178,7 +188,7 @@ export class LicenseOperations {
    * Get the current license state
    */
   getState(): LicenseState {
-    const status = this.repository.getStatus();
+    const status = this.getEffectiveStatus();
     const license = this.repository.loadLicense();
     const trial = this.repository.loadTrialPeriod();
     const networkState = this.networkStateProvider.getNetworkState();
@@ -203,16 +213,17 @@ export class LicenseOperations {
     const state = this.getState();
 
     switch (state.status) {
-      case 'trial': {
-        const trial = this.repository.loadTrialPeriod();
-        return trial.isExpired() ? 'trial-expired' : null;
-      }
-      case 'valid': {
-        const graceExceeded =
-          state.networkState === 'offline' &&
-          state.daysSinceLastOnline >= OFFLINE_GRACE_PERIOD_DAYS;
-        return graceExceeded ? 'offline-grace-exceeded' : null;
-      }
+      case 'trial':
+        return null;
+      case 'trial-expired':
+        // The license gate is a reminder, not enforcement: once the license
+        // server no longer answers, an ended trial opens like a valid license.
+        if (this.repository.getTrialProbeResult() !== 'no-response') {
+          return 'trial-expired';
+        }
+        return isOfflineGraceExceeded(state) ? 'offline-grace-exceeded' : null;
+      case 'valid':
+        return isOfflineGraceExceeded(state) ? 'offline-grace-exceeded' : null;
       case 'expired':
         return 'license-expired';
       case 'invalid':
@@ -306,12 +317,20 @@ export class LicenseOperations {
   }
 
   /**
-   * Clear the current license and return to trial mode
+   * Clear the current license and return to the trial. When the trial days
+   * are already used up, return to trial-expired instead, so clearing a
+   * license never restarts an ended trial.
    */
   clearLicense(): void {
     this.repository.clearLicense();
+    const trialEnded = this.repository.loadTrialPeriod().isExpired();
+    if (trialEnded) {
+      this.repository.setStatus('trial-expired');
+    }
     this.notifyStateChange();
-    log('[LicenseOperations] License cleared, returning to trial mode');
+    log(
+      `[LicenseOperations] License cleared, returning to ${trialEnded ? 'trial-expired' : 'trial'}`
+    );
   }
 
   /**
@@ -336,16 +355,51 @@ export class LicenseOperations {
     this.repository.saveTrialPeriod(updatedTrial);
 
     log(
-      `[LicenseOperations] Recorded trial day ${updatedTrial.daysUsed.toNumber()}/${30} (${today})`
+      `[LicenseOperations] Recorded trial day ${updatedTrial.daysUsed.toNumber()}/${TrialDays.LIMIT} (${today})`
     );
 
     if (updatedTrial.isExpired()) {
       log('[LicenseOperations] Trial period has ended');
-      this.repository.setStatus('expired');
+      this.repository.setStatus('trial-expired');
     }
 
     this.notifyStateChange();
     return true;
+  }
+
+  /**
+   * Rewrite the status an older version stored when the trial ended.
+   * It stored 'expired' without a license key; 'expired' with a license key is
+   * a License the license server rejected, and stays.
+   */
+  private migrateTrialExpiry(): void {
+    if (this.repository.getStatus() === 'expired' && this.repository.loadLicense() === null) {
+      log('[LicenseOperations] Rewriting the stored trial expiry as trial-expired');
+      this.repository.setStatus('trial-expired');
+    }
+  }
+
+  /**
+   * Ask the license server whether it is there and store whether it answered.
+   * An ended trial opens only when the license server no longer answers.
+   */
+  private async probeLicenseServer(): Promise<void> {
+    const outcome = await this.apiClient.probe();
+    const result = trialProbeResultOf(outcome);
+    log(`[LicenseOperations] License server probe after the trial: ${result}`);
+    this.repository.setTrialProbeResult(result);
+  }
+
+  /**
+   * The stored status, except that a trial whose days are used up (e.g.
+   * written by another process) counts as trial-expired.
+   */
+  private getEffectiveStatus(): LicenseStatus {
+    const status = this.repository.getStatus();
+    if (status === 'trial' && this.repository.loadTrialPeriod().isExpired()) {
+      return 'trial-expired';
+    }
+    return status;
   }
 
   /**
@@ -405,4 +459,12 @@ export class LicenseOperations {
       }
     }
   }
+}
+
+/**
+ * Whether the device has been offline longer than the offline grace period,
+ * counted from the last time it was online.
+ */
+function isOfflineGraceExceeded(state: LicenseState): boolean {
+  return state.networkState === 'offline' && state.daysSinceLastOnline >= OFFLINE_GRACE_PERIOD_DAYS;
 }

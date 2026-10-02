@@ -43,6 +43,8 @@ function createMockRepository(options: {
     },
     getLastOnlineAt: notImplemented('getLastOnlineAt'),
     setLastOnlineAt: notImplemented('setLastOnlineAt'),
+    getTrialProbeResult: notImplemented('getTrialProbeResult'),
+    setTrialProbeResult: notImplemented('setTrialProbeResult'),
     clearLicense: notImplemented('clearLicense'),
     watchChanges: notImplemented('watchChanges'),
   };

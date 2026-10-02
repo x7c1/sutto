@@ -2,7 +2,7 @@
 
 ## What counts as a trial day?
 
-A trial day is an actual usage day, not a calendar day. A day is counted when the extension is first used on that day. If you don't use Sutto on a given day, it doesn't count toward your 30-day trial.
+A trial day is an actual usage day, not a calendar day. A day is counted the first time you open the main panel that day; logging in or unlocking the screen does not count. If you don't use Sutto on a given day, it doesn't count toward your 30-day trial.
 
 ## Can I use Sutto on multiple devices?
 
@@ -10,11 +10,11 @@ Yes. A licensed subscription supports up to **3 device activations**. If you act
 
 ## What happens when my trial expires?
 
-The extension is disabled until you purchase a license. Your preferences and configuration are preserved — once you activate a license, everything works as before.
+The extension is disabled until you purchase a license. Your preferences and configuration are preserved — once you activate a license, everything works as before. If the license server is ever shut down, Sutto works again without a license.
 
 ## Do I need internet to use Sutto?
 
-Internet is needed for license activation and validation, but the extension works offline for up to **7 days** after the last successful validation.
+Internet is needed for license activation and validation, but the extension works offline for up to **7 days** after the device was last online.
 
 ## Which GNOME Shell versions are supported?
 
