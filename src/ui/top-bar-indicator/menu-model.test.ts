@@ -8,6 +8,8 @@ function licenseState(overrides: Partial<LicenseState> = {}): LicenseState {
     networkState: 'online',
     trialDaysRemaining: 0,
     validUntil: new Date(2026, 9, 5),
+    validUntilPassed: false,
+    lastValidated: new Date(2026, 8, 5),
     daysSinceLastOnline: 0,
     ...overrides,
   });

@@ -17,6 +17,7 @@ export type { LicenseState } from './license-state.js';
 export {
   createLicenseState,
   daysSinceLastOnline,
+  isValidUntilPassed,
   OFFLINE_GRACE_PERIOD_DAYS,
 } from './license-state.js';
 export type { LicenseStatus } from './license-status.js';

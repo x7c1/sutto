@@ -20,7 +20,7 @@ export interface LicenseStatusDisplay {
  * Map a LicenseState to its user-facing title, subtitle and purchase-link flag.
  */
 export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDisplay {
-  const { status, networkState, trialDaysRemaining, validUntil, daysSinceLastOnline } = state;
+  const { status, networkState, trialDaysRemaining, daysSinceLastOnline } = state;
 
   if (status === 'trial') {
     return {
@@ -44,10 +44,9 @@ export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDispl
         showPurchaseLink: false,
       };
     }
-    const validUntilStr = validUntil ? formatDate(validUntil) : 'Unknown';
     return {
       title: 'Active',
-      subtitle: `Valid until ${validUntilStr}`,
+      subtitle: validLicenseSubtitle(state),
       showPurchaseLink: false,
     };
   }
@@ -76,6 +75,19 @@ export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDispl
     subtitle: state.errorMessage ?? 'License key is invalid',
     showPurchaseLink: true,
   };
+}
+
+/**
+ * Subtitle of a valid License while online. The valid-until date is only
+ * refreshed by a successful validation, so once it has passed (the license
+ * server stopped answering) the last validation is what is actually known.
+ */
+function validLicenseSubtitle(state: LicenseState): string {
+  const { validUntil, validUntilPassed, lastValidated } = state;
+  if (!validUntilPassed) {
+    return `Valid until ${validUntil ? formatDate(validUntil) : 'Unknown'}`;
+  }
+  return lastValidated ? `Last verified ${formatDate(lastValidated)}` : 'Not verified yet';
 }
 
 function formatDate(date: Date): string {
