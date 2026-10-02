@@ -18,7 +18,7 @@ When triggered, the Main Panel shows a visual representation of all available [S
 - **Positioning**: When triggered by keyboard, appears centered on the focused window. When triggered by drag, follows the cursor while staying within screen boundaries
 - **Auto-hide**: Hides automatically after a short period if not interacted with
 - **Keyboard Navigation**: Arrow keys navigate between layout buttons, Enter applies the selected layout, Escape closes the panel
-- **Locked State**: When the [License Status](../license/license-status/) no longer grants access, the Main Panel still appears on every trigger, but the layout buttons are replaced by an explanation of why the extension is disabled and, where the user can act on it, a button that opens the preferences window. Positioning and auto-hide are unchanged
+- **Locked State**: When the extension is disabled (see [License Status](../license/license-status/) and [Trial Period](../trial-period/)), the Main Panel still appears on every trigger, but the layout buttons are replaced by an explanation of why the extension is disabled and, where the user can act on it, a button that opens the preferences window. Positioning and auto-hide are unchanged
 
 ## Examples
 
