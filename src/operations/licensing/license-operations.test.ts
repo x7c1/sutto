@@ -7,6 +7,7 @@ import type {
   LicenseState,
   LicenseStatus,
   NetworkState,
+  TrialProbeResult,
 } from '../../domain/licensing/index.js';
 import {
   ActivationId,
@@ -69,6 +70,7 @@ function createMockRepository(
     trialPeriod: TrialPeriod;
     trialWarningThreshold: number;
     lastOnlineAt: Date | null;
+    trialProbeResult: TrialProbeResult;
   }>
 ): LicenseRepository {
   let status = overrides?.status ?? 'trial';
@@ -76,6 +78,7 @@ function createMockRepository(
   let trialPeriod = overrides?.trialPeriod ?? TrialPeriod.initial();
   let trialWarningThreshold = overrides?.trialWarningThreshold ?? 0;
   let lastOnlineAt = overrides?.lastOnlineAt ?? null;
+  let trialProbeResult = overrides?.trialProbeResult ?? 'none';
 
   return {
     getStatus: () => status,
@@ -98,6 +101,10 @@ function createMockRepository(
     setLastOnlineAt: (date: Date) => {
       lastOnlineAt = date;
     },
+    getTrialProbeResult: () => trialProbeResult,
+    setTrialProbeResult: (result: TrialProbeResult) => {
+      trialProbeResult = result;
+    },
     clearLicense: () => {
       license = null;
       status = 'trial';
@@ -111,6 +118,7 @@ interface ExternalStore {
   license: License | null;
   trialPeriod: TrialPeriod;
   lastOnlineAt?: Date | null;
+  trialProbeResult?: TrialProbeResult;
 }
 
 /**
@@ -155,6 +163,10 @@ function createExternallyChangedRepository(initial: ExternalStore): {
     setLastOnlineAt: (date: Date) => {
       store.lastOnlineAt = date;
     },
+    getTrialProbeResult: () => store.trialProbeResult ?? 'none',
+    setTrialProbeResult: write((result: TrialProbeResult) => {
+      store.trialProbeResult = result;
+    }),
     clearLicense: write(() => {
       store.license = null;
       store.status = 'trial';
@@ -197,6 +209,7 @@ function createMockApiClient(
     validate: async () =>
       overrides?.validateResult ??
       ValidationResult.succeeded({ validUntil: TEST_VALID_UNTIL, subscriptionStatus: 'active' }),
+    probe: async () => ValidationResult.rejected('INVALID_LICENSE_KEY'),
   };
 }
 
@@ -356,6 +369,155 @@ describe('LicenseOperations', () => {
 
       expect(repository.loadTrialPeriod().daysUsed.toNumber()).toBe(5);
       expect(repository.loadTrialPeriod().lastUsedDate).toBe('2026-06-14');
+    });
+
+    it('rewrites a stored expired status without a license key as trial-expired', async () => {
+      const repository = createMockRepository({
+        status: 'expired',
+        license: null,
+        trialPeriod: createMockTrialPeriod(30, '2026-06-01'),
+      });
+      const ops = createOperations({ repository });
+
+      await ops.initialize();
+
+      expect(repository.getStatus()).toBe('trial-expired');
+    });
+
+    it('keeps a stored expired status with a license key', async () => {
+      const repository = createMockRepository({
+        status: 'expired',
+        license: createMockLicense({ status: 'expired' }),
+        trialPeriod: createMockTrialPeriod(30, '2026-06-01'),
+      });
+      const apiClient = createMockApiClient();
+      apiClient.probe = () => {
+        throw new Error('probe is not expected to be called for an expired license');
+      };
+      const ops = createOperations({ repository, apiClient });
+
+      await ops.initialize();
+
+      expect(repository.getStatus()).toBe('expired');
+      expect(ops.getDisabledReason()).toBe('license-expired');
+    });
+
+    describe('probing the license server after the trial', () => {
+      function countingApiClient(probeResult: ValidationResult): {
+        apiClient: LicenseApiClient;
+        probeCalls: () => number;
+      } {
+        let calls = 0;
+        const apiClient = createMockApiClient();
+        apiClient.probe = async () => {
+          calls++;
+          return probeResult;
+        };
+        return { apiClient, probeCalls: () => calls };
+      }
+
+      it.each([
+        ['a rejection', ValidationResult.rejected('INVALID_LICENSE_KEY'), 'answered'],
+        [
+          'a success',
+          ValidationResult.succeeded({
+            validUntil: TEST_VALID_UNTIL,
+            subscriptionStatus: 'active',
+          }),
+          'answered',
+        ],
+        ['no response', ValidationResult.noResponse(), 'no-response'],
+      ] as const)('stores %s as %s when online', async (_label, probeResult, expected) => {
+        const repository = createMockRepository({
+          status: 'trial-expired',
+          trialPeriod: createMockTrialPeriod(30, '2026-06-01'),
+        });
+        const { apiClient, probeCalls } = countingApiClient(probeResult);
+        const ops = createOperations({
+          repository,
+          apiClient,
+          networkStateProvider: createMockNetworkStateProvider('online'),
+        });
+
+        await ops.initialize();
+
+        expect(probeCalls()).toBe(1);
+        expect(repository.getTrialProbeResult()).toBe(expected);
+      });
+
+      it('opens the gate once the license server did not answer', async () => {
+        const repository = createMockRepository({
+          status: 'trial-expired',
+          trialPeriod: createMockTrialPeriod(30, '2026-06-01'),
+        });
+        const { apiClient } = countingApiClient(ValidationResult.noResponse());
+        const ops = createOperations({ repository, apiClient });
+        const states: LicenseState[] = [];
+        ops.onStateChange((s) => states.push(s));
+        expect(ops.getDisabledReason()).toBe('trial-expired');
+
+        await ops.initialize();
+
+        expect(ops.getDisabledReason()).toBeNull();
+        expect(states.length).toBe(1);
+      });
+
+      it('probes after rewriting a stored trial expiry from an older version', async () => {
+        const repository = createMockRepository({
+          status: 'expired',
+          license: null,
+          trialPeriod: createMockTrialPeriod(30, '2026-06-01'),
+        });
+        const { apiClient, probeCalls } = countingApiClient(ValidationResult.noResponse());
+        const ops = createOperations({ repository, apiClient });
+
+        await ops.initialize();
+
+        expect(probeCalls()).toBe(1);
+        expect(repository.getTrialProbeResult()).toBe('no-response');
+      });
+
+      it.each([
+        'answered',
+        'no-response',
+      ] as const)('does not probe and keeps the stored result %s when offline', async (stored) => {
+        const repository = createMockRepository({
+          status: 'trial-expired',
+          trialPeriod: createMockTrialPeriod(30, '2026-06-01'),
+          trialProbeResult: stored,
+        });
+        const { apiClient, probeCalls } = countingApiClient(ValidationResult.noResponse());
+        const ops = createOperations({
+          repository,
+          apiClient,
+          networkStateProvider: createMockNetworkStateProvider('offline'),
+        });
+
+        await ops.initialize();
+
+        expect(probeCalls()).toBe(0);
+        expect(repository.getTrialProbeResult()).toBe(stored);
+      });
+
+      it.each([
+        ['trial', null],
+        ['valid', createMockLicense()],
+        ['expired', createMockLicense({ status: 'expired' })],
+        ['invalid', createMockLicense({ status: 'invalid' })],
+      ] as const)('does not probe when the status is %s', async (status, license) => {
+        const repository = createMockRepository({
+          status,
+          license,
+          trialPeriod: createMockTrialPeriod(5, '2026-06-01'),
+        });
+        const { apiClient, probeCalls } = countingApiClient(ValidationResult.noResponse());
+        const ops = createOperations({ repository, apiClient });
+
+        await ops.initialize();
+
+        expect(probeCalls()).toBe(0);
+        expect(repository.getTrialProbeResult()).toBe('none');
+      });
     });
 
     it('notifies state change callbacks after initialization', async () => {
@@ -551,13 +713,92 @@ describe('LicenseOperations', () => {
       expect(createOperations({ repository }).getDisabledReason()).toBeNull();
     });
 
-    it('returns trial-expired when the trial is expired', () => {
+    it('treats a trial whose days are used up like trial-expired', () => {
       const repository = createMockRepository({
         status: 'trial',
         trialPeriod: createMockTrialPeriod(30),
       });
+      const ops = createOperations({ repository });
 
-      expect(createOperations({ repository }).getDisabledReason()).toBe('trial-expired');
+      expect(ops.getDisabledReason()).toBe('trial-expired');
+      expect(ops.getState().status).toBe('trial-expired');
+    });
+
+    it('opens a trial whose days are used up once the license server no longer answers', () => {
+      const repository = createMockRepository({
+        status: 'trial',
+        trialPeriod: createMockTrialPeriod(30),
+        trialProbeResult: 'no-response',
+      });
+
+      expect(createOperations({ repository }).getDisabledReason()).toBeNull();
+    });
+
+    describe('when the trial has ended', () => {
+      function trialExpiredOperations(options: {
+        probe: TrialProbeResult;
+        network: NetworkState;
+        daysOffline?: number;
+      }): LicenseOperations {
+        const repository = createMockRepository({
+          status: 'trial-expired',
+          trialPeriod: createMockTrialPeriod(30, '2026-06-01'),
+          trialProbeResult: options.probe,
+          lastOnlineAt: daysBefore(TEST_NOW, options.daysOffline ?? 0),
+        });
+        return createOperations({
+          repository,
+          networkStateProvider: createMockNetworkStateProvider(options.network),
+        });
+      }
+
+      it.each([
+        'online',
+        'offline',
+      ] as const)('returns trial-expired when the license server was never asked, while %s', (network) => {
+        expect(trialExpiredOperations({ probe: 'none', network }).getDisabledReason()).toBe(
+          'trial-expired'
+        );
+      });
+
+      it.each([
+        'online',
+        'offline',
+      ] as const)('returns trial-expired when the license server answered, while %s', (network) => {
+        expect(trialExpiredOperations({ probe: 'answered', network }).getDisabledReason()).toBe(
+          'trial-expired'
+        );
+      });
+
+      it('returns null when the license server did not answer and the device is online', () => {
+        expect(
+          trialExpiredOperations({
+            probe: 'no-response',
+            network: 'online',
+            daysOffline: 30,
+          }).getDisabledReason()
+        ).toBeNull();
+      });
+
+      it('returns null when the license server did not answer and the device is offline within 7 days of last online', () => {
+        expect(
+          trialExpiredOperations({
+            probe: 'no-response',
+            network: 'offline',
+            daysOffline: 6,
+          }).getDisabledReason()
+        ).toBeNull();
+      });
+
+      it('returns offline-grace-exceeded when the license server did not answer and the device is offline 7 days after last online', () => {
+        expect(
+          trialExpiredOperations({
+            probe: 'no-response',
+            network: 'offline',
+            daysOffline: 7,
+          }).getDisabledReason()
+        ).toBe('offline-grace-exceeded');
+      });
     });
 
     function validLicenseOperations(options: {
@@ -827,10 +1068,11 @@ describe('LicenseOperations', () => {
   });
 
   describe('clearLicense', () => {
-    it('delegates to repository.clearLicense()', () => {
+    it('returns to trial while trial days remain', () => {
       const repository = createMockRepository({
         status: 'valid',
         license: createMockLicense(),
+        trialPeriod: createMockTrialPeriod(29),
       });
       const ops = createOperations({ repository });
 
@@ -838,6 +1080,21 @@ describe('LicenseOperations', () => {
 
       expect(repository.loadLicense()).toBeNull();
       expect(repository.getStatus()).toBe('trial');
+    });
+
+    it('returns to trial-expired when the trial days are used up', () => {
+      const repository = createMockRepository({
+        status: 'valid',
+        license: createMockLicense(),
+        trialPeriod: createMockTrialPeriod(30),
+      });
+      const ops = createOperations({ repository });
+
+      ops.clearLicense();
+
+      expect(repository.loadLicense()).toBeNull();
+      expect(repository.getStatus()).toBe('trial-expired');
+      expect(ops.getDisabledReason()).toBe('trial-expired');
     });
 
     it('notifies state change callbacks', () => {
@@ -885,6 +1142,7 @@ describe('LicenseOperations', () => {
     });
 
     it.each([
+      'trial-expired',
       'valid',
       'expired',
       'invalid',
@@ -901,7 +1159,7 @@ describe('LicenseOperations', () => {
       expect(repository.loadTrialPeriod().daysUsed.toNumber()).toBe(5);
     });
 
-    it('sets status to expired when trial period ends', () => {
+    it('sets status to trial-expired, not expired, when the day that reaches the limit is recorded', () => {
       const repository = createMockRepository({
         status: 'trial',
         trialPeriod: createMockTrialPeriod(29, '2026-06-14'),
@@ -910,7 +1168,8 @@ describe('LicenseOperations', () => {
 
       ops.recordTrialUsage();
 
-      expect(repository.getStatus()).toBe('expired');
+      expect(repository.getStatus()).toBe('trial-expired');
+      expect(ops.getDisabledReason()).toBe('trial-expired');
     });
 
     it('notifies state change after recording', () => {

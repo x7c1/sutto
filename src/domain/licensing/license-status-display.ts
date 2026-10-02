@@ -52,14 +52,17 @@ export function getLicenseStatusDisplay(state: LicenseState): LicenseStatusDispl
     };
   }
 
+  // Shown the same whether or not the license gate is open: an ended trial
+  // that opens because the license server no longer answers is still ended.
+  if (status === 'trial-expired') {
+    return {
+      title: 'Trial Expired',
+      subtitle: 'Please purchase a license',
+      showPurchaseLink: true,
+    };
+  }
+
   if (status === 'expired') {
-    if (trialDaysRemaining === 0) {
-      return {
-        title: 'Trial Expired',
-        subtitle: 'Please purchase a license',
-        showPurchaseLink: true,
-      };
-    }
     return {
       title: 'Expired',
       subtitle: 'Please renew your subscription',

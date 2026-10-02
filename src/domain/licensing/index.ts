@@ -33,6 +33,12 @@ export { isValidNetworkState, NETWORK_STATES } from './network-state.js';
 export { InvalidTrialDaysError, TrialDays } from './trial-days.js';
 export type { TrialPeriodProps } from './trial-period.js';
 export { TrialPeriod } from './trial-period.js';
+export type { TrialProbeResult } from './trial-probe-result.js';
+export {
+  isValidTrialProbeResult,
+  TRIAL_PROBE_RESULTS,
+  trialProbeResultOf,
+} from './trial-probe-result.js';
 export type { TrialWarningDecision, TrialWarningInput } from './trial-warning.js';
 export {
   evaluateTrialWarning,

@@ -2,7 +2,12 @@
 globalThis.log = () => {};
 
 import { describe, expect, it } from 'vitest';
-import type { DisabledReason, LicenseStatus, NetworkState } from '../../domain/licensing/index.js';
+import type {
+  DisabledReason,
+  LicenseStatus,
+  NetworkState,
+  TrialProbeResult,
+} from '../../domain/licensing/index.js';
 import {
   ActivationId,
   DeviceId,
@@ -12,7 +17,11 @@ import {
   TrialPeriod,
 } from '../../domain/licensing/index.js';
 import type { LicenseApiClient, LicenseRepository } from '../../operations/licensing/index.js';
-import { LicenseOperations, TrialWarningOperations } from '../../operations/licensing/index.js';
+import {
+  LicenseOperations,
+  TrialWarningOperations,
+  ValidationResult,
+} from '../../operations/licensing/index.js';
 import { LicenseStateHandler } from './license-state-handler.js';
 
 const unexpected = (name: string) => (): never => {
@@ -26,7 +35,7 @@ const unexpected = (name: string) => (): never => {
 function createSharedStorage() {
   const store: { status: LicenseStatus; license: License | null; lastOnlineAt: Date | null } = {
     status: 'expired',
-    license: null,
+    license: createValidLicense().withStatus('expired'),
     lastOnlineAt: null,
   };
   const trialPeriod = new TrialPeriod({ daysUsed: new TrialDays(30), lastUsedDate: '2026-06-15' });
@@ -45,6 +54,8 @@ function createSharedStorage() {
     setLastOnlineAt: (date) => {
       store.lastOnlineAt = date;
     },
+    getTrialProbeResult: () => 'none',
+    setTrialProbeResult: unexpected('setTrialProbeResult'),
     clearLicense: unexpected('clearLicense'),
     watchChanges: (callback) => {
       watchers.add(callback);
@@ -77,7 +88,8 @@ function createTrialStorage(
     trialPeriod: TrialPeriod;
     trialWarningThreshold: number;
     lastOnlineAt: Date | null;
-  } = { status, trialPeriod, trialWarningThreshold, lastOnlineAt: null };
+    trialProbeResult: TrialProbeResult;
+  } = { status, trialPeriod, trialWarningThreshold, lastOnlineAt: null, trialProbeResult: 'none' };
   const savedTrialPeriods: TrialPeriod[] = [];
 
   const repository: LicenseRepository = {
@@ -100,6 +112,10 @@ function createTrialStorage(
     getLastOnlineAt: () => store.lastOnlineAt,
     setLastOnlineAt: (date) => {
       store.lastOnlineAt = date;
+    },
+    getTrialProbeResult: () => store.trialProbeResult,
+    setTrialProbeResult: (result) => {
+      store.trialProbeResult = result;
     },
     clearLicense: unexpected('clearLicense'),
     watchChanges: () => () => {},
@@ -152,6 +168,8 @@ function createHandler(
   const apiClient: LicenseApiClient = {
     activate: unexpected('activate'),
     validate: unexpected('validate'),
+    // The license server always answers here, so an ended trial stays locked.
+    probe: async () => ValidationResult.rejected('INVALID_LICENSE_KEY'),
   };
   const licenseOperations = new LicenseOperations(
     repository,
@@ -332,6 +350,7 @@ describe('LicenseStateHandler', () => {
     });
 
     it.each([
+      'trial-expired',
       'valid',
       'expired',
       'invalid',
@@ -356,7 +375,8 @@ describe('LicenseStateHandler', () => {
 
       handler.recordPanelUse();
 
-      expect(handler.getDisabledReason()).toBe('license-expired');
+      expect(handler.getDisabledReason()).toBe('trial-expired');
+      expect(storage.store.status).toBe('trial-expired');
     });
 
     it('warns when a recorded day crosses a warning threshold', async () => {

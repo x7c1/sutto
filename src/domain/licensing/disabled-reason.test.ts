@@ -29,7 +29,7 @@ describe('describeDisabledReason', () => {
 
   it('describes offline-grace-exceeded without an action', () => {
     expect(describeDisabledReason('offline-grace-exceeded')).toEqual({
-      headline: "Sutto couldn't verify your license.",
+      headline: 'This device has been offline for too long.',
       instruction: 'Reconnect to the internet to continue.',
       canOpenPreferences: false,
     });

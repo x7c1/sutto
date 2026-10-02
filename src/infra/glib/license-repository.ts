@@ -3,12 +3,14 @@ import GLib from 'gi://GLib';
 
 import {
   ActivationId,
+  isValidTrialProbeResult,
   License,
   LicenseKey,
   type LicenseStatus,
   parseLicenseStatus,
   TrialDays,
   TrialPeriod,
+  type TrialProbeResult,
 } from '../../domain/licensing/index.js';
 import type { LicenseRepository } from '../../operations/licensing/index.js';
 
@@ -19,7 +21,8 @@ declare function log(message: string): void;
  * The trial warning threshold is deliberately excluded: it does not affect
  * whether the extension is enabled. `last-online-at` is excluded too: the Shell
  * writes it often, and following it would only produce redundant
- * notifications.
+ * notifications. `trial-probe-result` is excluded because only the Shell
+ * writes it, and the Shell notifies the state change itself after writing it.
  */
 const LICENSE_STATE_KEYS = [
   'license-status',
@@ -106,6 +109,15 @@ export class GSettingsLicenseRepository implements LicenseRepository {
 
   setLastOnlineAt(date: Date): void {
     this.settings.set_int64('last-online-at', Math.floor(date.getTime() / 1000));
+  }
+
+  getTrialProbeResult(): TrialProbeResult {
+    const value = this.settings.get_string('trial-probe-result');
+    return isValidTrialProbeResult(value) ? value : 'none';
+  }
+
+  setTrialProbeResult(result: TrialProbeResult): void {
+    this.settings.set_string('trial-probe-result', result);
   }
 
   getStatus(): LicenseStatus {

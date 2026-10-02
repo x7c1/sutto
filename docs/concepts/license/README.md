@@ -27,6 +27,8 @@ A License is created when a user activates a [License Key](./license-key/) and c
 
 - **3-device limit**: Each License supports up to 3 device activations. When activated on a 4th device, the oldest activation is automatically deactivated.
 - **7-day offline grace period**: A License works offline for up to 7 days after the device was last online, whether or not the license server answered. After that, an internet connection is needed. While online, a License keeps working even when the license server does not answer.
+- **No answer is not a rejection**: When the license server does not answer, the stored License and [License Status](./license-status/) stay as they are.
+- **A rejected activation changes nothing**: When the license server rejects an activation, nothing stored changes; a user in the [Trial Period](../trial-period/) stays in it.
 
 ## Related Concepts
 

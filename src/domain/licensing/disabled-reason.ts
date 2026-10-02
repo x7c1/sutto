@@ -46,7 +46,7 @@ const DESCRIPTIONS: Record<DisabledReason, DisabledReasonDescription> = {
     canOpenPreferences: true,
   },
   'offline-grace-exceeded': {
-    headline: "Sutto couldn't verify your license.",
+    headline: 'This device has been offline for too long.',
     instruction: 'Reconnect to the internet to continue.',
     canOpenPreferences: false,
   },

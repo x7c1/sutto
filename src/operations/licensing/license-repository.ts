@@ -1,4 +1,9 @@
-import type { License, LicenseStatus, TrialPeriod } from '../../domain/licensing/index.js';
+import type {
+  License,
+  LicenseStatus,
+  TrialPeriod,
+  TrialProbeResult,
+} from '../../domain/licensing/index.js';
 
 /**
  * Interface for license data persistence
@@ -50,6 +55,18 @@ export interface LicenseRepository {
   setLastOnlineAt(date: Date): void;
 
   /**
+   * Get the result of the last time the license server was asked, after the
+   * Trial Period ended, whether it is there. Returns 'none' when it has not
+   * been asked (or the stored value is not usable).
+   */
+  getTrialProbeResult(): TrialProbeResult;
+
+  /**
+   * Store the result of asking the license server whether it is there.
+   */
+  setTrialProbeResult(result: TrialProbeResult): void;
+
+  /**
    * Get the current license status
    */
   getStatus(): LicenseStatus;
@@ -60,7 +77,7 @@ export interface LicenseRepository {
   setStatus(status: LicenseStatus): void;
 
   /**
-   * Clear all license data (return to trial mode)
+   * Clear all license data and set the status to 'trial'
    */
   clearLicense(): void;
 
