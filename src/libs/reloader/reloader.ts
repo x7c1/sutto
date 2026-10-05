@@ -90,7 +90,7 @@ export class Reloader {
       const extensionManager = Main.extensionManager;
 
       // Clean up old instances
-      this.cleanupOldInstances(extensionManager);
+      await this.cleanupOldInstances(extensionManager);
 
       // Unload the old extension first to unregister its D-Bus interface.
       // `unloadExtension()` runs the same disable path as `disableExtension()`
@@ -186,13 +186,15 @@ export class Reloader {
   }
 
   /**
-   * Clean up old reload instances.
+   * Clean up old reload instances. Best-effort: a failure on one UUID is
+   * logged and the rest are still visited. Each unload is awaited so that
+   * its rejection lands in the catch below instead of escaping it.
    *
    * `unloadExtension()` never writes GSettings, so the stale UUIDs it leaves
    * in the `org.gnome.shell` arrays are removed later by
    * {@link pruneStaleReloadUuidsFromGSettings}.
    */
-  private cleanupOldInstances(extensionManager: ExtensionManager): void {
+  private async cleanupOldInstances(extensionManager: ExtensionManager): Promise<void> {
     const uuids = extensionManager.getUuids();
     for (const uuid of uuids) {
       // Only this extension's own copies: other extensions may run their
@@ -201,7 +203,7 @@ export class Reloader {
         try {
           const extension = extensionManager.lookup(uuid) as ExtensionObject | undefined;
           if (extension) {
-            extensionManager.unloadExtension(extension);
+            await extensionManager.unloadExtension(extension);
           }
         } catch (e: unknown) {
           console.log(`[Reloader] Error removing ${uuid}: ${getErrorMessage(e)}`);
