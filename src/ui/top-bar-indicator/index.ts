@@ -39,10 +39,18 @@ export class TopBarIndicator {
 
   constructor(private readonly options: TopBarIndicatorOptions) {
     this.button = new PanelMenu.Button(0.0, options.name, false);
-    // The theme's panel-button padding (12px a side) makes a single-icon
-    // button look far wider than its glyph; keep it compact.
-    this.button.set_style('-natural-hpadding: 6px;');
-    this.button.add_child(new St.Icon({ icon_name: ICON_NAME, style_class: 'system-status-icon' }));
+    // The theme pads a single-icon button twice, on the button and on its
+    // status icon (6px padding and 4px margin a side), which makes it look
+    // far wider than its glyph. Drop the icon's and keep the button's,
+    // stated here so the width does not depend on the theme.
+    this.button.set_style('-natural-hpadding: 12px;');
+    this.button.add_child(
+      new St.Icon({
+        icon_name: ICON_NAME,
+        style_class: 'system-status-icon',
+        style: 'padding: 0; margin: 0;',
+      })
+    );
 
     const menu = this.button.menu as PopupMenu.PopupMenu;
 
