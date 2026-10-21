@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: x7c1/colophon/.github/workflows/release-pr.yml@f08a4ae25f01df195386a5af560b69f48f98bdd3 # v0.1.0
+    uses: x7c1/colophon/.github/workflows/release-pr.yml@f8431bbc0604ad67234d5f04033eb488283dfa2f # v0.1.1
     with:
       version-scheme: semver
       version-writer: gnome-extension
