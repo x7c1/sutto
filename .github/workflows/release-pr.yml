@@ -1,0 +1,23 @@
+name: Release PR
+
+# Opens or refreshes the rolling release PR through colophon. See
+# docs/guides/08-release-workflow.md.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [edited]
+  workflow_dispatch:
+
+jobs:
+  release-pr:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: x7c1/colophon/.github/workflows/release-pr.yml@f08a4ae25f01df195386a5af560b69f48f98bdd3 # v0.1.0
+    with:
+      version-scheme: semver
+      version-writer: gnome-extension
+      version-file: dist/metadata.json
