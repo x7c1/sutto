@@ -1,0 +1,16 @@
+name: Validate Release PR
+
+# Checks the release PR's title and summary. Other PRs pass. See
+# docs/guides/08-release-workflow.md.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate:
+    permissions:
+      contents: read
+    uses: x7c1/colophon/.github/workflows/validate-release-pr.yml@f08a4ae25f01df195386a5af560b69f48f98bdd3 # v0.1.0
+    with:
+      version-scheme: semver

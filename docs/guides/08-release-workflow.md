@@ -2,144 +2,45 @@
 
 ## Overview
 
-This guide explains the automated release process for the GNOME Shell extension. Releases are triggered automatically when the version number in `dist/metadata.json` is incremented and merged to the main branch. The workflow creates a GitHub Release with a packaged extension zip file and auto-generated changelog.
+Releases run through [colophon](https://github.com/x7c1/colophon)'s reusable workflows. Every push to `main` keeps one release PR titled `Release vX.Y.Z` up to date; merging it publishes a GitHub Release with the packaged extension once CI passes on the merge commit. The version shown to users is a semver string shared with Sutto for macOS, written to `version-name` in `dist/metadata.json`, while the integer `version` that extensions.gnome.org requires grows by one with every release.
 
-## Release Process
+## Versions
 
-### 1. Increment Version
+- Releases are `vX.Y.Z`. Tags up to `v7` were integers; colophon reads `v7` as `7.0.0`, so `v8.0.0` follows it as a major bump
+- The minor version marks a milestone of the product, shared with Sutto for macOS. The patch version is per client, so a fix for GNOME alone is released as the next patch here only
+- `version-name` in `dist/metadata.json` is what the Extensions app and extensions.gnome.org show. `version` is an internal counter and is not kept equal to the major version
 
-Edit the version field in `dist/metadata.json`:
+## Releasing
 
-```json
-{
-  "uuid": "sutto@x7c1.github.io",
-  "name": "Sutto",
-  "version": 2
-}
-```
+1. **Find the release PR.** It is labelled `release` and titled `Release v<next>`, where the default is the next patch. Its branch is `main` plus one commit that writes `version-name` and `version` to `dist/metadata.json`
+2. **Pick the version.** To release a minor or major instead of a patch, edit the PR title (for example `Release v8.0.1` → `Release v8.1.0`). The release PR workflow rewrites the branch for the new version. The validate check rejects titles that skip a version
+3. **Write the summary.** Replace the placeholder above the `<!-- changelog:auto -->` marker in the PR body and delete the `<!-- release-summary:todo -->` comment. The summary becomes the GitHub Release body; the changelog below the marker is regenerated on every push to `main`
+4. **Run the checks.** The release PR is opened with `GITHUB_TOKEN`, so CI does not start on it by itself. Close and reopen the PR to run CI and the validate check on its latest commit
+5. **Merge.** Squash-merge the PR. When CI passes on the merge commit, the Release workflow builds the extension with the production settings, tags the commit `vX.Y.Z`, and publishes the GitHub Release with `sutto@x7c1.github.io.vX.Y.Z.shell-extension.zip` attached
 
-The version is an integer value. Increment it by 1 for each release (e.g., 1 → 2 → 3).
+## Workflows
 
-### 2. Create Pull Request
+| Workflow | Runs on | Does |
+|---|---|---|
+| `release-pr.yml` | push to `main`, release PR title edits, manual dispatch | Opens or refreshes the release PR |
+| `validate-release-pr.yml` | pull requests | Checks a release PR's title and summary; other PRs pass |
+| `release.yml` | CI completing on `main` | Builds and packages the extension, then tags and publishes the release |
 
-Create a PR with the version change:
-
-```bash
-git checkout -b release-v2
-git add dist/metadata.json
-git commit -m "chore: bump version to 2"
-git push origin release-v2
-```
-
-### 3. Review and Merge
-
-- PR checks will run automatically (lint, build, tests)
-- Review the changes and version increment
-- Merge to main branch when ready
-
-### 4. Automatic Release
-
-After merging to main:
-
-1. CI workflow runs (lint, build, tests)
-2. Release workflow detects version change
-3. Extension is built in production mode
-4. Extension is packaged as `sutto@x7c1.github.io.v2.shell-extension.zip`
-5. Git tag `v2` is created automatically
-6. GitHub Release is created with:
-   - Extension zip file
-   - Auto-generated changelog from PRs and commits
-
-## What Happens Automatically
-
-### CI Checks (pr.yml)
-
-Runs on every push and pull request:
-
-- Lint and format check (`npm run check`)
-- TypeScript compilation and build (`npm run build`)
-- Test execution (`npm run test:run`)
-
-### Release Creation (release.yml)
-
-Runs after CI completes successfully on main branch:
-
-- **Version Detection**: Compares current and previous version in `dist/metadata.json`
-- **Production Build**: Runs `npm run build:release` for optimized output
-- **Extension Packaging**: Creates zip file with all contents of `dist/` directory
-- **Git Tag Creation**: Automatically creates tag (e.g., `v2`)
-- **GitHub Release**: Creates release with zip file and changelog
-
-## Release Naming Convention
-
-The extension zip file follows GNOME's naming convention:
-
-```
-<uuid>.v<version>.shell-extension.zip
-```
-
-Example: `sutto@x7c1.github.io.v2.shell-extension.zip`
-
-Where:
-- `<uuid>`: Extension UUID from `metadata.json`
-- `<version>`: Version number from `metadata.json`
-
-## Verifying Release
-
-After merging:
-
-1. Check GitHub Actions tab for workflow status
-2. Verify both CI and Release workflows completed successfully
-3. Check GitHub Releases page for new release
-4. Download and verify the extension zip file
+The colophon workflows are pinned by commit SHA. See colophon's [usage guide](https://github.com/x7c1/colophon/blob/main/docs/usage.md) for their inputs.
 
 ## Troubleshooting
 
-### Release Not Triggered
-
-**Problem**: Release workflow didn't run after merge.
-
-**Solution**: Ensure version in `dist/metadata.json` was actually incremented. Check that:
-- Previous commit had version `1`
-- Current commit has version `2`
-- Change is in main branch
-
-### CI Checks Failed
-
-**Problem**: Release workflow skipped because CI failed.
-
-**Solution**: Fix CI issues first:
-1. Run `npm run check` locally to fix lint/format issues
-2. Run `npm run build` to ensure build succeeds
-3. Run `npm run test:run` to verify tests pass
-4. Push fixes to main branch
-
-### Wrong Version Number
-
-**Problem**: Released with incorrect version number.
-
-**Solution**:
-1. Increment version again in `dist/metadata.json`
-2. Create new PR and merge to trigger new release
-3. Old release can be deleted manually from GitHub Releases page
+- **No release was published after merging**: check that CI passed on the merge commit and that the Release workflow's `plan` job found the release PR. A release PR whose body has no summary fails `plan` before anything is tagged; write the summary and re-run the workflow
+- **The release PR workflow failed**: an edited title that skips a version is rejected. Fix the title and the next run refreshes the PR
+- **A build or upload step failed**: re-run the Release workflow. An existing release is kept, and the zip is replaced
 
 ## Manual Testing Before Release
 
-Before incrementing version, verify locally:
-
 ```bash
-# Run all checks
 npm run build && npm run check && npm run test:run
 
-# Test extension installation
 npm run build:release
 cd dist
 zip -r ../test-extension.zip .
 gnome-extensions install ../test-extension.zip --force
 ```
-
-## Future Enhancements
-
-- Automatic version bumping based on PR labels
-- Upload to extensions.gnome.org
-- Release notes template with changelog categories

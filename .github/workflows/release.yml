@@ -1,91 +1,75 @@
 name: Release
 
+# Once CI passes on the merge of a release PR, builds the extension zip at
+# that commit and publishes it as a GitHub Release through colophon. See
+# docs/guides/08-release-workflow.md.
+
 on:
   workflow_run:
     workflows: ["CI"]
-    types:
-      - completed
-    branches:
-      - main
+    types: [completed]
+    branches: [main]
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
+  plan:
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      pull-requests: read
+    uses: x7c1/colophon/.github/workflows/release-plan.yml@f08a4ae25f01df195386a5af560b69f48f98bdd3 # v0.1.0
+    with:
+      version-scheme: semver
 
+  build:
+    needs: plan
+    if: needs.plan.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-
-      - name: Check if version changed
-        id: version-check
-        run: ./scripts/check-version-change.sh
+          ref: ${{ needs.plan.outputs.sha }}
+          persist-credentials: false
 
       - name: Setup Node.js
-        if: steps.version-check.outputs.changed == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.x'
           cache: 'npm'
 
       - name: Install dependencies
-        if: steps.version-check.outputs.changed == 'true'
         run: npm ci
 
       - name: Build Extension
-        if: steps.version-check.outputs.changed == 'true'
         run: npm run build:release
         env:
           LICENSE_API_BASE_URL: ${{ secrets.LICENSE_API_BASE_URL }}
           LICENSE_PURCHASE_URL: ${{ secrets.LICENSE_PURCHASE_URL }}
 
       - name: Package Extension
-        if: steps.version-check.outputs.changed == 'true'
         id: package
-        run: |
-          ./scripts/package-extension.sh \
-            "${{ steps.version-check.outputs.uuid }}" \
-            "${{ steps.version-check.outputs.version }}"
-
-      - name: Generate Changelog
-        if: steps.version-check.outputs.changed == 'true'
-        id: changelog
-        run: |
-          repo_url=$(gh repo view --json url --jq '.url')
-          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          changelog=$(.github/scripts/generate-changelog.sh "$last_tag" "$repo_url")
-          compare=""
-          if [ -n "$last_tag" ]; then
-            compare=$(printf '## Changelog\n\n- [%s...v%s](%s/compare/%s...v%s)' \
-              "$last_tag" "${{ steps.version-check.outputs.version }}" \
-              "$repo_url" "$last_tag" "${{ steps.version-check.outputs.version }}")
-          fi
-          {
-            echo 'body<<CHANGELOG_EOF'
-            printf '%s\n' "$changelog"
-            printf '%s\n' "$compare"
-            echo 'CHANGELOG_EOF'
-          } >> "$GITHUB_OUTPUT"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: ./scripts/package-extension.sh "$(jq -r '.uuid' dist/metadata.json)" "$VERSION"
 
-      - name: Create Release
-        if: steps.version-check.outputs.changed == 'true'
-        uses: softprops/action-gh-release@v2
+      - name: Upload the extension zip
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          tag_name: v${{ steps.version-check.outputs.version }}
-          name: Release ${{ steps.version-check.outputs.version }}
-          files: ${{ steps.package.outputs.filename }}
-          body: ${{ steps.changelog.outputs.body }}
+          name: extension
+          path: ${{ steps.package.outputs.filename }}
+          if-no-files-found: error
 
-      - name: Update release PR links
-        if: steps.version-check.outputs.changed == 'true'
-        run: .github/scripts/update-release-pr-links.sh "${{ steps.version-check.outputs.version }}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  publish:
+    needs: [plan, build]
+    if: needs.plan.outputs.released == 'true'
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: x7c1/colophon/.github/workflows/release-publish.yml@f08a4ae25f01df195386a5af560b69f48f98bdd3 # v0.1.0
+    with:
+      tag: ${{ needs.plan.outputs.tag }}
+      sha: ${{ needs.plan.outputs.sha }}
+      pr-number: ${{ needs.plan.outputs.pr-number }}
+      artifact-name: extension
