@@ -11,6 +11,6 @@ jobs:
   validate:
     permissions:
       contents: read
-    uses: x7c1/colophon/.github/workflows/validate-release-pr.yml@f8431bbc0604ad67234d5f04033eb488283dfa2f # v0.1.1
+    uses: x7c1/colophon/.github/workflows/validate-release-pr.yml@32c12d334eab2aad2e21df7008df099e4bf2c665 # v0.2.0
     with:
       version-scheme: semver
