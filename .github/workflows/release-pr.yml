@@ -16,8 +16,13 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: x7c1/colophon/.github/workflows/release-pr.yml@f8431bbc0604ad67234d5f04033eb488283dfa2f # v0.1.1
+    uses: x7c1/colophon/.github/workflows/release-pr.yml@32c12d334eab2aad2e21df7008df099e4bf2c665 # v0.2.0
     with:
       version-scheme: semver
       version-writer: gnome-extension
       version-file: dist/metadata.json
+      # The GitHub App that opens the release PR, so CI runs on it. Until the
+      # variable and secret are registered, GITHUB_TOKEN is used instead.
+      app-client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+    secrets:
+      app-private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
