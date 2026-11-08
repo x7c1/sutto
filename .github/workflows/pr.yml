@@ -32,3 +32,21 @@ jobs:
 
       - name: Run tests
         run: npm run test:run
+
+  # Aggregates every job's result. This is the required check in the default branch's ruleset.
+  # When adding a job, add it to needs as well.
+  all-green:
+    if: always()
+    needs: [check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any job failed or was cancelled
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "needs results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" = failure ] || [ "$result" = cancelled ]; then
+              exit 1
+            fi
+          done
