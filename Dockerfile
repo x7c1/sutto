@@ -1,4 +1,4 @@
-FROM rust:1.91.1
+FROM rust:1.99.1
 
 # Install additional tools
 RUN apt-get update && apt-get install -y \
