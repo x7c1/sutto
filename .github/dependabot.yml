@@ -1,0 +1,43 @@
+# Weekly update pull requests, on Monday morning (Asia/Tokyo).
+#
+# Minor and patch updates of each ecosystem arrive as one grouped pull
+# request, since they rarely break anything and one CI run covers them all.
+# Major updates stay one pull request each, so a failing one points at the
+# dependency that broke. Security updates are not grouped.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Asia/Tokyo
+    groups:
+      github-actions-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Asia/Tokyo
+    groups:
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Asia/Tokyo
+    groups:
+      docker-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
