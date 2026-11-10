@@ -45,7 +45,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.6.6",
     "@girs/adw-1": "1.10.0-4.0.0-rc.15",
-    "@girs/clutter-18": "18.0.0-4.0.0-rc.15",
+    "@girs/clutter-18": "18.0.0-4.0.4",
     "@girs/gdk-4.0": "4.0.0-4.0.0-rc.15",
     "@girs/gjs": "4.0.0-rc.15",
     "@girs/gnome-shell": "50.0.0",
@@ -59,7 +59,7 @@
     "vitest": "^4.1.0"
   },
   "overrides": {
-    "@girs/clutter-18": "18.0.0-4.0.0-rc.15",
+    "@girs/clutter-18": "18.0.0-4.0.4",
     "@girs/cogl-2.0": "2.0.0-4.0.0-rc.15",
     "@girs/meta-18": "18.0.0-4.0.0-rc.15",
     "@girs/mtk-18": "18.0.0-4.0.0-rc.15",
