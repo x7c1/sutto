@@ -89,7 +89,7 @@ export function environmentToMonitorMap(environment: MonitorEnvironment): Map<st
 export function getCurrentMonitors(
   storage: MonitorEnvironmentStorage | null
 ): Map<string, Monitor> {
-  if (!storage || !storage.current) {
+  if (!storage?.current) {
     return new Map();
   }
 

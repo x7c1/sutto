@@ -45,17 +45,15 @@ describe('buildIndicatorMenuModel', () => {
       { licenseValid: false, hasFocusWindow: false, panelVisible: true, expected: true },
     ];
 
-    it.each(
-      cases
-    )('is $expected when licenseValid=$licenseValid, hasFocusWindow=$hasFocusWindow, panelVisible=$panelVisible', ({
-      licenseValid,
-      hasFocusWindow,
-      panelVisible,
-      expected,
-    }) => {
-      const model = buildIndicatorMenuModel(input({ licenseValid, hasFocusWindow, panelVisible }));
-      expect(model.showPanelSensitive).toBe(expected);
-    });
+    it.each(cases)(
+      'is $expected when licenseValid=$licenseValid, hasFocusWindow=$hasFocusWindow, panelVisible=$panelVisible',
+      ({ licenseValid, hasFocusWindow, panelVisible, expected }) => {
+        const model = buildIndicatorMenuModel(
+          input({ licenseValid, hasFocusWindow, panelVisible })
+        );
+        expect(model.showPanelSensitive).toBe(expected);
+      }
+    );
   });
 
   describe('Purchase License item', () => {
