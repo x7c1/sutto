@@ -347,22 +347,20 @@ describe('LicenseStateHandler', () => {
       expect(storage.savedTrialPeriods).toHaveLength(1);
     });
 
-    it.each([
-      'trial-expired',
-      'valid',
-      'expired',
-      'invalid',
-    ] as const)('writes no trial data when the status is %s', async (status) => {
-      const storage = createTrialStorage(status, trialPeriod(5, '2026-06-14'));
-      storage.repository.saveTrialPeriod = unexpected('saveTrialPeriod');
-      const handler = createHandler(storage.repository);
-      handler.initialize(() => {});
-      await flushPromises();
+    it.each(['trial-expired', 'valid', 'expired', 'invalid'] as const)(
+      'writes no trial data when the status is %s',
+      async (status) => {
+        const storage = createTrialStorage(status, trialPeriod(5, '2026-06-14'));
+        storage.repository.saveTrialPeriod = unexpected('saveTrialPeriod');
+        const handler = createHandler(storage.repository);
+        handler.initialize(() => {});
+        await flushPromises();
 
-      handler.recordPanelUse();
+        handler.recordPanelUse();
 
-      expect(storage.store.trialPeriod.daysUsed.toNumber()).toBe(5);
-    });
+        expect(storage.store.trialPeriod.daysUsed.toNumber()).toBe(5);
+      }
+    );
 
     it('locks the panel as soon as the day that reaches the limit is recorded', async () => {
       const storage = createTrialStorage('trial', trialPeriod(29, '2026-06-14'));
