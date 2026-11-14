@@ -295,7 +295,7 @@ export function createSpacesRowView(
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     // Defensive check: ensure row has spaces array
-    if (!row || !row.spaces || !Array.isArray(row.spaces)) {
+    if (!row?.spaces || !Array.isArray(row.spaces)) {
       log(
         `[Renderer] WARNING: Invalid row data detected (missing or invalid spaces) at index ${i}`
       );
@@ -313,7 +313,7 @@ export function createSpacesRowView(
 
     for (const space of row.spaces) {
       // Defensive check: ensure space is valid
-      if (!space || !space.displays) {
+      if (!space?.displays) {
         log(`[Renderer] WARNING: Invalid space detected in row at index ${i}, skipping`);
         continue;
       }
