@@ -56,7 +56,7 @@
     "esbuild": "^0.28.1",
     "typescript": "^5.9.3",
     "vitepress": "^1.6.4",
-    "vitest": "^4.1.0"
+    "vitest": "^5.1.0"
   },
   "overrides": {
     "@girs/clutter-18": "18.0.0-4.0.4",
