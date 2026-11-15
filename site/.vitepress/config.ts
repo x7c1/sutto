@@ -7,6 +7,10 @@ export default defineConfig({
   base: '/sutto/',
 
   vite: {
+    build: {
+      // esbuild 0.28 cannot lower destructuring to Vite 5's default target
+      target: 'esnext',
+    },
     define: {
       __STORE_URL__: JSON.stringify(requireEnv('STORE_URL')),
     },
