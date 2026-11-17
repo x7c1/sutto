@@ -97,7 +97,7 @@ Sutto consumes the official `@girs/*` packages for GNOME Shell, Mutter, St, Clut
 `src/libs/gnome-types/` contains hand-written `.d.ts` files that fill three roles:
 
 - **`gjs-modules.d.ts`** — declares the `gi://*` and `resource://*` module paths so TypeScript can resolve imports like `import Meta from 'gi://Meta'` and `import * as Main from 'resource:///org/gnome/shell/ui/main.js'`. Each declaration re-exports the matching `@girs` namespace.
-- **`gnome-shell-50.d.ts`** — augments specific Shell-50 types where the upstream `@girs` declaration is too narrow (currently a single interface-merge that narrows `Extension.metadata` from `MetadataJson` to the richer runtime `ExtensionMetadata`).
+- **`gnome-shell-50.d.ts`** — augments specific Shell-50 types where the upstream `@girs` declaration is too narrow (currently a single interface-merge that narrows `Extension.metadata` from `MetadataJson` to the richer runtime `ExtensionMetadata`, which is declared here because the package's `exports` map does not expose upstream's copy).
 - **`adwaita.d.ts` / `gdk4.d.ts` / `gio.d.ts` / `glib.d.ts` / `gtk4.d.ts` / `st.d.ts`** — small stubs for the few cases where `@girs` types are missing or insufficient. Keep these as minimal as possible; prefer fixing or upgrading `@girs` over growing these stubs.
 
 ## TypeScript Configuration
@@ -109,7 +109,7 @@ Key settings (see `tsconfig.json` for the full configuration):
   "compilerOptions": {
     "target": "ES2022",
     "module": "ES2022",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "lib": ["ES2022"],
     "rootDir": "./src",
     "outDir": "./.tsc",
@@ -136,6 +136,8 @@ npm run build
 ```
 
 If `tsc` reports missing types for a `gi://` or `resource://` module path, check that the path has a matching `declare module` block in `src/libs/gnome-types/gjs-modules.d.ts`.
+
+If `tsc` reports `TS2307: Cannot find module '@girs/...'`, check the specifier against the package's `exports` map in `node_modules/@girs/<pkg>/package.json`. `moduleResolution: "bundler"` resolves only the subpaths listed there (e.g. `@girs/gnome-shell/ui/main`, `@girs/st-18/ambient`), so paths into `dist/` or other unlisted files do not resolve.
 
 ### Missing Shell-50-only symbol
 

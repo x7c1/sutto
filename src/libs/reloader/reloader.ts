@@ -13,14 +13,17 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import { ExtensionType } from 'resource:///org/gnome/shell/misc/extensionUtils.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import type { ExtensionObject } from '@girs/gnome-shell/dist/types/extension-object.js';
-import type { ExtensionManager } from '@girs/gnome-shell/dist/ui/extensionSystem.js';
+import type { ExtensionManager } from '@girs/gnome-shell/ui/extensionSystem';
 import { GioShellExtensionSettings } from './gio-shell-extension-settings.js';
 import {
   isReloadUuidOf,
   pruneStaleReloadUuidsFromSettings,
   type ShellExtensionSettingsPort,
 } from './prune-stale-uuids.js';
+
+// `@girs/gnome-shell` does not expose its `types/extension-object` module
+// through `exports`, so take the type from the method that returns it.
+type ExtensionObject = ReturnType<ExtensionManager['lookup']>;
 
 // Declare TextEncoder/TextDecoder for TypeScript
 declare class TextDecoder {

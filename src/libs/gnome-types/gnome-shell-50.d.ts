@@ -7,11 +7,36 @@
  * by GNOME Shell's extension loader. Sutto reads `metadata.dir` /
  * `metadata.path` from `this.metadata` inside an Extension subclass, so the
  * upstream type must be widened to match runtime via interface merging.
+ *
+ * Upstream declares `ExtensionMetadata` in `dist/types/extension-metadata`,
+ * which the package's `exports` map does not expose, so it is mirrored here
+ * and added to the `extensions/extension` module.
  */
 
-import type { ExtensionMetadata } from '@girs/gnome-shell/dist/types/extension-metadata';
+import type Gio from '@girs/gio-2.0';
 
-declare module '@girs/gnome-shell/dist/extensions/extension' {
+declare module '@girs/gnome-shell/extensions/extension' {
+  /**
+   * The metadata object GNOME Shell attaches to a loaded extension.
+   *
+   * @see https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/main/js/extensions/sharedInternals.js
+   */
+  export interface ExtensionMetadata {
+    readonly uuid: string;
+    readonly dir: Gio.File;
+    readonly path: string;
+    readonly name: string;
+    readonly description: string;
+    readonly version?: string;
+    readonly url?: string;
+    readonly 'shell-version': string[];
+    readonly 'settings-schema'?: string;
+    readonly 'gettext-domain'?: string;
+    readonly 'original-author'?: string[];
+    readonly 'extension-id'?: string;
+    readonly 'version-name'?: string;
+  }
+
   interface Extension {
     readonly metadata: ExtensionMetadata;
   }
