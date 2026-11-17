@@ -6,17 +6,17 @@
  * GNOME Shell 50 specific type definitions
  */
 
-/// <reference types="@girs/st-18/st-18-ambient" />
-/// <reference types="@girs/meta-18/meta-18-ambient" />
-/// <reference types="@girs/mtk-18/mtk-18-ambient" />
-/// <reference types="@girs/clutter-18/clutter-18-ambient" />
-/// <reference types="@girs/shell-18/shell-18-ambient" />
-/// <reference types="@girs/gio-2.0/gio-2.0-ambient" />
-/// <reference types="@girs/glib-2.0/glib-2.0-ambient" />
-/// <reference types="@girs/adw-1/adw-1-ambient" />
-/// <reference types="@girs/gtk-4.0/gtk-4.0-ambient" />
-/// <reference types="@girs/gdk-4.0/gdk-4.0-ambient" />
-/// <reference types="@girs/gnome-shell/dist/extensions/global" />
+/// <reference types="@girs/st-18/ambient" />
+/// <reference types="@girs/meta-18/ambient" />
+/// <reference types="@girs/mtk-18/ambient" />
+/// <reference types="@girs/clutter-18/ambient" />
+/// <reference types="@girs/shell-18/ambient" />
+/// <reference types="@girs/gio-2.0/ambient" />
+/// <reference types="@girs/glib-2.0/ambient" />
+/// <reference types="@girs/adw-1/ambient" />
+/// <reference types="@girs/gtk-4.0/ambient" />
+/// <reference types="@girs/gdk-4.0/ambient" />
+/// <reference types="@girs/gnome-shell/extensions/global" />
 
 // GI imports
 declare module 'gi://St' {
@@ -98,32 +98,29 @@ declare namespace Soup {
 
 // GNOME Shell resource imports
 declare module 'resource:///org/gnome/shell/extensions/extension.js' {
-  export * from '@girs/gnome-shell/dist/extensions/extension';
-  // ExtensionMetadata is not re-exported by upstream extension.d.ts (Shell 50),
-  // but is the actual runtime type returned by Extension.metadata; the upstream
-  // declaration narrows it to the JSON-only subset (MetadataJson). Re-exporting
-  // it here lets sutto code import it from the same resource:// module path.
-  export type { ExtensionMetadata } from '@girs/gnome-shell/dist/types/extension-metadata';
+  // Also re-exports ExtensionMetadata, which gnome-shell-50.d.ts adds to the
+  // upstream module because the package's `exports` map does not expose it.
+  export * from '@girs/gnome-shell/extensions/extension';
 }
 
 declare module 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js' {
-  export * from '@girs/gnome-shell/dist/extensions/prefs';
+  export * from '@girs/gnome-shell/extensions/prefs';
 }
 
 declare module 'resource:///org/gnome/shell/misc/extensionUtils.js' {
-  export * from '@girs/gnome-shell/dist/misc/extensionUtils';
+  export * from '@girs/gnome-shell/misc/extensionUtils';
 }
 
 declare module 'resource:///org/gnome/shell/ui/main.js' {
-  export * from '@girs/gnome-shell/dist/ui/main';
+  export * from '@girs/gnome-shell/ui/main';
 }
 
 declare module 'resource:///org/gnome/shell/ui/panelMenu.js' {
-  export * from '@girs/gnome-shell/dist/ui/panelMenu';
+  export * from '@girs/gnome-shell/ui/panelMenu';
 }
 
 declare module 'resource:///org/gnome/shell/ui/popupMenu.js' {
-  export * from '@girs/gnome-shell/dist/ui/popupMenu';
+  export * from '@girs/gnome-shell/ui/popupMenu';
 }
 
 // Global console for logging (GNOME Shell provides this)
