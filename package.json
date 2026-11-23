@@ -43,20 +43,20 @@
   },
   "homepage": "https://github.com/x7c1/sutto#readme",
   "devDependencies": {
-    "@biomejs/biome": "^2.6.7",
+    "@biomejs/biome": "^2.6.8",
     "@girs/adw-1": "1.10.0-4.0.0-rc.15",
     "@girs/clutter-18": "18.0.0-4.0.4",
     "@girs/gdk-4.0": "5.6.0",
-    "@girs/gjs": "4.0.0-rc.15",
+    "@girs/gjs": "5.6.0",
     "@girs/gnome-shell": "50.0.0",
-    "@girs/gtk-4.0": "4.23.0-4.0.0-rc.15",
+    "@girs/gtk-4.0": "5.6.0",
     "@girs/meta-18": "18.0.0-4.0.4",
     "@girs/mtk-18": "18.0.0-4.0.4",
     "@girs/st-18": "18.0.0-4.0.4",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2",
     "vitepress": "^1.6.4",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "overrides": {
     "@girs/clutter-18": "18.0.0-4.0.4",
@@ -66,7 +66,7 @@
     "@girs/shell-18": "18.0.0-4.0.0-rc.15",
     "@girs/st-18": "18.0.0-4.0.4",
     "@girs/gio-2.0": "2.88.0-4.0.0-rc.15",
-    "@girs/gjs": "4.0.0-rc.15",
+    "@girs/gjs": "5.6.0",
     "@girs/cairo-1.0": "1.0.0-4.0.0-rc.15",
     "@girs/glib-2.0": "2.88.0-4.0.0-rc.15",
     "@girs/gobject-2.0": "2.88.0-4.0.0-rc.15",
