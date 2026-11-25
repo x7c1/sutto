@@ -90,7 +90,9 @@ This command:
 
 ### Where types come from
 
-Sutto consumes the official `@girs/*` packages for GNOME Shell, Mutter, St, Clutter, Mtk, GTK, GIO, GLib, Adwaita, etc. These provide most of the typings out of the box. The packages match the Shell-50 / Mutter-18 series (e.g., `@girs/gnome-shell@51.0.1`, `@girs/meta-18`, `@girs/st-18`).
+Sutto consumes the official `@girs/*` packages for GNOME Shell, Mutter, St, Clutter, Mtk, GTK, GIO, GLib, Adwaita, etc. These provide most of the typings out of the box. The packages match the Shell-50 / Mutter-18 series (`@girs/gnome-shell@50.0.4`, with `@girs/meta-18`, `@girs/st-18` and the other `@girs` packages on 4.x).
+
+The `@girs` packages follow the Shell version the extension targets: the 4.x line for Shell 50, the 5.x line for Shell 51. They move together with `shell-version` in `dist/metadata.json`, in the same change, because types for another Shell let code call an API the targeted Shell does not have and still compile.
 
 ### Custom type definitions
 
@@ -141,7 +143,7 @@ If `tsc` reports `TS2307: Cannot find module '@girs/...'`, check the specifier a
 
 ### Missing Shell-50-only symbol
 
-If `tsc` reports a missing symbol that exists on the live host but not in `@girs/gnome-shell@51`, add a minimal augmentation to `src/libs/gnome-types/gnome-shell-50.d.ts` rather than monkey-patching the upstream `.d.ts`. Keep augmentations tight — every line is a future maintenance cost.
+If `tsc` reports a missing symbol that exists on the live host but not in the `@girs/gnome-shell` 50.x typings, add a minimal augmentation to `src/libs/gnome-types/gnome-shell-50.d.ts` rather than monkey-patching the upstream `.d.ts`. Keep augmentations tight — every line is a future maintenance cost.
 
 ## References
 
