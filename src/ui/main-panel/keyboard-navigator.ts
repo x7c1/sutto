@@ -9,7 +9,8 @@ declare function log(message: string): void;
 
 interface ParsedShortcut {
   keyval: number;
-  modifiers: Clutter.ModifierType;
+  /** Bitwise OR of `Clutter.ModifierType` masks; 0 means no modifier */
+  modifiers: number;
 }
 
 /**
@@ -17,7 +18,7 @@ interface ParsedShortcut {
  */
 function parseAccelerator(accelerator: string): ParsedShortcut | null {
   let remaining = accelerator;
-  let modifiers: Clutter.ModifierType = 0;
+  let modifiers = 0;
 
   // Extract modifiers
   const modifierPattern = /<(\w+)>/g;
