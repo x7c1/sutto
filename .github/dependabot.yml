@@ -29,6 +29,13 @@ updates:
       npm-minor-and-patch:
         applies-to: version-updates
         update-types: [minor, patch]
+    # The @girs type packages stay on the line that describes the targeted
+    # GNOME Shell, and move to the next line only in the change that adds
+    # support for that Shell (docs/guides/05-typescript-build.md, "Where types
+    # come from"). Minor and patch updates still arrive in the group above.
+    ignore:
+      - dependency-name: "@girs/*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: docker
     directory: /
