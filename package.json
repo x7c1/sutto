@@ -51,7 +51,7 @@
     "@girs/gnome-shell": "50.0.4",
     "@girs/gtk-4.0": "4.9.0",
     "@girs/meta-18": "4.9.0",
-    "@girs/mtk-18": "4.9.0",
+    "@girs/mtk-18": "5.6.0",
     "@girs/st-18": "4.9.0",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2",
